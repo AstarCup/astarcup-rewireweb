@@ -23,7 +23,10 @@ import {
   type RoomScoresResponse,
 } from "@/lib/types";
 import { BeatmapGroup } from "@/components/multiplayer/BeatmapGroup";
-import { AggregateTable, type AggregateRow } from "@/components/multiplayer/AggregateTable";
+import {
+  ModAggregateTable,
+  type ModColumnInfo,
+} from "@/components/multiplayer/ModAggregateTable";
 import { buildApprovedInfo, isScoreApproved, type ApprovedInfo } from "@/components/multiplayer/approved";
 
 interface DateRangeOption {
@@ -150,27 +153,35 @@ export default function MultiplayerScoresPage() {
     return groups;
   }, [scores.data, mapByBeatmapId]);
 
-  const aggregateRows = useMemo<AggregateRow[]>(() => {
-    const data = scores.data;
-    if (!data) return [];
-    const byKey = new Map<string, AggregateRow>();
-    for (const s of data.scores) {
-      if (onlyApproved && !isScoreApproved(approvedInfo, s)) continue;
-      const key = s.username || String(s.userId != null ? s.userId : 0);
-      const cur = byKey.get(key) ?? {
-        username: s.username || `#${s.userId ?? ""}`,
-        avatarUrl: s.avatarUrl,
-        played: 0,
-        totalScore: 0,
-        approved: false,
-      };
-      cur.played += 1;
-      cur.totalScore += s.totalScore;
-      if (!cur.approved && isScoreApproved(approvedInfo, s)) cur.approved = true;
-      byKey.set(key, cur);
+  const modColumns = useMemo<ModColumnInfo[]>(() => {
+    const order = MODS_ORDER as readonly string[];
+    const cols = new Map<string, ModColumnInfo>();
+    for (const g of poolGroups) {
+      if (!g.map) continue;
+      const label = g.map.modPosition ?? g.map.selectedMods ?? "NM";
+      const key = `${g.map.selectedMods ?? "NM"}|${label}`;
+      let col = cols.get(key);
+      if (!col) {
+        col = {
+          key,
+          label,
+          mods: g.map.selectedMods ?? "NM",
+          coverUrl: g.map.coverUrl,
+          beatmapIds: [],
+        };
+        cols.set(key, col);
+      }
+      col.beatmapIds.push(g.beatmapId);
+      if (!col.coverUrl) col.coverUrl = g.map.coverUrl;
     }
-    return Array.from(byKey.values());
-  }, [scores.data, approvedInfo, onlyApproved]);
+    return Array.from(cols.values()).sort((a, b) => {
+      const base = (m: string) => m.split("+")[0]?.toUpperCase() || "NM";
+      const ia = order.indexOf(base(a.mods));
+      const ib = order.indexOf(base(b.mods));
+      if (ia !== ib) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      return a.label.localeCompare(b.label, undefined, { numeric: true });
+    });
+  }, [poolGroups]);
 
   const handleLoad = async () => {
     const ids = roomInput
@@ -369,7 +380,12 @@ export default function MultiplayerScoresPage() {
               </TabsContent>
 
               <TabsContent value="total">
-                <AggregateTable rows={aggregateRows} />
+                <ModAggregateTable
+                  scores={scores.data?.scores ?? []}
+                  columns={modColumns}
+                  isApproved={(s) => isScoreApproved(approvedInfo, s)}
+                  onlyApproved={onlyApproved}
+                />
               </TabsContent>
             </Tabs>
           </>

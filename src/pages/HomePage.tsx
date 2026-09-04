@@ -4,19 +4,17 @@ import {
   CalendarDays,
   Map,
   MessageCircle,
-  Trophy,
 } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { SectionTitle, PaperStack } from "@/components/paper/paper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { parseFrontMatter } from "@/lib/markdown";
-import Logo from "@/components/layout/Logo";
+import AnimatedLogo from "@/components/layout/AnimatedLogo";
 import winners from "@/data/winners.json";
-import m1 from "@/data/news/1.md?raw";
-import m2 from "@/data/news/2.md?raw";
-import m3 from "@/data/news/3.md?raw";
-import m4 from "@/data/news/4.md?raw";
+import RegisterDialog from "@/components/RegisterDialog";
+import { REG_STATUS_LABEL } from "@/lib/types";
+import { useState } from "react";
 
 interface WinnerCard {
   id: string;
@@ -41,15 +39,17 @@ const quickLinks = [
   { to: "/contact", label: "联系我们", desc: "STAFF · 报名 · 疑问", icon: MessageCircle },
 ];
 
-const newsSources: { slug: string; raw: string }[] = [
-  { slug: "1", raw: m1 },
-  { slug: "2", raw: m2 },
-  { slug: "3", raw: m3 },
-  { slug: "4", raw: m4 },
-];
+const newsModules = import.meta.glob("@/data/news/*.md", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
 
-const news = newsSources
-  .map(({ slug, raw }) => ({ slug, data: parseFrontMatter(raw).data }))
+const news = Object.entries(newsModules)
+  .map(([path, raw]) => ({
+    slug: path.split("/").pop()?.replace(/\.md$/, "") ?? "",
+    data: parseFrontMatter(raw).data,
+  }))
   .sort((a, b) => {
     const da = a.data.date ? new Date(a.data.date).getTime() : 0;
     const db = b.data.date ? new Date(b.data.date).getTime() : 0;
@@ -59,8 +59,9 @@ const news = newsSources
 const medalColors = ["bg-[#f5c040]", "bg-[#cfd3c9]", "bg-[#e0a47e]"];
 
 export default function HomePage() {
-  const { user, permissions, settings } = useApp();
-  const tournamentName = settings?.tournament_name || "Astracup";
+  const { user, permissions } = useApp();
+
+  const [registerOpen, setRegisterOpen] = useState(false);
   const isAdmin = !!permissions?.isadmin;
 
   const sortedWinners = [...winnersData.cards].sort((a, b) => a.rank - b.rank);
@@ -82,18 +83,8 @@ export default function HomePage() {
           className="absolute right-1/3 top-2 h-8 w-8 rotate-[30deg] rounded-lg bg-[#e85d75]/20"
         />
         <div className="relative mx-auto max-w-6xl">
-          <PaperStack className="p-8 md:p-14" layers={2}>
             <div className="flex flex-col items-start gap-6">
-              <Logo />
-              <div className="mt-2 max-w-2xl">
-                <h1 className="font-display font-bold text-4xl leading-tight text-[#2d2d2d] md:text-6xl">
-                  {tournamentName}
-                </h1>
-                <p className="mt-4 max-w-lg text-sm leading-relaxed text-[#666666] md:text-base">
-                  osu!std 双败制 solo 赛事 · Paper Craft 站点风格，报名、图池、手册、
-                  预约一站式完成。
-                </p>
-              </div>
+              <AnimatedLogo />
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 {!user ? (
                   <Button asChild size="lg" variant="primary">
@@ -101,6 +92,18 @@ export default function HomePage() {
                   </Button>
                 ) : (
                   <>
+                    {(() => {
+                      const regStatus = user.registrationStatus ?? "not_registered";
+                      return regStatus === "not_registered" ? (
+                        <Button size="lg" variant="yellow" onClick={() => setRegisterOpen(true)}>
+                          快速报名
+                        </Button>
+                      ) : (
+                        <Button size="lg" variant="yellow" disabled>
+                          {REG_STATUS_LABEL[regStatus] ?? regStatus}
+                        </Button>
+                      );
+                    })()}
                     <Button asChild size="lg" variant="primary">
                       <Link to="/player-info">个人中心</Link>
                     </Button>
@@ -111,14 +114,49 @@ export default function HomePage() {
                     )}
                   </>
                 )}
-                <Button asChild size="lg" variant="outline">
-                  <Link to="/schedule">赛程安排</Link>
-                </Button>
               </div>
             </div>
-          </PaperStack>
         </div>
       </section>
+
+      {/* Community links */}
+      {user && (
+        <section className="mx-auto max-w-6xl px-4 py-6 md:px-8">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <a
+              href="https://qm.qq.com/q/sFydxoQtaw"
+              target="_blank"
+              rel="noreferrer"
+              className="group relative flex flex-col justify-end rounded-2xl border-2 border-[#e0d8cc] bg-white p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
+            >
+              <p className="font-bold text-xl text-[#2d2d2d]">QQ Group</p>
+              <img
+                src="/QQGroupQRcode.png"
+                alt="QQ 群二维码"
+                className="absolute right-3 top-3 w-32 rounded-xl bg-white p-2 shadow-[3px_3px_0px_rgba(0,0,0,0.1)] opacity-0 transition group-hover:opacity-100"
+              />
+            </a>
+            <a
+              href="https://space.bilibili.com/11872433"
+              target="_blank"
+              rel="noreferrer"
+              className="flex flex-col justify-end rounded-2xl border-2 border-[#e0d8cc] bg-white p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
+            >
+              <p className="font-bold text-xl text-[#2d2d2d]">Bilibili</p>
+              <p className="mt-1 text-xs text-[#b0a898]">比赛录像与精彩集锦</p>
+            </a>
+            <a
+              href="https://live.bilibili.com/725565"
+              target="_blank"
+              rel="noreferrer"
+              className="flex flex-col justify-end rounded-2xl border-2 border-[#e0d8cc] bg-white p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
+            >
+              <p className="font-bold text-xl text-[#2d2d2d]">Live</p>
+              <p className="mt-1 text-xs text-[#b0a898]">赛事直播频道</p>
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* Quick Links */}
       <section className="mx-auto max-w-6xl px-4 py-12 md:px-8">
@@ -165,9 +203,13 @@ export default function HomePage() {
                   }`}
                 >
                   <span
-                    className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl font-bold text-[#2d2d2d] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] ${medal}`}
+                    className={`grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.1)] ${medal}`}
                   >
-                    <Trophy className="h-6 w-6" />
+                    <img
+                      src={w.avatarUrl}
+                      alt={w.playerName}
+                      className="h-full w-full object-cover"
+                    />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
@@ -214,6 +256,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      <RegisterDialog open={registerOpen} onOpenChange={setRegisterOpen} />
     </div>
   );
 }

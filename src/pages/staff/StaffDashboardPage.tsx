@@ -77,7 +77,6 @@ export default function StaffDashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#fdf6ee] pb-16">
-      <PageHeader title="管理后台" subtitle={`欢迎回来，${user.username}`} />
       <div className="mx-auto max-w-6xl px-4 pt-8">
         {/* Horizontal scrollable tab bar */}
         <div className="flex gap-2 overflow-x-auto pb-3">

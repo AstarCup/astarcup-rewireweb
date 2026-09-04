@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { LogOut, User, ShieldCheck } from "lucide-react";
 import Logo from "./Logo";
+import MessageCenter from "./MessageCenter";
 import { useApp } from "@/lib/app-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -65,6 +66,7 @@ export default function Navbar() {
                   管理后台
                 </Link>
               )}
+              <MessageCenter />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button

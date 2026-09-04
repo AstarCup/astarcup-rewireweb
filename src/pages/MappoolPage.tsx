@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -9,10 +10,12 @@ import {
 } from "@/components/ui/select";
 import { PageHeader, SectionTitle } from "@/components/paper/paper";
 import { LoadingBlock, ErrorBlock, useFetch } from "@/hooks/useFetch";
+import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn, fmt } from "@/lib/utils";
 import { useApp } from "@/lib/app-context";
-import { MODS_ORDER, type MapSelection } from "@/lib/types";
+import { MODS_ORDER, seasonOptions as buildSeasonOptions, type MapSelection } from "@/lib/types";
+import { BulkDownload, MapHoverCard, downloadSingleMap } from "@/components/mappool/MapPoolTools";
 
 const CATEGORY_OPTIONS = ["全部", "资格赛", "32强", "16强", "8强", "半决赛", "决赛", "总决赛"];
 
@@ -21,6 +24,12 @@ type ViewMode = "card" | "table";
 interface ModGroup {
   mod: string;
   items: MapSelection[];
+}
+
+function displayTitle(m: MapSelection, useUnicode: boolean): string {
+  const artist = useUnicode ? m.artist_unicode || m.artist : m.artist;
+  const title = useUnicode ? m.title_unicode || m.title : m.title;
+  return [artist, m.version].filter(Boolean).join(" - ") || title || "未知曲目";
 }
 
 function fmtLength(seconds: number | null): string {
@@ -72,8 +81,15 @@ function ModHeader({ group }: { group: ModGroup }) {
   );
 }
 
-function MapCard({ map }: { map: MapSelection }) {
-  const title = [map.artist, map.version].filter(Boolean).join(" - ") || map.title || "未知曲目";
+function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }) {
+  const title = displayTitle(map, useUnicode);
+  const handleDownload = () => {
+    void downloadSingleMap(map).then((ok) =>
+      ok
+        ? toast({ title: "开始下载", description: map.title })
+        : toast({ variant: "destructive", title: "该图不支持下载" }),
+    );
+  };
   return (
     <a
       href={osuLink(map)}
@@ -81,20 +97,33 @@ function MapCard({ map }: { map: MapSelection }) {
       rel="noreferrer"
       className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
     >
-      {map.coverUrl ? (
-        <img
-          src={map.coverUrl}
-          alt={map.title}
-          className="h-28 w-full object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <div className="flex h-28 w-full items-center justify-center bg-[#f5c040]/30 px-4">
-          <span className="line-clamp-2 text-center text-sm font-bold text-[#2d2d2d]">
-            {map.title || "未命名图"}
-          </span>
-        </div>
-      )}
+      <div className="relative">
+        {map.coverUrl ? (
+          <img
+            src={map.coverUrl}
+            alt={map.title}
+            className="h-28 w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-28 w-full items-center justify-center bg-[#f5c040]/30 px-4">
+            <span className="line-clamp-2 text-center text-sm font-bold text-[#2d2d2d]">
+              {map.title || "未命名图"}
+            </span>
+          </div>
+        )}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleDownload();
+          }}
+          title="下载谱面"
+          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg bg-white/90 text-[#6b7fb5] shadow-[2px_2px_0px_rgba(0,0,0,0.1)] opacity-0 transition hover:text-[#e85d75] group-hover:opacity-100"
+        >
+          <Download className="h-4 w-4" />
+        </button>
+      </div>
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex items-start justify-between gap-2">
           <Badge variant="outline" className="shrink-0 border-[#6b7fb5]/40 text-[#6b7fb5]">
@@ -121,7 +150,8 @@ function MapCard({ map }: { map: MapSelection }) {
   );
 }
 
-function MapTable({ group }: { group: ModGroup }) {
+function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean }) {
+  const [hover, setHover] = useState<{ map: MapSelection; rect: DOMRect } | null>(null);
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
       <table className="w-full text-left text-sm">
@@ -140,11 +170,13 @@ function MapTable({ group }: { group: ModGroup }) {
         </thead>
         <tbody>
           {group.items.map((m) => {
-            const title = [m.artist, m.version].filter(Boolean).join(" - ") || m.title || "未知曲目";
+            const title = displayTitle(m, useUnicode);
             const objs = m.moddedStats?.totalHitObjects;
             return (
               <tr
                 key={m.id}
+                onMouseEnter={(e) => setHover({ map: m, rect: e.currentTarget.getBoundingClientRect() })}
+                onMouseLeave={() => setHover(null)}
                 className="border-b border-[#e0d8cc]/60 transition-colors hover:bg-[#fdf6ee]"
               >
                 <td className="px-4 py-3 font-sans text-xs font-bold text-[#b0a898]">
@@ -176,6 +208,12 @@ function MapTable({ group }: { group: ModGroup }) {
           })}
         </tbody>
       </table>
+      {hover && (
+        <MapHoverCard
+          map={hover.map}
+          rect={{ left: hover.rect.left, top: hover.rect.top, bottom: hover.rect.bottom }}
+        />
+      )}
     </div>
   );
 }
@@ -191,6 +229,17 @@ export default function MappoolPage() {
     const v = localStorage.getItem("mappool_view");
     return v === "table" ? "table" : "card";
   });
+  const [useUnicode, setUseUnicode] = useState<boolean>(
+    () => localStorage.getItem("mappool_unicode") === "1",
+  );
+
+  const toggleUnicode = () => {
+    setUseUnicode((v) => {
+      const next = !v;
+      localStorage.setItem("mappool_unicode", next ? "1" : "0");
+      return next;
+    });
+  };
   const [season, setSeason] = useState<string>(() => {
     const saved = localStorage.getItem("mappool_season");
     if (saved) {
@@ -200,10 +249,12 @@ export default function MappoolPage() {
     return settings?.current_season || "s1";
   });
 
-  const seasonOptions =
-    settings?.availableSeasons?.length && settings.availableSeasons[0]?.value
-      ? settings.availableSeasons
+  const seasonSelectOptions = (() => {
+    const pool = buildSeasonOptions(settings);
+    return pool.length
+      ? pool
       : [{ value: settings?.current_season || "s1", label: settings?.current_season || "S1" }];
+  })();
 
   // Sync season to the tournament setting until the user picks one.
   useEffect(() => {
@@ -236,7 +287,7 @@ export default function MappoolPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [season, category]);
 
-  if (settings?.mappool_visible === "false") {
+  if (String(settings?.mappool_visible ?? "true") === "false") {
     return (
       <div className="bg-[#fdf6ee]">
         <PageHeader title="图池" subtitle="本赛事的比赛选图池" />
@@ -265,7 +316,7 @@ export default function MappoolPage() {
                   <SelectValue placeholder="选择赛季" />
                 </SelectTrigger>
                 <SelectContent>
-                  {seasonOptions.map((s) => (
+                  {seasonSelectOptions.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
                       {s.label}
                     </SelectItem>
@@ -290,24 +341,38 @@ export default function MappoolPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 rounded-xl bg-white border-2 border-[#e0d8cc] p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
-            {(["card", "table"] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => {
-                  setView(v);
-                  localStorage.setItem("mappool_view", v);
-                }}
-                className={cn(
-                  "rounded-lg px-4 py-1.5 text-sm font-bold transition-colors",
-                  view === v
-                    ? "bg-[#6b7fb5] text-[#fdf6ee]"
-                    : "bg-transparent text-[#666666] hover:text-[#2d2d2d]",
-                )}
-              >
-                {v === "card" ? "卡片" : "表格"}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 rounded-xl bg-white border-2 border-[#e0d8cc] p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
+              {(["card", "table"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => {
+                    setView(v);
+                    localStorage.setItem("mappool_view", v);
+                  }}
+                  className={cn(
+                    "rounded-lg px-4 py-1.5 text-sm font-bold transition-colors",
+                    view === v
+                      ? "bg-[#6b7fb5] text-[#fdf6ee]"
+                      : "bg-transparent text-[#666666] hover:text-[#2d2d2d]",
+                  )}
+                >
+                  {v === "card" ? "卡片" : "表格"}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={toggleUnicode}
+              className={cn(
+                "rounded-xl border-2 px-4 py-2 text-sm font-bold transition-all duration-200",
+                useUnicode
+                  ? "border-[#f5c040] bg-[#f5c040] text-[#2d2d2d] shadow-[2px_2px_0px_rgba(0,0,0,0.1)]"
+                  : "border-[#e0d8cc] bg-white text-[#666666] hover:text-[#2d2d2d]",
+              )}
+            >
+              原曲名
+            </button>
+            <BulkDownload maps={data ?? []} />
           </div>
         </div>
 
@@ -328,11 +393,11 @@ export default function MappoolPage() {
                 {view === "card" ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {g.items.map((m) => (
-                      <MapCard key={m.id} map={m} />
+                      <MapCard key={m.id} map={m} useUnicode={useUnicode} />
                     ))}
                   </div>
                 ) : (
-                  <MapTable group={g} />
+                  <MapTable group={g} useUnicode={useUnicode} />
                 )}
               </section>
             ))}

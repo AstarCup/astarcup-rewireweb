@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { api } from "@/lib/api";
+import { useApp } from "@/lib/app-context";
 import { SectionTitle } from "@/components/paper/paper";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { fmt, fmtInt } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { seasonLabel } from "@/lib/types";
 import type { StaffStats, SeasonMappoolStat } from "@/lib/types";
 
 const STAT_CARDS: {
@@ -31,6 +34,7 @@ const AVG_ROWS: { label: string; pick: (s: SeasonMappoolStat) => number }[] = [
 ];
 
 export default function OverviewManagement() {
+  const { user, permissions, settings } = useApp();
   const { data, loading, error, load } = useFetch<StaffStats>(() => api.get("/api/staff/stats"));
   const [expanded, setExpanded] = useState<string | null>(null);
 
@@ -43,6 +47,23 @@ export default function OverviewManagement() {
 
   return (
     <div>
+      {/* Welcome banner */}
+      <div className="mb-6 flex items-center gap-4 rounded-2xl bg-white p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+        <Avatar className="h-16 w-16 rounded-2xl border-2 border-[#e85d75]">
+          <AvatarImage src={user?.avatarUrl ?? undefined} alt={user?.username ?? ""} />
+          <AvatarFallback className="bg-[#f5c040]/30 text-xl font-bold text-[#2d2d2d]">
+            {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="font-bold text-xl text-[#2d2d2d]">欢迎回来，{user?.username ?? "Staff"}</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {permissions?.isadmin && <Badge variant="primary">管理员</Badge>}
+            {permissions?.isplayer && <Badge variant="teal">选手</Badge>}
+          </div>
+        </div>
+      </div>
+
       <SectionTitle tag="后台概览" accent="#e85d75">
         运营数据一览
       </SectionTitle>
@@ -68,7 +89,7 @@ export default function OverviewManagement() {
             <div>
               <CardDescription>当前赛季</CardDescription>
               <p className="mt-1 text-lg font-bold text-[#2d2d2d]">
-                {stats.tournamentSettings.currentSeason || "-"}
+                {seasonLabel(settings, stats.tournamentSettings.currentSeason) || "-"}
               </p>
             </div>
             <div>

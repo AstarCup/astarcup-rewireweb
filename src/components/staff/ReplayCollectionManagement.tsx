@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "@/hooks/use-toast";
 import { useApp } from "@/lib/app-context";
 import { LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { api, qs, blob, downloadBlob } from "@/lib/api";
@@ -15,6 +16,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { seasonOptions as buildSeasonOptions } from "@/lib/types";
 
 export default function ReplayCollectionManagement() {
   const { user, settings } = useApp();
@@ -23,11 +25,10 @@ export default function ReplayCollectionManagement() {
   const [uploaded, setUploaded] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState("");
   const [files, setFiles] = useState<string[]>([]);
 
-  const seasonOptions = settings?.availableSeasons ?? [];
+  const seasonOptions = buildSeasonOptions(settings);
 
   const loadUploaded = async () => {
     setLoading(true);
@@ -50,7 +51,6 @@ export default function ReplayCollectionManagement() {
 
   const downloadAll = async () => {
     setBusy("download");
-    setMsg("");
     try {
       const b = await blob(
         "/api/replays/archive" +
@@ -60,9 +60,9 @@ export default function ReplayCollectionManagement() {
           }),
       );
       downloadBlob(b, `replays-${season || "all"}-${category}.zip`);
-      setMsg("已开始下载");
+      toast({ title: "已开始下载" });
     } catch {
-      setMsg("下载失败");
+      toast({ variant: "destructive", title: "下载失败" });
     }
     setBusy("");
   };
@@ -71,7 +71,6 @@ export default function ReplayCollectionManagement() {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy("upload");
-    setMsg("");
     void (async () => {
       const fd = new FormData();
       fd.append("file", file);
@@ -80,11 +79,11 @@ export default function ReplayCollectionManagement() {
       const res = await api.post<{ url: string }>("/api/replays", fd, { json: false });
       setBusy("");
       if (res.ok) {
-        setMsg("上传成功");
+        toast({ title: "上传成功" });
         setFiles((fs) => [file.name, ...fs]);
         void loadUploaded();
       } else {
-        setMsg("上传失败");
+        toast({ variant: "destructive", title: "上传失败" });
       }
     })();
     e.target.value = "";
@@ -96,10 +95,10 @@ export default function ReplayCollectionManagement() {
     setBusy("");
     if (res.ok) {
       setFiles((fs) => fs.filter((f) => f !== filename));
-      setMsg("已删除");
+      toast({ title: "已删除" });
       void loadUploaded();
     } else {
-      setMsg("删除失败");
+      toast({ variant: "destructive", title: "删除失败" });
     }
   };
 
@@ -161,12 +160,6 @@ export default function ReplayCollectionManagement() {
           </Button>
         </div>
       </div>
-
-      {msg && (
-        <Badge variant={msg.includes("失败") ? "primary" : "teal"} className="mt-4">
-          {msg}
-        </Badge>
-      )}
 
       {loading ? (
         <LoadingBlock label="加载回放列表…" />

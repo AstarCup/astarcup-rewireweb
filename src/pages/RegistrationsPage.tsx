@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -9,11 +10,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import RadarChart from "@/components/ui/RadarChart";
 import { PageHeader } from "@/components/paper/paper";
 import { LoadingBlock, ErrorBlock, useFetch } from "@/hooks/useFetch";
+import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn, fmtInt } from "@/lib/utils";
-import type { PlayerStub } from "@/lib/types";
+import type { SessionUser } from "@/lib/types";
 
 type FilterKey = "all" | "approved" | "registered";
 
@@ -42,39 +45,75 @@ function statusBadge(status?: string) {
   }
 }
 
+function coverUrl(p: SessionUser): string | null {
+  return p.cover?.customUrl || p.cover?.url || null;
+}
+
+function radarSkills(p: SessionUser) {
+  const skills = [
+    { label: "准度", value: Number(p.accuracy) || 0 },
+    { label: "体力", value: Number(p.stamina) || 0 },
+    { label: "初见力", value: Number(p.firstSight) || 0 },
+    { label: "策略", value: Number(p.strategy) || 0 },
+    { label: "经验", value: Number(p.experience) || 0 },
+  ];
+  if (p.customKey && p.customValue != null) {
+    skills.push({ label: p.customKey, value: Number(p.customValue) || 0 });
+  }
+  return skills;
+}
+
+async function copyOsuId(osuId: string) {
+  try {
+    await navigator.clipboard.writeText(osuId);
+    toast({ title: "已复制 osuID", description: osuId });
+  } catch {
+    toast({ variant: "destructive", title: "复制失败" });
+  }
+}
+
 function PlayerCard({
   player,
   onSelect,
 }: {
-  player: PlayerStub;
-  onSelect: (p: PlayerStub) => void;
+  player: SessionUser;
+  onSelect: (p: SessionUser) => void;
 }) {
+  const cover = coverUrl(player);
   return (
     <button
       onClick={() => onSelect(player)}
-      className="flex flex-col items-center gap-3 rounded-2xl bg-white p-5 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
+      className="flex flex-col overflow-hidden rounded-2xl bg-white text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
     >
-      <Avatar className="h-16 w-16 rounded-2xl border-2 border-[#e0d8cc]">
-        <AvatarImage src={player.avatarUrl ?? undefined} alt={player.username} />
-        <AvatarFallback className="bg-[#f5c040]/30 text-lg font-bold text-[#2d2d2d]">
-          {player.username?.slice(0, 1).toUpperCase() ?? "?"}
-        </AvatarFallback>
-      </Avatar>
-      <div className="min-w-0">
-        <p className="truncate font-bold text-[#2d2d2d]">{player.username}</p>
-        <p className="mt-0.5 text-xs text-[#b0a898]">{player.country ?? "-"}</p>
+      <div className="relative h-20 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
+        {cover && (
+          <img src={cover} alt="" className="h-full w-full object-cover" />
+        )}
+        <span className="absolute right-2 top-2">{statusBadge(player.registrationStatus)}</span>
       </div>
-      <div className="flex w-full items-center justify-around text-center">
-        <div className="flex-1">
-          <p className="text-xs text-[#b0a898]">PP</p>
-          <p className="font-sans font-bold text-[#6b7fb5]">{fmtInt(player.pp)}</p>
+      <div className="-mt-9 flex flex-col items-center gap-2 px-4 pb-4">
+        <Avatar className="h-16 w-16 rounded-2xl border-4 border-white bg-[#fdf6ee]">
+          <AvatarImage src={player.avatarUrl ?? undefined} alt={player.username} />
+          <AvatarFallback className="bg-[#f5c040]/30 text-lg font-bold text-[#2d2d2d]">
+            {player.username?.slice(0, 1).toUpperCase() ?? "?"}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="truncate font-bold text-[#2d2d2d]">{player.username}</p>
+          <p className="mt-0.5 text-xs text-[#b0a898]">{player.country ?? "-"}</p>
         </div>
-        <div className="w-px self-stretch bg-[#e0d8cc]" />
-        <div className="flex-1">
-          <p className="text-xs text-[#b0a898]">世界排名</p>
-          <p className="font-sans font-bold text-[#2d2d2d]">
-            {player.globalRank != null ? `#${fmtInt(player.globalRank)}` : "-"}
-          </p>
+        <div className="flex w-full items-center justify-around">
+          <div className="flex-1">
+            <p className="text-xs text-[#b0a898]">PP</p>
+            <p className="font-sans text-lg font-bold text-[#6b7fb5]">{fmtInt(player.pp)}</p>
+          </div>
+          <div className="w-px self-stretch bg-[#e0d8cc]" />
+          <div className="flex-1">
+            <p className="text-xs text-[#b0a898]">世界排名</p>
+            <p className="font-sans text-lg font-bold text-[#2d2d2d]">
+              {player.globalRank != null ? `#${fmtInt(player.globalRank)}` : "-"}
+            </p>
+          </div>
         </div>
       </div>
     </button>
@@ -82,11 +121,11 @@ function PlayerCard({
 }
 
 export default function RegistrationsPage() {
-  const { data, loading, error, load } = useFetch<PlayerStub[]>(() =>
-    api.get<PlayerStub[]>("/api/users"),
+  const { data, loading, error, load } = useFetch<SessionUser[]>(() =>
+    api.get<SessionUser[]>("/api/users"),
   );
   const [filter, setFilter] = useState<FilterKey>("all");
-  const [selected, setSelected] = useState<PlayerStub | null>(null);
+  const [selected, setSelected] = useState<SessionUser | null>(null);
 
   const players = data ?? [];
 
@@ -155,9 +194,12 @@ export default function RegistrationsPage() {
 
         <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
           {selected && (
-            <DialogContent>
+            <DialogContent className="max-w-lg">
               <DialogHeader>
-                <DialogTitle>{selected.username}</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  {selected.username}
+                  {statusBadge(selected.registrationStatus)}
+                </DialogTitle>
                 <DialogDescription>{selected.country ?? "未知地区"}</DialogDescription>
               </DialogHeader>
               <div className="flex flex-col items-center gap-4 py-2 text-center">
@@ -167,7 +209,6 @@ export default function RegistrationsPage() {
                     {selected.username?.slice(0, 1).toUpperCase() ?? "?"}
                   </AvatarFallback>
                 </Avatar>
-                {statusBadge(selected.registrationStatus)}
                 <div className="grid w-full grid-cols-2 gap-3">
                   <div className="rounded-xl bg-white border-2 border-[#e0d8cc] p-3">
                     <p className="text-xs text-[#b0a898]">PP</p>
@@ -188,9 +229,36 @@ export default function RegistrationsPage() {
                     </p>
                   </div>
                   <div className="rounded-xl bg-white border-2 border-[#e0d8cc] p-3">
-                    <p className="text-xs text-[#b0a898]">国家/地区</p>
-                    <p className="mt-1 font-bold text-[#2d2d2d]">{selected.country ?? "-"}</p>
+                    <p className="text-xs text-[#b0a898]">osuID</p>
+                    <p className="mt-1 font-mono text-sm font-bold text-[#2d2d2d]">
+                      {selected.osuId}
+                    </p>
                   </div>
+                </div>
+
+                <div className="flex justify-center rounded-xl border-2 border-[#e0d8cc] bg-white p-3">
+                  <RadarChart skills={radarSkills(selected)} size={230} />
+                </div>
+
+                <div className="flex w-full flex-wrap justify-center gap-2">
+                  <Button variant="teal" size="sm" onClick={() => void copyOsuId(selected.osuId)}>
+                    <Copy className="h-4 w-4" />
+                    复制 osuID
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                  >
+                    <a
+                      href={`https://osu.ppy.sh/users/${selected.osuId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      osu! 主页
+                    </a>
+                  </Button>
                 </div>
               </div>
             </DialogContent>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useApp } from "@/lib/app-context";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { SectionTitle } from "@/components/paper/paper";
 import { Card } from "@/components/ui/card";
@@ -52,7 +53,6 @@ export default function StreamingManagement() {
   const [staffOsuId, setStaffOsuId] = useState(user?.osuId ?? "");
   const [staffUsername, setStaffUsername] = useState(user?.username ?? "");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
   const [revoking, setRevoking] = useState<number | null>(null);
 
   const list = assignments.data ?? [];
@@ -73,11 +73,10 @@ export default function StreamingManagement() {
 
   const apply = async () => {
     if (!roomId || !staffOsuId || !staffUsername) {
-      setMsg("请填写完整信息");
+      toast({ title: "请填写完整信息" });
       return;
     }
     setBusy(true);
-    setMsg("");
     const res = await api.post("/api/staff/assignments", {
       roomId: Number(roomId),
       staffOsuId,
@@ -86,11 +85,11 @@ export default function StreamingManagement() {
     });
     setBusy(false);
     if (res.ok) {
-      setMsg("已申请加入房间");
+      toast({ title: "已申请加入房间" });
       setApplyOpen(false);
       refetch();
     } else {
-      setMsg("申请失败");
+      toast({ variant: "destructive", title: "申请失败" });
     }
   };
 
@@ -99,10 +98,10 @@ export default function StreamingManagement() {
     const res = await api.delete(`/api/staff/assignments/${id}`);
     setRevoking(null);
     if (res.ok) {
-      setMsg("已撤销安排");
+      toast({ title: "已撤销安排" });
       refetch();
     } else {
-      setMsg("撤销失败");
+      toast({ variant: "destructive", title: "撤销失败" });
     }
   };
 
@@ -174,12 +173,6 @@ export default function StreamingManagement() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {msg && (
-        <Badge variant={msg.includes("失败") ? "primary" : "teal"} className="mb-4">
-          {msg}
-        </Badge>
-      )}
 
       {rooms.loading || assignments.loading ? (
         <LoadingBlock label="加载房间与安排中…" />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 import { useFetch, LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { api, qs } from "@/lib/api";
 import { SectionTitle } from "@/components/paper/paper";
@@ -49,7 +50,6 @@ export default function MatchupManagement() {
   const [p1, setP1] = useState("");
   const [p2, setP2] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<PlayerMatchup | null>(null);
   const [delBusy, setDelBusy] = useState(false);
   const patch = useAsync<PlayerMatchup>();
@@ -59,11 +59,10 @@ export default function MatchupManagement() {
 
   const createMatchup = async () => {
     if (!p1 || !p2 || p1 === p2) {
-      setMsg("请选择两名不同选手");
+      toast({ title: "请选择两名不同选手" });
       return;
     }
     setBusy(true);
-    setMsg("");
     const a = playerById(p1);
     const b = playerById(p2);
     const res = await api.post("/api/matchups", {
@@ -74,13 +73,13 @@ export default function MatchupManagement() {
     });
     setBusy(false);
     if (res.ok) {
-      setMsg("对战已创建");
+      toast({ title: "对战已创建" });
       setCreateOpen(false);
       setP1("");
       setP2("");
       void load();
     } else {
-      setMsg("创建失败");
+      toast({ variant: "destructive", title: "创建失败" });
     }
   };
 
@@ -89,10 +88,10 @@ export default function MatchupManagement() {
       api.patch(`/api/matchups/${m.id}`, { status }),
     );
     if (res?.ok) {
-      setMsg("状态已更新");
+      toast({ title: "状态已更新" });
       void load();
     } else {
-      setMsg("状态更新失败");
+      toast({ variant: "destructive", title: "状态更新失败" });
     }
   };
 
@@ -103,10 +102,10 @@ export default function MatchupManagement() {
     setDelBusy(false);
     setDeleteTarget(null);
     if (res.ok) {
-      setMsg("对战已删除");
+      toast({ title: "对战已删除" });
       void load();
     } else {
-      setMsg("删除失败");
+      toast({ variant: "destructive", title: "删除失败" });
     }
   };
 
@@ -171,12 +170,6 @@ export default function MatchupManagement() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {msg && (
-        <Badge variant={msg.includes("失败") || msg.includes("不同") ? "primary" : "teal"} className="mb-4">
-          {msg}
-        </Badge>
-      )}
 
       {data.length === 0 ? (
         <p className="py-10 text-center text-sm text-[#b0a898]">还没有对战。</p>

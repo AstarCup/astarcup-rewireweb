@@ -1,4 +1,5 @@
 import { Routes, Route, Outlet } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -38,7 +39,9 @@ function BareLayout() {
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <Toaster />
+      <Routes>
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -59,5 +62,6 @@ export default function App() {
         <Route path="/obs-overlay" element={<ObsOverlayPage />} />
       </Route>
     </Routes>
+    </>
   );
 }

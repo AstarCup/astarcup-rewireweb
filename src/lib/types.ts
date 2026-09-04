@@ -256,17 +256,63 @@ export interface Message {
   updatedAt?: string;
 }
 
+export interface SeasonInfo {
+  name: string;
+  status: string;
+}
+
 export interface Settings {
   tournament_name?: string;
   max_pp_for_registration?: string;
   min_pp_for_registration?: string;
   current_season?: string;
   current_season_stage?: string;
-  registration_enabled?: string;
-  mappool_visible?: string;
-  availableSeasons?: { value: string; label: string }[];
+  registration_enabled?: string | boolean;
+  mappool_visible?: string | boolean;
+  /** 赛季池：{ 赛季id: { name, status } } 字典 */
+  seasons?: Record<string, SeasonInfo>;
+  availableSeasons?: { value: string; label: string; status?: string }[];
   [key: string]: any;
 }
+
+/** 由赛季池生成赛季下拉选项（value=赛季id, label=赛季名）。 */
+export function seasonOptions(
+  settings?: Settings | null,
+): { value: string; label: string; status?: string }[] {
+  const seasons = settings?.seasons;
+  if (!seasons || typeof seasons !== "object") return [];
+  return Object.entries(seasons).map(([id, s]) => ({
+    value: id,
+    label: (s && (s as SeasonInfo).name) || id,
+    status: s && (s as SeasonInfo).status,
+  }));
+}
+
+/** 根据赛季id取赛季名。 */
+export function seasonLabel(settings?: Settings | null, id?: string | null): string {
+  if (!id) return "";
+  const s = settings?.seasons?.[id];
+  return (s && s.name) || id;
+}
+
+/** 报名状态常量（与后台 RegistrationStatus 枚举保持一致） */
+export const REG_STATUS_LABEL: Record<string, string> = {
+  not_registered: "未报名",
+  registered: "待审核",
+  approved: "已通过",
+};
+
+export const REG_STATUS_VARIANT: Record<string, "outline" | "yellow" | "teal"> = {
+  not_registered: "outline",
+  registered: "yellow",
+  approved: "teal",
+};
+
+export const REG_STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "not_registered", label: "未报名" },
+  { value: "registered", label: "待审核" },
+  { value: "approved", label: "已通过" },
+];
 
 export interface SeasonMappoolStat {
   category: string;
@@ -306,6 +352,7 @@ export interface AdminUserStub {
   username: string;
   avatarUrl?: string | null;
   userGroup: string;
+  registrationStatus?: string;
   createdAt?: string;
 }
 

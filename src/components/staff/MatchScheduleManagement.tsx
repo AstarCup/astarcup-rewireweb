@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { api, qs } from "@/lib/api";
 import { SectionTitle } from "@/components/paper/paper";
@@ -150,7 +151,6 @@ export default function MatchScheduleManagement() {
   const [r1, setR1] = useState("");
   const [r2, setR2] = useState("");
   const [busy, setBusy] = useState("");
-  const [msg, setMsg] = useState("");
   const [forms, setForms] = useState<Record<number, RowForm>>({});
 
   const playerList = players.data ?? [];
@@ -169,11 +169,10 @@ export default function MatchScheduleManagement() {
 
   const create = async () => {
     if (!roomId || !r1 || !r2 || r1 === r2) {
-      setMsg("请选择房间与两名不同选手");
+      toast({ title: "请选择房间与两名不同选手" });
       return;
     }
     setBusy("create");
-    setMsg("");
     const a = playerList.find((p) => p.osuId === r1);
     const b = playerList.find((p) => p.osuId === r2);
     const res = await api.post("/api/schedules", {
@@ -186,14 +185,14 @@ export default function MatchScheduleManagement() {
     });
     setBusy("");
     if (res.ok) {
-      setMsg("赛程已创建");
+      toast({ title: "赛程已创建" });
       setCreateOpen(false);
       setRoomId("");
       setR1("");
       setR2("");
       void load();
     } else {
-      setMsg("创建失败");
+      toast({ variant: "destructive", title: "创建失败" });
     }
   };
 
@@ -211,10 +210,10 @@ export default function MatchScheduleManagement() {
     setBusy("");
     if (res.ok) {
       setForms((m) => ({ ...m, [s.id]: { red: "", blue: "", link: "", stream: "", replay: "" } }));
-      setMsg("保存成功");
+      toast({ title: "保存成功" });
       void load();
     } else {
-      setMsg("保存失败");
+      toast({ variant: "destructive", title: "保存失败" });
     }
   };
 
@@ -223,10 +222,10 @@ export default function MatchScheduleManagement() {
     const res = await api.patch(`/api/schedules/${s.id}`, { status });
     setBusy("");
     if (res.ok) {
-      setMsg("状态已更新");
+      toast({ title: "状态已更新" });
       void load();
     } else {
-      setMsg("状态更新失败");
+      toast({ variant: "destructive", title: "状态更新失败" });
     }
   };
 
@@ -313,12 +312,6 @@ export default function MatchScheduleManagement() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {msg && (
-        <Badge variant={msg.includes("失败") || msg.includes("不同") ? "primary" : "teal"} className="mb-4">
-          {msg}
-        </Badge>
-      )}
 
       {data.length === 0 ? (
         <p className="py-10 text-center text-sm text-[#b0a898]">还没有赛程。</p>

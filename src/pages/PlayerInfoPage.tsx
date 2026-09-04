@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Home, LogOut, ShieldCheck, User } from "lucide-react";
+import { Home, LogOut, ShieldCheck, Trophy, User } from "lucide-react";
 import { api, qs } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
 import { useFetch, useAsync, LoadingBlock } from "@/hooks/useFetch";
+import { toast } from "@/hooks/use-toast";
 import { fmt, fmtInt } from "@/lib/utils";
 import type { MatchRoom, MatchSchedule, NextMatch } from "@/lib/types";
 import {
@@ -17,6 +18,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import RegisterDialog from "@/components/RegisterDialog";
 import {
   Dialog,
   DialogContent,
@@ -66,19 +68,14 @@ export default function PlayerInfoPage() {
   const [selectedRoomId, setSelectedRoomId] = useState<string>("");
   const rooms = useAsync<MatchRoom[]>();
   const booking = useAsync<MatchSchedule>();
-  const [toast, setToast] = useState<string | null>(null);
 
   // Redirect unauthenticated users to register.
   useEffect(() => {
     if (!loading && !user) navigate("/register", { replace: true });
   }, [loading, user, navigate]);
 
-  // Auto-dismiss toast.
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3500);
-    return () => clearTimeout(t);
-  }, [toast]);
+  // Registration dialog state
+  const [registerOpen, setRegisterOpen] = useState(false);
 
   if (loading) {
     return (
@@ -97,7 +94,6 @@ export default function PlayerInfoPage() {
 
   const openBookingDialog = async () => {
     setSelectedRoomId("");
-    setToast(null);
     rooms.run(() =>
       api.get<MatchRoom[]>("/api/rooms" + qs({ status: "open", withSchedules: true })),
     );
@@ -115,7 +111,7 @@ export default function PlayerInfoPage() {
     );
     if (res.ok) {
       setDialogOpen(false);
-      setToast("预约成功，通知已发送。");
+      toast({ title: "预约成功", description: "通知已发送。" });
       await reloadNext();
       await refresh();
     }
@@ -123,10 +119,23 @@ export default function PlayerInfoPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 md:px-8">
-      {toast && (
-        <div className="mb-6 rounded-2xl border-2 border-[#5cb8a5]/40 bg-[#5cb8a5]/15 p-4 text-center text-sm font-bold text-[#2d2d2d]">
-          {toast}
-        </div>
+      {user.registrationStatus === "not_registered" && (
+        <Card className="mb-6 overflow-hidden">
+          <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-[#e85d75]" />
+                报名参赛
+              </CardTitle>
+              <CardDescription className="mt-1">
+                你尚未报名本赛季，点击下方按钮完成报名，等待管理员审核。
+              </CardDescription>
+            </div>
+            <Button variant="primary" size="lg" onClick={() => setRegisterOpen(true)}>
+              立即报名
+            </Button>
+          </CardContent>
+        </Card>
       )}
 
       <div className="flex items-center justify-between gap-4">
@@ -269,6 +278,9 @@ export default function PlayerInfoPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Registration dialog */}
+      <RegisterDialog open={registerOpen} onOpenChange={setRegisterOpen} />
 
       {/* Booking dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
