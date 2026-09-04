@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ---- Paper Craft shadcn theme tokens ---- */
+  --background: 32 79% 96%;            /* #fdf6ee */
+  --foreground: 0 0% 18%;              /* #2d2d2d */
+  --card: 32 79% 96%;
+  --card-foreground: 0 0% 18%;
+  --popover: 32 79% 96%;
+  --popover-foreground: 0 0% 18%;
+  --primary: 350 75% 64%;              /* #e85d75 */
+  --primary-foreground: 0 0% 9%;
+  --secondary: 32 79% 96%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 100%;
+  --muted-foreground: 40 13% 64%;
+  --accent: 168 39% 54%;               /* #5cb8a5 */
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 36 24% 84%;                /* #e0d8cc */
+  --input: 36 24% 84%;
+  --ring: 350 75% 64%;
+  --chart-1: 350 75% 64%;
+  --chart-2: 168 39% 54%;
+  --chart-3: 42 90% 61%;               /* #f5c040 */
+  --chart-4: 224 33% 56%;              /* #6b7fb5 */
+  --chart-5: 216 63% 70%;
+  --sidebar: 32 79% 96%;
+  --sidebar-foreground: 0 0% 18%;
+  --sidebar-primary: 350 75% 64%;
+  --sidebar-primary-foreground: 0 0% 9%;
+  --sidebar-accent: 168 39% 54%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 36 24% 84%;
+  --sidebar-ring: 350 75% 64%;
+  --radius: 0.75rem;
+
+  /* ---- Paper Craft palette ---- */
+  --pc-primary: #e85d75;
+  --pc-teal: #5cb8a5;
+  --pc-yellow: #f5c040;
+  --pc-blue: #6b7fb5;
+  --pc-paper: #fdf6ee;
+  --pc-white: #fffdf9;
+  --pc-ink: #2d2d2d;
+  --pc-slate: #666666;
+  --pc-faint: #b0a898;
+  --pc-border: #e0d8cc;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-sidebar: hsl(var(--sidebar));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: ui-rounded, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    system-ui, sans-serif;
+  --font-display: ui-rounded, "PingFang SC", system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: #f5c040;
+    color: #2d2d2d;
+  }
+}
+
+/* ---- Paper Craft helpers ---- */
+
+/* Subtle paper grain overlay for surfaces */
+.paper-texture {
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* Paper fold crease line */
+.paper-fold {
+  background-image: linear-gradient(
+    to right,
+    transparent 49.5%,
+    rgba(0, 0, 0, 0.05) 49.5%,
+    rgba(0, 0, 0, 0.05) 50.5%,
+    transparent 50.5%
+  );
+}
+
+/* A stack of paper layers that splay apart on hover (Layer Separation) */
+.paper-stack {
+  position: relative;
+}
+.paper-stack__under {
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  transition: transform 0.25s ease-out;
+  pointer-events: none;
+}
+.paper-stack:hover .paper-stack__under--1 {
+  transform: translate(-5px, 4px) rotate(-2deg);
+}
+.paper-stack:hover .paper-stack__under--2 {
+  transform: translate(5px, 5px) rotate(2deg);
+}
+
+/* Fade/slide entrance */
+@keyframes paper-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.paper-animate-in {
+  animation: paper-fade-in 0.5s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

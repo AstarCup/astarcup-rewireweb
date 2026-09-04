@@ -1,0 +1,388 @@
+/**
+ * Backend entity & API types (mirrors the Rust backend `to_json` models).
+ * All JSON fields are camelCase.
+ */
+
+export interface OsuCover {
+  customUrl?: string;
+  url?: string;
+  id?: string;
+}
+
+export interface SessionUser {
+  id: number;
+  osuId: string;
+  username: string;
+  registeredAt: string | null;
+  avatarUrl: string | null;
+  pp?: number | null;
+  globalRank?: number | null;
+  countryRank?: number | null;
+  country?: string | null;
+  userGroup: string;
+  registrationStatus: string;
+  season?: string | null;
+  accuracy?: number | null;
+  stamina?: number | null;
+  firstSight?: number | null;
+  strategy?: number | null;
+  experience?: number | null;
+  customKey?: string | null;
+  customValue?: number | null;
+  cover?: OsuCover | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Permissions {
+  isplayer: boolean;
+  isadmin: boolean;
+}
+
+export interface AuthMe {
+  user: SessionUser;
+  permissions: Permissions;
+}
+
+export interface PlayerStub {
+  osuId: string;
+  username: string;
+  avatarUrl?: string | null;
+  pp?: number | null;
+  globalRank?: number | null;
+  countryRank?: number | null;
+  country?: string | null;
+  registrationStatus?: string;
+}
+
+export interface MatchRoom {
+  id: number;
+  roomName: string;
+  roundNumber: number;
+  matchDate: string | null;
+  matchTime: string | null;
+  matchNumber: number;
+  maxParticipants: number;
+  status: string; // open | full | closed
+  description?: string | null;
+  createdBy?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  schedules?: MatchSchedule[];
+  scheduleIds?: number[];
+  scoresCount?: number;
+}
+
+export interface MatchSchedule {
+  id: number;
+  roomId: number | null;
+  player1OsuId: string | null;
+  player1Username: string | null;
+  player2OsuId: string | null;
+  player2Username: string | null;
+  redScore: number | null;
+  blueScore: number | null;
+  status: string; // pending | confirmed | completed | cancelled
+  replayLink?: string | null;
+  matchLink?: string | null;
+  streamLink?: string | null;
+  createdBy?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  room?: MatchRoom | null;
+}
+
+export interface PlayerMatchup {
+  id: number;
+  roomId: number | null;
+  player1OsuId: string;
+  player1Username: string;
+  player2OsuId: string;
+  player2Username: string;
+  status: string; // available | scheduled | completed
+  createdBy?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  room?: MatchRoom | null;
+}
+
+export interface StaffRoomAssignment {
+  id: number;
+  roomId: number;
+  staffOsuId: string;
+  staffUsername: string;
+  role: string; // referee | commentator | streamer
+  createdAt?: string;
+  updatedAt?: string;
+  room?: MatchRoom | null;
+}
+
+export interface MatchScore {
+  id: number;
+  scheduleId: number;
+  playerOsuId: string;
+  playerUsername: string;
+  score: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MapComment {
+  id: number;
+  mapSelectionId: number;
+  userId: string;
+  username: string;
+  avatarUrl?: string | null;
+  comment: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ModdedStats {
+  ar?: number;
+  cs?: number;
+  od?: number;
+  hp?: number;
+  starRating?: number;
+  bpm?: number;
+  totalLength?: number;
+  [key: string]: any;
+}
+
+export interface MapSelection {
+  id: number;
+  beatmapId: number;
+  beatmapsetId: number | null;
+  title: string;
+  title_unicode?: string | null;
+  artist?: string | null;
+  artist_unicode?: string | null;
+  version: string;
+  creator?: string | null;
+  starRating: number | null;
+  bpm: number | null;
+  totalLength: number | null;
+  maxCombo?: number | null;
+  ar?: number | null;
+  cs?: number | null;
+  od?: number | null;
+  hp?: number | null;
+  selectedMods: string | null;
+  modPosition?: string | null;
+  comment?: string | null;
+  selectedBy?: string | null;
+  selectedAt?: string | null;
+  season?: string | null;
+  category?: string | null;
+  url?: string | null;
+  coverUrl?: string | null;
+  approved: boolean;
+  padding?: boolean;
+  isCustome?: boolean;
+  isOrigin?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  // Admin-extended fields
+  customDTRate?: number | null;
+  customModName?: string | null;
+  selectedByUsername?: string | null;
+  selectedByAvatar?: string | null;
+  moddedStats?: ModdedStats | null;
+}
+
+export interface BeatmapInfo {
+  id: number;
+  beatmapsetId: number | null;
+  title: string;
+  title_unicode?: string | null;
+  artist?: string | null;
+  artist_unicode?: string | null;
+  version: string;
+  creator?: string | null;
+  star_rating: number | null;
+  bpm: number | null;
+  total_length: number | null;
+  maxCombo?: number | null;
+  ar?: number | null;
+  cs?: number | null;
+  od?: number | null;
+  hp?: number | null;
+  url?: string | null;
+  cover_url?: string | null;
+}
+
+export interface ModStatsResult {
+  modStats: {
+    ar: number;
+    cs: number;
+    od: number;
+    hp: number;
+    starRating: number;
+    bpm: number;
+    totalLength: number;
+    aimDifficulty: number;
+    speedDifficulty: number;
+    maxCombo: number;
+    totalHitObjects: number;
+    lengthSeconds: number;
+    clockRate: number;
+    arBase: number;
+    odBase: number;
+    hpBase: number;
+    bpmBase: number;
+    lengthBase: number;
+    beatmapId: number;
+    artist: string;
+    title: string;
+    creator: string;
+  };
+  mods: string;
+  customModName?: string;
+  customDTRate?: number;
+}
+
+export interface Message {
+  id: number;
+  senderOsuId: string;
+  senderUsername: string;
+  receiverOsuId: string;
+  receiverUsername: string;
+  type: string; // match_invitation | system_notification | admin_message
+  title?: string | null;
+  content?: string | null;
+  relatedMatchupId?: number | null;
+  status: string; // unread | read | archived
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface Settings {
+  tournament_name?: string;
+  max_pp_for_registration?: string;
+  min_pp_for_registration?: string;
+  current_season?: string;
+  current_season_stage?: string;
+  registration_enabled?: string;
+  mappool_visible?: string;
+  availableSeasons?: { value: string; label: string }[];
+  [key: string]: any;
+}
+
+export interface SeasonMappoolStat {
+  category: string;
+  label: string;
+  avgStarRating: number;
+  avgStarRatingTesting: number;
+  avgStarRatingPending: number;
+  avgLength: number;
+  avgLengthTesting: number;
+  avgLengthPending: number;
+  count: number;
+  testingCount: number;
+  pendingCount: number;
+}
+
+export interface StaffStats {
+  approvedPlayers: number;
+  matchRooms: number;
+  mappoolSeasons: number;
+  replayCount: number;
+  totalRegistrations: number;
+  totalSchedules: number;
+  seasonMappoolStats: Record<string, SeasonMappoolStat[]>;
+  tournamentSettings: {
+    currentSeason: string;
+    currentSeasonStage: string;
+    minPp: number;
+    maxPp: number;
+    registrationEnabled: boolean;
+    mappoolVisible: boolean;
+    adminCount: number;
+  };
+}
+
+export interface AdminUserStub {
+  osuId: string;
+  username: string;
+  avatarUrl?: string | null;
+  userGroup: string;
+  createdAt?: string;
+}
+
+export interface NextMatch {
+  id: number;
+  opponent: { osuId: string; username: string; avatarUrl?: string | null };
+  status: string;
+  room?: MatchRoom | null;
+}
+
+export interface OsuRoom {
+  id: number;
+  name: string;
+  category?: string;
+  type?: string;
+  startsAt?: string;
+  endsAt?: string;
+  participantCount?: number;
+  host?: string;
+  playlistCount?: number;
+  active?: boolean;
+}
+
+export interface DisplayScore {
+  userId: number;
+  username: string;
+  avatarUrl?: string;
+  countryCode?: string;
+  totalScore: number;
+  accuracy: number;
+  maxCombo: number;
+  mods: string[];
+  rank: string;
+  passed: boolean;
+  statistics: { count300: number; count100: number; count50: number; countMiss: number };
+  pp?: number;
+  endedAt?: string;
+  position?: number;
+  beatmapId: number;
+  beatmapsetId: number;
+  roomId: number;
+  roomName?: string;
+  playlistId?: number;
+}
+
+export interface RoomScoresResponse {
+  scores: DisplayScore[];
+  rooms: OsuRoom[];
+  source: "database" | "osu";
+}
+
+export interface ContentCheck {
+  hasIllegal: boolean;
+  triggeredWords: string[];
+  text: string;
+}
+
+export type UserGroup = "player" | "admin";
+export type RegistrationStatus = "not_registered" | "registered" | "approved";
+export type StaffRole = "referee" | "commentator" | "streamer";
+
+export const MODS_ORDER: readonly string[] = ["NM", "HD", "HR", "DT", "FM", "LZ", "TB"];
+
+export const CATEGORIES = [
+  "全部",
+  "资格赛",
+  "32强",
+  "16强",
+  "8强",
+  "半决赛",
+  "决赛",
+  "总决赛",
+] as const;
+
+/** Return unique mods in the canonical front-of-mod order. */
+export function modCountByOrder(list: string[]): string[] {
+  const order = MODS_ORDER as readonly string[];
+  const seen = Array.from(new Set(list.filter((m) => !!m)));
+  return seen.sort((a, b) => order.indexOf(a.split("+")[0]) - order.indexOf(b.split("+")[0]));
+}

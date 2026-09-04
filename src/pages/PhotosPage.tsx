@@ -1,0 +1,124 @@
+import { useState } from "react";
+import { PageHeader, SectionTitle } from "@/components/paper/paper";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import winnersJson from "@/data/winners.json";
+
+interface WinnerCard {
+  id: string;
+  playerName: string;
+  osuId: string;
+  avatarUrl?: string;
+  rank: number;
+  country?: string;
+  season: string;
+  frameStyle: string;
+}
+
+interface WinnerPhoto {
+  id: string;
+  imageUrl: string;
+  caption: string;
+  season: string;
+}
+
+interface WinnersData {
+  cards: WinnerCard[];
+  photos: WinnerPhoto[];
+}
+
+const winners = winnersJson as unknown as WinnersData;
+
+const FRAMES: Record<string, string> = {
+  gold: "bg-[#f5c040]",
+  silver: "bg-[#e0d8cc]",
+  bronze: "bg-[#d8a76e]",
+};
+
+const rankLabels: Record<number, string> = { 1: "冠军", 2: "亚军", 3: "季军" };
+
+export default function PhotosPage() {
+  const [season, setSeason] = useState("s1");
+
+  const cards = winners.cards.filter((c) => c.season === season);
+  const photos = winners.photos.filter((p) => p.season === season);
+
+  return (
+    <div>
+      <PageHeader title="历届风采" subtitle="AstarCup 历届比赛的获胜选手与精彩瞬间。" accent="#f5c040" />
+      <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
+        <div className="mb-10 flex items-center gap-3">
+          <Button variant={season === "s1" ? "primary" : "outline"} onClick={() => setSeason("s1")}>
+            S1
+          </Button>
+          <Button variant={season === "s2" ? "primary" : "outline"} disabled>
+            S2
+          </Button>
+          <span className="text-sm text-[#b0a898]">当前赛季：{season.toUpperCase()}</span>
+        </div>
+
+        <SectionTitle tag="获奖选手">本届获胜选手</SectionTitle>
+        {cards.length === 0 ? (
+          <p className="text-[#b0a898]">暂无选手信息。</p>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {cards.map((card) => {
+              const frame = FRAMES[card.frameStyle] ?? "bg-white";
+              return (
+                <div
+                  key={card.id}
+                  className={`rounded-2xl p-2 shadow-[4px_4px_0px_rgba(0,0,0,0.08)] ${frame}`}
+                >
+                  <Card className="flex flex-col items-center p-6 text-center">
+                    {card.avatarUrl ? (
+                      <img
+                        src={card.avatarUrl}
+                        alt={card.playerName}
+                        loading="lazy"
+                        className="h-20 w-20 rounded-full border-2 border-[#e0d8cc] object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#e0d8cc] bg-[#fdf6ee] font-bold text-2xl text-[#b0a898]">
+                        {card.playerName.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="mt-4 text-sm font-bold text-[#b0a898]">
+                      {rankLabels[card.rank] ?? `第 ${card.rank} 名`}
+                    </div>
+                    <h3 className="mt-1 font-bold text-xl text-[#2d2d2d]">{card.playerName}</h3>
+                    {card.country && (
+                      <span className="mt-1 text-sm text-[#666666]">{card.country}</span>
+                    )}
+                  </Card>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <SectionTitle tag="精彩瞬间" className="mt-16">
+          比赛剪影
+        </SectionTitle>
+        {photos.length === 0 ? (
+          <p className="text-[#b0a898]">暂无照片。</p>
+        ) : (
+          <div className="grid gap-8 sm:grid-cols-2">
+            {photos.map((photo) => (
+              <figure key={photo.id}>
+                <img
+                  src={photo.imageUrl}
+                  alt={photo.caption}
+                  loading="lazy"
+                  className="w-full rounded-2xl object-cover shadow-[4px_4px_0px_rgba(0,0,0,0.08)]"
+                />
+                <figcaption className="mt-3 text-center text-sm text-[#666666]">
+                  {photo.caption}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
