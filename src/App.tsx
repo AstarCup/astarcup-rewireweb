@@ -7,7 +7,6 @@ import HomePage from "@/pages/HomePage";
 import RegisterPage from "@/pages/RegisterPage";
 import PlayerInfoPage from "@/pages/PlayerInfoPage";
 import StaffDashboardPage from "@/pages/staff/StaffDashboardPage";
-import MultiplayerScoresPage from "@/pages/MultiplayerScoresPage";
 import ObsOverlayPage from "@/pages/obs/ObsOverlayPage";
 import NewsPage from "@/pages/NewsPage";
 import NewsDetailPage from "@/pages/NewsDetailPage";
@@ -47,7 +46,6 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/player-info" element={<PlayerInfoPage />} />
         <Route path="/staff-dashboard" element={<StaffDashboardPage />} />
-        <Route path="/multiplayer-scores" element={<MultiplayerScoresPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/news/:slug" element={<NewsDetailPage />} />
         <Route path="/guide" element={<GuidePage />} />

@@ -5,8 +5,9 @@ import { api, qs } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
 import { useFetch, useAsync, LoadingBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
-import { fmt, fmtInt } from "@/lib/utils";
-import type { MatchRoom, MatchSchedule, NextMatch } from "@/lib/types";
+import { fmtInt } from "@/lib/utils";
+import type { MatchRoom, MatchSchedule, NextMatch, Settings } from "@/lib/types";
+import { seasonLabel } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -53,7 +54,7 @@ const registrationLabels: Record<string, string> = {
 };
 
 export default function PlayerInfoPage() {
-  const { user, permissions, loading, refresh, logout } = useApp();
+  const { user, permissions, settings, loading, refresh, logout } = useApp();
   const navigate = useNavigate();
 
   const {
@@ -172,7 +173,6 @@ export default function PlayerInfoPage() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="truncate font-bold text-xl text-[#2d2d2d]">{user.username}</p>
-                  {user.country && <Badge variant="outline">{user.country}</Badge>}
                 </div>
                 <p className="mt-1 text-xs text-[#b0a898]">osuId: {user.osuId}</p>
               </div>
@@ -191,13 +191,12 @@ export default function PlayerInfoPage() {
               </div>
               <div className="rounded-xl bg-[#fdf6ee] p-3">
                 <p className="text-lg font-bold text-[#2d2d2d]">#{fmtInt(user.countryRank)}</p>
-                <p className="text-xs text-[#b0a898]">国家排名</p>
+                <p className="text-xs text-[#b0a898]">地区排名</p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="primary">PP {fmt(user.pp)}</Badge>
-              <Badge variant="outline">#全球 {fmtInt(user.globalRank)}</Badge>
+              {user.country && <Badge variant="outline">{user.country}</Badge>}
               {user.registrationStatus && (
                 <Badge
                   variant={
@@ -214,6 +213,20 @@ export default function PlayerInfoPage() {
                 </Badge>
               )}
             </div>
+
+            {user.season && user.season.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-bold text-[#b0a898]">已报名参赛过的赛季</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {user.season.map((s) => (
+                    <Badge key={s} variant="yellow">
+                      <Trophy className="h-3.5 w-3.5" />
+                      {seasonLabel(settings as Settings | null, s) || s}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

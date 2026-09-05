@@ -10,9 +10,7 @@ export default function Footer() {
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3">
         <div>
           <Logo />
-          <p className="mt-2 max-w-xs text-xs text-[#666666]">
-            一场由 osu! 社区玩家共同举办的赛事：纸艺手作风，轻巧但认真。
-          </p>
+
         </div>
         <div>
           <h4 className="text-xl font-bold text-[#2d2d2d]">赛事</h4>
@@ -47,7 +45,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="mx-auto mt-8 max-w-6xl border-t-2 border-[#e0d8cc] pt-4 text-xs text-[#b0a898]">
-        © {new Date().getFullYear()} {name} · 由社区玩家维护
+        © {new Date().getFullYear()} {name} · 闽ICP备2026007493号-1 · 闽公网安备35063002000143号
       </div>
     </footer>
   );

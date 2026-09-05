@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Download } from "lucide-react";
+import { Copy, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -8,16 +8,26 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { PageHeader, SectionTitle } from "@/components/paper/paper";
-import { LoadingBlock, ErrorBlock, useFetch } from "@/hooks/useFetch";
+import { PageHeader } from "@/components/paper/paper";
+import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn, fmt } from "@/lib/utils";
 import { useApp } from "@/lib/app-context";
-import { MODS_ORDER, CATEGORY_OPTIONS, seasonOptions as buildSeasonOptions, type MapSelection } from "@/lib/types";
-import { BulkDownload, MapHoverCard, downloadSingleMap } from "@/components/mappool/MapPoolTools";
+import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, type MapSelection } from "@/lib/types";
+import { BulkDownload, downloadSingleMap } from "@/components/mappool/MapPoolTools";
 
 type ViewMode = "card" | "table";
+
+/** 设置的当前阶段(短码) → 图池类别(长值) */
+const STAGE_TO_CATEGORY: Record<string, string> = {
+  qua: "qualification",
+  ro16: "ro16",
+  qf: "quarterfinals",
+  sf: "semifinals",
+  f: "finals",
+  gf: "grandfinals",
+};
 
 interface ModGroup {
   mod: string;
@@ -57,30 +67,73 @@ function groupMaps(list: MapSelection[]): ModGroup[] {
     const ib = order.indexOf(b);
     return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
   });
-  return keys.map((mod) => ({ mod, items: map.get(mod)! }));
-}
-
-function slotLabel(m: MapSelection): string {
-  return m.modPosition ?? m.selectedMods ?? "NM";
+  return keys.map((mod) => ({
+    mod,
+    items: map
+      .get(mod)!
+      .slice()
+      .sort((a, b) => {
+        const pa = Number(a.modPosition ?? 0);
+        const pb = Number(b.modPosition ?? 0);
+        if (pa !== pb) return pa - pb;
+        return (a.selectedAt ?? a.createdAt ?? "").localeCompare(b.selectedAt ?? b.createdAt ?? "");
+      }),
+  }));
 }
 
 function osuLink(m: MapSelection): string {
   return m.url ?? `https://osu.ppy.sh/beatmaps/${m.beatmapId}`;
 }
 
+const MOD_COLORS: Record<string, string> = {
+  NM: "#6b7fb5",
+  HD: "#f5c040",
+  HR: "#e85d75",
+  DT: "#a78bfa",
+  FM: "#5cb8a5",
+  LZ: "#ec6ba8",
+  TB: "#2d2d2d",
+};
+
+const MOD_DISPLAY: Record<string, string> = {
+  NM: "No Mod",
+  HD: "Hidden",
+  HR: "Hard Rock",
+  DT: "Double Time",
+  FM: "Free Mod",
+  LZ: "Lazer Mod",
+  TB: "Tiebreaker",
+};
+
 function ModHeader({ group }: { group: ModGroup }) {
   return (
-    <div className="mb-4 flex items-center gap-3">
-      <span className="inline-block rounded-xl bg-[#e85d75] px-3 py-1 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)]">
-        {group.mod}
+    <div className="mb-3 flex items-center gap-3">
+      <span
+        className="rounded-xl px-3 py-1 text-sm font-bold text-white shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
+        style={{ backgroundColor: MOD_COLORS[group.mod] ?? "#666" }}
+      >
+        {MOD_DISPLAY[group.mod] ?? group.mod}
       </span>
       <span className="text-xs text-[#666666]">{group.items.length} 张图</span>
     </div>
   );
 }
 
+function statCell(label: string, value: string) {
+  return (
+    <div className="rounded-xl bg-[#fdf6ee] px-2 py-1.5 text-center">
+      <p className="text-[10px] text-[#b0a898]">{label}</p>
+      <p className="font-sans text-sm font-bold text-[#2d2d2d]">{value}</p>
+    </div>
+  );
+}
+
 function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }) {
-  const title = displayTitle(map, useUnicode);
+  const title = (() => {
+    const artist = useUnicode ? map.artist_unicode || map.artist : map.artist;
+    const t = useUnicode ? map.title_unicode || map.title : map.title;
+    return [artist, t].filter(Boolean).join(" - ") || "未知曲目";
+  })();
   const handleDownload = () => {
     void downloadSingleMap(map).then((ok) =>
       ok
@@ -93,23 +146,37 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
       href={osuLink(map)}
       target="_blank"
       rel="noreferrer"
-      className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
+      className="group overflow-hidden rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
     >
-      <div className="relative">
+      <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
         {map.coverUrl ? (
           <img
             src={map.coverUrl}
             alt={map.title}
-            className="h-28 w-full object-cover"
+            className="h-full w-full object-cover"
             loading="lazy"
           />
         ) : (
-          <div className="flex h-28 w-full items-center justify-center bg-[#f5c040]/30 px-4">
+          <div className="grid h-full w-full place-items-center bg-[#f5c040]/30 px-4">
             <span className="line-clamp-2 text-center text-sm font-bold text-[#2d2d2d]">
               {map.title || "未命名图"}
             </span>
           </div>
         )}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            void navigator.clipboard
+              .writeText(String(map.beatmapId))
+              .then(() => toast({ title: "已复制 BID", description: String(map.beatmapId) }))
+              .catch(() => toast({ variant: "destructive", title: "复制失败" }));
+          }}
+          title="复制 BID"
+          className="absolute right-11 top-2 grid h-8 w-8 place-items-center rounded-lg bg-white/90 text-[#6b7fb5] shadow-[2px_2px_0px_rgba(0,0,0,0.1)] opacity-0 transition hover:text-[#e85d75] group-hover:opacity-100"
+        >
+          <Copy className="h-4 w-4" />
+        </button>
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -122,26 +189,32 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
           <Download className="h-4 w-4" />
         </button>
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <Badge variant="outline" className="shrink-0 border-[#6b7fb5]/40 text-[#6b7fb5]">
-            {slotLabel(map)}
-          </Badge>
-          <Badge className="border-[#5cb8a5] bg-[#5cb8a5] text-[#fdf6ee]">
+      <div className="p-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+            style={{ backgroundColor: MOD_COLORS[modKey(map)] ?? "#666" }}
+          >
             {map.selectedMods ?? "NM"}
-          </Badge>
+            {map.modPosition ?? ""}
+          </span>
+          {map.category && (
+            <Badge variant="outline">{CATEGORY_LABEL[map.category] ?? map.category}</Badge>
+          )}
         </div>
-        <p className="line-clamp-2 font-bold text-sm text-[#2d2d2d]">{title}</p>
-        <div className="mt-auto flex items-center gap-2 pt-1 text-xs text-[#666666]">
-          <span className="rounded-lg bg-[#e85d75]/10 px-2 py-0.5 font-bold text-[#e85d75]">
-            {fmt(map.starRating)}★
-          </span>
-          <span className="rounded-lg bg-[#6b7fb5]/10 px-2 py-0.5 font-bold text-[#6b7fb5]">
-            {map.bpm ?? "-"} BPM
-          </span>
-          <span className="rounded-lg bg-[#f5c040]/15 px-2 py-0.5 font-bold text-[#2d2d2d]">
-            {fmtLength(map.totalLength)}
-          </span>
+        <p className="mt-2 line-clamp-2 font-bold text-[#2d2d2d]">{title}</p>
+        <p className="text-xs text-[#b0a898]">
+          [{map.version}] by {map.creator ?? "-"}
+        </p>
+        <div className="mt-3 grid grid-cols-4 gap-1.5">
+          {statCell("CS", fmt(map.cs))}
+          {statCell("AR", fmt(map.ar))}
+          {statCell("OD", fmt(map.od))}
+          {statCell("HP", fmt(map.hp))}
+          {statCell("时长", fmtLength(map.totalLength))}
+          {statCell("MaxCombo", map.maxCombo != null ? String(map.maxCombo) : "-")}
+          {statCell("BPM", fmt(map.bpm))}
+          {statCell("★", fmt(map.starRating))}
         </div>
       </div>
     </a>
@@ -149,15 +222,17 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
 }
 
 function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean }) {
-  const [hover, setHover] = useState<{ map: MapSelection; rect: DOMRect } | null>(null);
   return (
     <div className="overflow-hidden rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b-2 border-[#e0d8cc] bg-[#fdf6ee]">
-            <th className="px-4 py-3 font-bold text-[#666666]">位</th>
             <th className="px-4 py-3 font-bold text-[#666666]">MOD</th>
-            <th className="px-4 py-3 font-bold text-[#666666]">图名</th>
+            <th className="min-w-25 min-h-9 px-4 py-3 font-bold text-[#666666]">封面</th>
+            <th className="w-full px-4 py-3 font-bold text-[#666666]">图名</th>
+            <th className="px-4 py-3 font-bold text-[#666666]">AR</th>
+            <th className="px-4 py-3 font-bold text-[#666666]">CS</th>
+            <th className="px-4 py-3 font-bold text-[#666666]">OD</th>
             <th className="px-4 py-3 font-bold text-[#666666]">星级</th>
             <th className="px-4 py-3 font-bold text-[#666666]">BPM</th>
             <th className="px-4 py-3 font-bold text-[#666666]">时长</th>
@@ -173,19 +248,41 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
             return (
               <tr
                 key={m.id}
-                onMouseEnter={(e) => setHover({ map: m, rect: e.currentTarget.getBoundingClientRect() })}
-                onMouseLeave={() => setHover(null)}
-                className="border-b border-[#e0d8cc]/60 transition-colors hover:bg-[#fdf6ee]"
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest("a")) return;
+                  void navigator.clipboard
+                    .writeText(String(m.beatmapId))
+                    .then(() => toast({ title: "已复制 BID", description: String(m.beatmapId) }))
+                    .catch(() => toast({ variant: "destructive", title: "复制失败" }));
+                }}
+                title="点击复制 BID"
+                className="cursor-pointer border-b border-[#e0d8cc]/60 transition-colors hover:bg-[#fdf6ee]"
               >
-                <td className="px-4 py-3 font-sans text-xs font-bold text-[#b0a898]">
-                  {slotLabel(m)}
-                </td>
                 <td className="px-4 py-3">
-                  <Badge variant="teal" className="border-[#5cb8a5] bg-[#5cb8a5] text-[#fdf6ee]">
+                  <span
+                    className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+                    style={{ backgroundColor: MOD_COLORS[modKey(m)] ?? "#666" }}
+                  >
                     {m.selectedMods ?? "NM"}
-                  </Badge>
+                    {m.modPosition ?? ""}
+                  </span>
                 </td>
                 <td className="px-4 py-3">
+                  {m.coverUrl ? (
+                    <img
+                      src={m.coverUrl}
+                      alt=""
+                      className="h-10 w-16 rounded-md object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="h-10 w-16 rounded-md bg-[#f5c040]/30" />
+                  )}
+                </td>
+                <td className="px-4 py-3">
+                  {m.isOrigin && <Badge variant="blue" className="mr-1">原创</Badge>}
+                  {m.isCustome && <Badge variant="yellow" className="mr-1">定制</Badge>}
                   <a
                     href={osuLink(m)}
                     target="_blank"
@@ -194,7 +291,13 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                   >
                     {title}
                   </a>
+                  {m.version && (
+                    <span className="ml-1 text-xs text-[#b0a898]">[{m.version}]</span>
+                  )}
                 </td>
+                <td className="px-4 py-3 font-sans text-[#666666]">{fmt(m.ar)}</td>
+                <td className="px-4 py-3 font-sans text-[#666666]">{fmt(m.cs)}</td>
+                <td className="px-4 py-3 font-sans text-[#666666]">{fmt(m.od)}</td>
                 <td className="px-4 py-3 font-sans text-[#e85d75]">{fmt(m.starRating)}★</td>
                 <td className="px-4 py-3 font-sans text-[#666666]">{m.bpm ?? "-"}</td>
                 <td className="px-4 py-3 font-sans text-[#666666]">{fmtLength(m.totalLength)}</td>
@@ -206,12 +309,6 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
           })}
         </tbody>
       </table>
-      {hover && (
-        <MapHoverCard
-          map={hover.map}
-          rect={{ left: hover.rect.left, top: hover.rect.top, bottom: hover.rect.bottom }}
-        />
-      )}
     </div>
   );
 }
@@ -219,6 +316,7 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
 export default function MappoolPage() {
   const { settings } = useApp();
   const seasonChosenRef = useRef(!!localStorage.getItem("mappool_season"));
+  const categoryChosenRef = useRef(!!localStorage.getItem("mappool_category"));
 
   const [category, setCategory] = useState<string>(
     () => localStorage.getItem("mappool_category") ?? "全部",
@@ -262,28 +360,45 @@ export default function MappoolPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.current_season]);
 
+  // 轮次默认取设置中的当前阶段（短码 → 类别长值），直到用户手动选择
+  useEffect(() => {
+    if (categoryChosenRef.current) return;
+    const stage = settings?.current_season_stage;
+    const mapped = stage ? STAGE_TO_CATEGORY[stage] : undefined;
+    if (mapped && mapped !== category) setCategory(mapped);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings?.current_season_stage]);
+
   // Reflect category in the URL.
   useEffect(() => {
     const suffix = category === "全部" ? "" : `?category=${encodeURIComponent(category)}`;
     window.history.replaceState(null, "", `/mappool${suffix}`);
   }, [category]);
 
-  // Build the query from the current season/category.
-  const { data, loading, error, load } = useFetch<MapSelection[]>(() =>
-    api.get<MapSelection[]>(
-      "/api/map-selections" +
-        (season
-          ? `?season=${encodeURIComponent(season)}&approved=true${
-              category === "全部" ? "" : `&category=${encodeURIComponent(category)}`
-            }`
-          : ""),
-    ),
-  );
+  // 赛季/轮次同步完成前不拉取图池：等两个 Select 稳定到最终值再加载
+  const settingsReady = !!settings?.seasons || !!settings?.current_season;
+  const seasonSettled =
+    seasonChosenRef.current || !settings?.current_season || season === settings?.current_season;
+  const stageMapped = settings?.current_season_stage
+    ? STAGE_TO_CATEGORY[settings.current_season_stage]
+    : undefined;
+  const categorySettled =
+    categoryChosenRef.current || !settings?.current_season_stage || !stageMapped || category === stageMapped;
+  const { data, loading, error, run } = useAsync<MapSelection[]>();
+
+  const poolUrl = (s: string, c: string) =>
+    "/api/map-selections" +
+    (s
+      ? `?season=${encodeURIComponent(s)}&approved=true${
+          c === "全部" ? "" : `&category=${encodeURIComponent(c)}`
+        }`
+      : "");
 
   useEffect(() => {
-    void load();
+    if (!settingsReady || !season || !seasonSettled || !categorySettled) return;
+    void run(() => api.get<MapSelection[]>(poolUrl(season, category)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, category]);
+  }, [settingsReady, season, category, seasonSettled, categorySettled]);
 
   if (String(settings?.mappool_visible ?? "true") === "false") {
     return (
@@ -309,7 +424,13 @@ export default function MappoolPage() {
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1">
               <span className="text-xs font-bold text-[#b0a898]">赛季</span>
-              <Select value={season} onValueChange={(v) => setSeason(v)}>
+              <Select
+                value={season}
+                onValueChange={(v) => {
+                  seasonChosenRef.current = true;
+                  setSeason(v);
+                }}
+              >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="选择赛季" />
                 </SelectTrigger>
@@ -324,7 +445,13 @@ export default function MappoolPage() {
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-xs font-bold text-[#b0a898]">轮次</span>
-              <Select value={category} onValueChange={(v) => setCategory(v)}>
+              <Select
+                value={category}
+                onValueChange={(v) => {
+                  categoryChosenRef.current = true;
+                  setCategory(v);
+                }}
+              >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="选择轮次" />
                 </SelectTrigger>
@@ -375,22 +502,27 @@ export default function MappoolPage() {
           </div>
         </div>
 
-        {loading && <LoadingBlock label="正在加载图池…" />}
-        {error && <ErrorBlock message={error} onRetry={() => void load()} />}
+        {(!settingsReady || loading) && <LoadingBlock label="正在加载图池…" />}
+        {settingsReady && error && (
+          <ErrorBlock
+            message={error}
+            onRetry={() => void run(() => api.get<MapSelection[]>(poolUrl(season, category)))}
+          />
+        )}
 
-        {!loading && !error && groups.length === 0 && (
+        {settingsReady && !loading && !error && groups.length === 0 && (
           <div className="rounded-2xl bg-white p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
             <p className="font-sans text-sm text-[#b0a898]">该轮次暂未公开选图</p>
           </div>
         )}
 
-        {!loading && !error && groups.length > 0 && (
+        {settingsReady && !loading && !error && groups.length > 0 && (
           <div className="flex flex-col gap-10">
             {groups.map((g) => (
               <section key={g.mod}>
                 <ModHeader group={g} />
                 {view === "card" ? (
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {g.items.map((m) => (
                       <MapCard key={m.id} map={m} useUnicode={useUnicode} />
                     ))}
@@ -403,14 +535,6 @@ export default function MappoolPage() {
           </div>
         )}
 
-        <div className="mt-12 border-t-2 border-[#e0d8cc] pt-6">
-          <SectionTitle tag="提示" accent="#5cb8a5">
-            图池说明
-          </SectionTitle>
-          <p className="max-w-2xl text-sm text-[#666666]">
-            点击任意选图即可跳转到 osu! 官网查看详情。若存在自定义 Mod 配置，将随图卡展示。
-          </p>
-        </div>
       </div>
     </div>
   );

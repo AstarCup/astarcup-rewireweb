@@ -1,10 +1,8 @@
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/paper/paper";
 import { LoadingBlock, ErrorBlock, useFetch } from "@/hooks/useFetch";
 import { api } from "@/lib/api";
-import { cn, formatDateTime } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 import type { MatchSchedule, MatchRoom } from "@/lib/types";
 
 interface ScheduleGroup {
@@ -156,24 +154,6 @@ export default function SchedulePage() {
       <PageHeader title="赛程安排" subtitle="比赛对阵与每场直播、回放信息一览" />
 
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
-        <div className="mb-10">
-          <Link
-            to="/multiplayer-scores"
-            className={cn(
-              "group flex items-center justify-between rounded-2xl border-2 border-[#e0d8cc] bg-white p-5",
-              "shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5",
-            )}
-          >
-            <div>
-              <p className="text-sm font-bold text-[#2d2d2d]">查看资格赛成绩</p>
-              <p className="mt-1 text-xs text-[#b0a898]">资格赛场次详细得分记录</p>
-            </div>
-            <Button variant="teal" size="sm" className="pointer-events-none group-hover:-translate-y-0.5 transition-transform duration-200">
-             前往 →
-            </Button>
-          </Link>
-        </div>
-
         {loading && <LoadingBlock label="正在加载赛程…" />}
         {error && <ErrorBlock message={error} onRetry={() => void load()} />}
 

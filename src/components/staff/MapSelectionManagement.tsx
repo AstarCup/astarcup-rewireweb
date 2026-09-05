@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckSquare,
   CircleArrowRight,
@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useApp } from "@/lib/app-context";
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useAsync, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { api, qs } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -559,32 +559,45 @@ export default function MapSelectionManagement() {
 
   const seasonOptions = buildSeasonOptions(settings);
 
-  // 赛季筛选默认取当前赛季，未设置时取最新赛季
+  // 赛季筛选默认取当前赛季，未设置时取最新赛季；同步完成前不拉取图池数据
+  const [seasonSettled, setSeasonSettled] = useState(false);
   useEffect(() => {
-    if (season) return;
+    if (season) {
+      setSeasonSettled(true);
+      return;
+    }
     const cur = settings?.current_season;
     if (cur && seasonOptions.some((o) => o.value === cur)) {
       setSeason(cur);
     } else if (seasonOptions.length > 0) {
       setSeason(seasonOptions[seasonOptions.length - 1].value);
+    } else {
+      return; // 设置尚未加载完成
     }
+    setSeasonSettled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings, seasonOptions, season]);
 
-  const { data, loading, error, load } = useFetch<MapSelection[]>(() =>
-    api.get(
-      "/api/map-selections" +
-        qs({
-          season: season || undefined,
-          category: category === "全部" ? undefined : category,
-        }),
-    ),
+  const { data, loading, error, run } = useAsync<MapSelection[]>();
+  const load = useCallback(
+    () =>
+      run(() =>
+        api.get<MapSelection[]>(
+          "/api/map-selections" +
+            qs({
+              season: season || undefined,
+              category: category === "全部" ? undefined : category,
+            }),
+        ),
+      ),
+    [run, season, category],
   );
 
   useEffect(() => {
+    if (!seasonSettled) return;
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [season, category]);
+  }, [seasonSettled, load]);
 
   // Batch-fetch comments for the visible pool.
   useEffect(() => {
@@ -905,7 +918,7 @@ export default function MapSelectionManagement() {
   const [commentTarget, setCommentTarget] = useState<MapSelection | null>(null);
   const [adjustTarget, setAdjustTarget] = useState<MapSelection | null>(null);
 
-  if (loading) return <LoadingBlock label="加载选图中…" />;
+  if (!seasonSettled || loading) return <LoadingBlock label="加载选图中…" />;
   if (error || !data) return <ErrorBlock message={error || "没有数据"} onRetry={load} />;
 
   const selectedMaps = data.filter((m) => selectedIds.has(m.id));
