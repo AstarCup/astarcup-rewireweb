@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useApp } from "@/lib/app-context";
 import { LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
@@ -8,7 +8,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectTrigger,
@@ -16,93 +15,229 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { seasonOptions as buildSeasonOptions } from "@/lib/types";
+import {
+  seasonOptions as buildSeasonOptions,
+  CATEGORY_OPTIONS,
+  MODS_ORDER,
+} from "@/lib/types";
+import type { MapSelection } from "@/lib/types";
+import { cn, fmt } from "@/lib/utils";
+
+const MOD_COLORS: Record<string, string> = {
+  NM: "#6b7fb5",
+  HD: "#f5c040",
+  HR: "#e85d75",
+  DT: "#a78bfa",
+  FM: "#5cb8a5",
+  LZ: "#ec6ba8",
+  TB: "#2d2d2d",
+};
+
+const MOD_DISPLAY: Record<string, string> = {
+  NM: "No Mod",
+  HD: "Hidden",
+  HR: "Hard Rock",
+  DT: "Double Time",
+  FM: "Free Mod",
+  LZ: "Lazer Mod",
+  TB: "Tiebreaker",
+};
+
+function modBase(m: MapSelection): string {
+  return (m.selectedMods ?? "NM").split("+")[0].toUpperCase() || "NM";
+}
+
+function starColor(s: number | null): string {
+  const v = s ?? 0;
+  if (v < 2) return "#4a90d9";
+  if (v < 3.5) return "#5cb8a5";
+  if (v < 5) return "#f5c040";
+  if (v < 6.5) return "#e85d75";
+  if (v < 8) return "#a78bfa";
+  return "#7c3aed";
+}
 
 export default function ReplayCollectionManagement() {
   const { user, settings } = useApp();
+  const seasonOptions = buildSeasonOptions(settings);
   const [season, setSeason] = useState("");
   const [category, setCategory] = useState("全部");
+  const [modFilter, setModFilter] = useState("全部");
+  const [maps, setMaps] = useState<MapSelection[]>([]);
   const [uploaded, setUploaded] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState("");
-  const [files, setFiles] = useState<string[]>([]);
+  const [busy, setBusy] = useState<number | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
-  const seasonOptions = buildSeasonOptions(settings);
+  const curSeason = season || seasonOptions[seasonOptions.length - 1]?.value || "s1";
 
-  const loadUploaded = async () => {
+  const loadPool = async () => {
     setLoading(true);
-    const res = await api.get<Record<string, string[]>>(
-      "/api/replays/uploaded" +
+    const res = await api.get<MapSelection[]>(
+      "/api/map-selections" +
         qs({
-          season: season || undefined,
+          season: curSeason,
           category: category === "全部" ? undefined : category,
+          padding: true,
         }),
     );
     setLoading(false);
-    if (res.ok) setUploaded(res.data);
+    if (res.ok) setMaps(res.data);
     else setError(res.error.message);
   };
 
+  const loadUploaded = async () => {
+    const res = await api.get<Record<string, string[]>>(
+      "/api/replays/uploaded" +
+        qs({
+          season: curSeason,
+          category: category === "全部" ? "all" : category,
+        }),
+    );
+    if (res.ok) setUploaded(res.data);
+  };
+
   useEffect(() => {
+    void loadPool();
     void loadUploaded();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [season, category]);
 
-  const downloadAll = async () => {
-    setBusy("download");
-    try {
-      const b = await blob(
-        "/api/replays/archive" +
-          qs({
-            season: season || undefined,
-            category: category === "全部" ? undefined : category,
-          }),
-      );
-      downloadBlob(b, `replays-${season || "all"}-${category}.zip`);
-      toast({ title: "已开始下载" });
-    } catch {
-      toast({ variant: "destructive", title: "下载失败" });
+  const filtered = useMemo(
+    () => maps.filter((m) => modFilter === "全部" || modBase(m) === modFilter),
+    [maps, modFilter],
+  );
+
+  const groups = useMemo(() => {
+    const map = new Map<string, MapSelection[]>();
+    for (const m of filtered) {
+      const key = modBase(m);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(m);
     }
-    setBusy("");
+    const order = MODS_ORDER as readonly string[];
+    return Array.from(map.keys())
+      .sort((a, b) => {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      })
+      .map((mod) => ({ mod, items: map.get(mod)! }));
+  }, [filtered]);
+
+  const modOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const m of maps) {
+      const k = modBase(m);
+      counts.set(k, (counts.get(k) ?? 0) + 1);
+    }
+    return [
+      { key: "全部", label: `全部 (${maps.length})` },
+      ...Array.from(counts.entries()).map(([k, n]) => ({
+        key: k,
+        label: `${MOD_DISPLAY[k] ?? k} (${n})`,
+      })),
+    ];
+  }, [maps]);
+
+  const replayKey = (m: MapSelection) => {
+    const s = m.season || curSeason;
+    const c = m.category || (category === "全部" ? "qualification" : category);
+    return `${s}/${c}/${m.beatmapId}`;
   };
 
-  const pickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBusy("upload");
+  const buildFilename = (m: MapSelection) => {
+    if (!user) return "";
+    const s = m.season || curSeason;
+    const c = m.category || (category === "全部" ? "qualification" : category);
+    const safeUsername = (user.username || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_");
+    return `${s}/${c}/${m.selectedMods ?? "NM"}${m.modPosition ?? ""}_${m.beatmapId}_${user.osuId}_${safeUsername}.osr`;
+  };
+
+  const uploadFor = (m: MapSelection, file: File) => {
+    if (!user) {
+      toast({ variant: "destructive", title: "请先登录" });
+      return;
+    }
+    if (!file.name.toLowerCase().endsWith(".osr")) {
+      toast({ variant: "destructive", title: "请上传 .osr 回放文件" });
+      return;
+    }
+    setBusy(m.id);
     void (async () => {
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("filename", file.name);
-      fd.append("userId", user?.osuId ?? "");
+      fd.append("filename", buildFilename(m));
+      fd.append("userId", user.osuId);
       const res = await api.post<{ url: string }>("/api/replays", fd, { json: false });
-      setBusy("");
+      setBusy(null);
       if (res.ok) {
         toast({ title: "上传成功" });
-        setFiles((fs) => [file.name, ...fs]);
-        void loadUploaded();
+        setUploaded((prev) => {
+          const key = replayKey(m);
+          const list = prev[key] ?? [];
+          return {
+            ...prev,
+            [key]: list.includes(user.username) ? list : [...list, user.username],
+          };
+        });
       } else {
         toast({ variant: "destructive", title: "上传失败" });
       }
     })();
-    e.target.value = "";
   };
 
-  const removeFile = async (filename: string) => {
-    setBusy(`del-${filename}`);
-    const res = await api.delete("/api/replays", { filename, userId: user?.osuId });
-    setBusy("");
+  const pickFile = (m: MapSelection) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".osr";
+    input.onchange = (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files?.[0]) uploadFor(m, target.files[0]);
+    };
+    input.click();
+  };
+
+  const deleteOwn = async (m: MapSelection) => {
+    if (!user) return;
+    setBusy(m.id);
+    const res = await api.delete("/api/replays", {
+      filename: buildFilename(m),
+      userId: user.osuId,
+    });
+    setBusy(null);
     if (res.ok) {
-      setFiles((fs) => fs.filter((f) => f !== filename));
       toast({ title: "已删除" });
-      void loadUploaded();
+      setUploaded((prev) => {
+        const key = replayKey(m);
+        return {
+          ...prev,
+          [key]: (prev[key] ?? []).filter((u) => u !== user.username),
+        };
+      });
     } else {
       toast({ variant: "destructive", title: "删除失败" });
     }
   };
 
-  const entries = Object.entries(uploaded);
+  const downloadAll = async () => {
+    setDownloading(true);
+    try {
+      const b = await blob(
+        "/api/replays/archive" +
+          qs({
+            season: curSeason,
+            category: category === "全部" ? "all" : category,
+          }),
+      );
+      downloadBlob(b, `replays-${curSeason}-${category}.zip`);
+      toast({ title: "已开始下载" });
+    } catch {
+      toast({ variant: "destructive", title: "下载失败" });
+    }
+    setDownloading(false);
+  };
 
   return (
     <div>
@@ -116,10 +251,10 @@ export default function ReplayCollectionManagement() {
           <Label className="text-xs text-[#b0a898]">赛季</Label>
           <Select value={season} onValueChange={setSeason}>
             <SelectTrigger className="w-36">
-              <SelectValue placeholder="全部" />
+              <SelectValue placeholder="最新" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">全部</SelectItem>
+              <SelectItem value="">最新赛季</SelectItem>
               {seasonOptions.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -129,89 +264,140 @@ export default function ReplayCollectionManagement() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">分类</Label>
+          <Label className="text-xs text-[#b0a898]">阶段</Label>
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="全部">全部</SelectItem>
-              <SelectItem value="资格赛">资格赛</SelectItem>
-              <SelectItem value="32强">32强</SelectItem>
-              <SelectItem value="16强">16强</SelectItem>
-              <SelectItem value="8强">8强</SelectItem>
-              <SelectItem value="半决赛">半决赛</SelectItem>
-              <SelectItem value="决赛">决赛</SelectItem>
-              <SelectItem value="总决赛">总决赛</SelectItem>
+              {CATEGORY_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-[#b0a898]">MOD</Label>
+          <Select value={modFilter} onValueChange={setModFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {modOptions.map((o) => (
+                <SelectItem key={o.key} value={o.key}>
+                  {o.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <label className="cursor-pointer rounded-xl border-2 border-[#e85d75] bg-[#e85d75] px-4 py-2 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition hover:-translate-y-0.5">
-            {busy === "upload" ? "上传中…" : "上传回放"}
-            <input type="file" accept=".osr" className="hidden" onChange={pickFile} />
-          </label>
-          <Button
-            variant="teal"
-            onClick={downloadAll}
-            disabled={busy === "download"}
-          >
-            {busy === "download" ? "下载中…" : "下载全部回放"}
+          <Button variant="teal" onClick={downloadAll} disabled={downloading}>
+            {downloading ? "下载中…" : "下载全部回放"}
           </Button>
         </div>
       </div>
 
-      {loading ? (
-        <LoadingBlock label="加载回放列表…" />
-      ) : error ? (
-        <ErrorBlock message={error} onRetry={() => void loadUploaded()} />
-      ) : (
-        <div className="mt-4">
-          {entries.length === 0 ? (
-            <p className="py-10 text-center text-sm text-[#b0a898]">当前条件下没有回放。</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {entries.map(([key, usernames]) => (
-                <Card key={key} className="p-4">
-                  <p className="font-bold text-[#2d2d2d]">{key}</p>
-                  <p className="mt-2 flex flex-wrap gap-1.5">
-                    {usernames.map((u) => (
-                      <Badge key={u} variant="outline">
-                        {u}
-                      </Badge>
-                    ))}
-                  </p>
-                </Card>
-              ))}
-            </div>
-          )}
+      <p className="mt-3 text-xs text-[#b0a898]">
+        共 {maps.length} 张测图中选图 · 点击卡片或「上传回放」按钮选择 .osr 文件
+      </p>
 
-          <Separator className="my-6" />
-          <div>
-            <p className="mb-3 text-sm font-bold text-[#2d2d2d]">本次会话上传的文件</p>
-            {files.length === 0 ? (
-              <p className="text-xs text-[#b0a898]">本次会话尚未上传文件。</p>
-            ) : (
-              <div className="space-y-2">
-                {files.map((f) => (
-                  <div
-                    key={f}
-                    className="flex items-center justify-between gap-3 rounded-xl border-2 border-[#e0d8cc] bg-white p-3"
-                  >
-                    <span className="text-sm text-[#2d2d2d]">{f}</span>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => void removeFile(f)}
-                      disabled={busy === `del-${f}`}
-                    >
-                      删除
-                    </Button>
-                  </div>
-                ))}
+      {loading ? (
+        <LoadingBlock label="加载图池…" />
+      ) : error ? (
+        <ErrorBlock message={error} onRetry={() => void loadPool()} />
+      ) : filtered.length === 0 ? (
+        <p className="py-10 text-center text-sm text-[#b0a898]">
+          当前条件下没有测图中的选图。
+        </p>
+      ) : (
+        <div className="mt-4 flex flex-col gap-8">
+          {groups.map((g) => (
+            <section key={g.mod}>
+              <div className="mb-3 flex items-center gap-3">
+                <span
+                  className="rounded-xl px-3 py-1 text-sm font-bold text-white shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
+                  style={{ backgroundColor: MOD_COLORS[g.mod] ?? "#666" }}
+                >
+                  {MOD_DISPLAY[g.mod] ?? g.mod}
+                </span>
+                <span className="text-xs text-[#666666]">{g.items.length} 张图</span>
               </div>
-            )}
-          </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {g.items.map((m) => {
+                  const usernames = uploaded[replayKey(m)] ?? [];
+                  const uploadedByMe = usernames.includes(user?.username ?? "");
+                  return (
+                    <Card
+                      key={m.id}
+                      className={cn("overflow-hidden p-0", usernames.length > 0 && "border-l-8")}
+                      style={usernames.length > 0 ? { borderLeftColor: "#5cb8a5" } : undefined}
+                    >
+                      <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
+                        {m.coverUrl && (
+                          <img src={m.coverUrl} alt="" className="h-full w-full object-cover" />
+                        )}
+                        <span
+                          className="absolute left-2 top-2 rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+                          style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
+                        >
+                          {m.selectedMods ?? "NM"}
+                          {m.modPosition ?? ""}
+                        </span>
+                      </div>
+                      <div className="p-4">
+                        <p className="line-clamp-2 font-bold text-[#2d2d2d]">
+                          {[m.artist, m.title].filter(Boolean).join(" - ") || "未知曲目"}
+                        </p>
+                        <p className="text-xs text-[#b0a898]">
+                          [{m.version}] by {m.creator ?? "-"}
+                        </p>
+                        <p className="mt-1 text-xs font-bold" style={{ color: starColor(m.starRating) }}>
+                          ★ {fmt(m.starRating)}
+                        </p>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                          {usernames.length === 0 ? (
+                            <span className="text-xs text-[#b0a898]">还没人上传</span>
+                          ) : (
+                            usernames.map((u) => (
+                              <Badge key={u} variant={u === user?.username ? "teal" : "outline"}>
+                                {u}
+                              </Badge>
+                            ))
+                          )}
+                        </div>
+
+                        <div className="mt-3 flex gap-2">
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={busy === m.id}
+                            onClick={() => pickFile(m)}
+                          >
+                            {busy === m.id ? "上传中…" : "上传回放"}
+                          </Button>
+                          {uploadedByMe && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              disabled={busy === m.id}
+                              onClick={() => void deleteOwn(m)}
+                            >
+                              删除
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </div>

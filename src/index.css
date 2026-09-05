@@ -101,6 +101,31 @@
     background: #f5c040;
     color: #2d2d2d;
   }
+  /* ---- 全局滚动条样式（Paper Craft 风格） ---- */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #d8cfc0 transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d8cfc0;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e85d75;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 /* ---- Paper Craft helpers ---- */

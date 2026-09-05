@@ -3,8 +3,11 @@ import {
   CheckSquare,
   CircleArrowRight,
   Clipboard,
+  Download,
+  ExternalLink,
   LayoutGrid,
   LayoutList,
+  MessageSquare,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useApp } from "@/lib/app-context";
@@ -14,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -34,8 +38,17 @@ import {
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { cn, fmt } from "@/lib/utils";
-import { MODS_ORDER, CATEGORIES, seasonOptions as buildSeasonOptions } from "@/lib/types";
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { cn, fmt, formatDateTime } from "@/lib/utils";
+import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, seasonLabel } from "@/lib/types";
 import type { MapSelection, BeatmapInfo, MapComment, ModStatsResult } from "@/lib/types";
 
 const MOD_COLORS: Record<string, string> = {
@@ -61,6 +74,17 @@ const MOD_DISPLAY: Record<string, string> = {
 function modBase(m: MapSelection): string {
   return (m.selectedMods ?? "NM").split("+")[0].toUpperCase() || "NM";
 }
+
+const STAT_FIELDS: { key: string; label: string }[] = [
+  { key: "star", label: "星数 ★" },
+  { key: "ar", label: "AR" },
+  { key: "cs", label: "CS" },
+  { key: "od", label: "OD" },
+  { key: "hp", label: "HP" },
+  { key: "bpm", label: "BPM" },
+  { key: "length", label: "时长 (s)" },
+  { key: "maxCombo", label: "MaxCombo" },
+];
 
 function modLabel(m: MapSelection): string {
   const pos = m.modPosition ?? "";
@@ -92,6 +116,10 @@ function osuMapUrl(s: MapSelection): string {
   return `https://osu.ppy.sh/b/${s.beatmapId}`;
 }
 
+function sayobotUrl(s: MapSelection): string {
+  return `https://dl.sayobot.cn/beatmaps/download/full/${s.beatmapsetId ?? s.beatmapId}`;
+}
+
 function groupMaps(list: MapSelection[]): { mod: string; items: MapSelection[] }[] {
   const map = new Map<string, MapSelection[]>();
   for (const m of list) {
@@ -105,7 +133,18 @@ function groupMaps(list: MapSelection[]): { mod: string; items: MapSelection[] }
     const ib = order.indexOf(b);
     return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
   });
-  return keys.map((mod) => ({ mod, items: map.get(mod)! }));
+  return keys.map((mod) => ({
+    mod,
+    items: map
+      .get(mod)!
+      .slice()
+      .sort((a, b) => {
+        const pa = Number(a.modPosition ?? 0);
+        const pb = Number(b.modPosition ?? 0);
+        if (pa !== pb) return pa - pb;
+        return (a.selectedAt ?? a.createdAt ?? "").localeCompare(b.selectedAt ?? b.createdAt ?? "");
+      }),
+  }));
 }
 
 function CommentDialog({
@@ -287,20 +326,250 @@ function BatchApproveDialog({
   );
 }
 
+function AdjustStatsDialog({
+  open,
+  onOpenChange,
+  map,
+  onSaved,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  map: MapSelection | null;
+  onSaved: () => void;
+}) {
+  const { settings } = useApp();
+  const seasonOptions = buildSeasonOptions(settings);
+  const [busy, setBusy] = useState(false);
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [season, setSeason] = useState("");
+  const [category, setCategory] = useState("");
+  const [mods, setMods] = useState("NM");
+  const [modPosition, setModPosition] = useState("");
+  const [customModName, setCustomModName] = useState("");
+  const [customDTRate, setCustomDTRate] = useState("");
+  const [comment, setComment] = useState("");
+  const [mapType, setMapType] = useState<"normal" | "original" | "custom">("normal");
+
+  useEffect(() => {
+    if (!map) return;
+    setValues({
+      star: map.starRating != null ? String(map.starRating) : "",
+      ar: map.ar != null ? String(map.ar) : "",
+      cs: map.cs != null ? String(map.cs) : "",
+      od: map.od != null ? String(map.od) : "",
+      hp: map.hp != null ? String(map.hp) : "",
+      bpm: map.bpm != null ? String(map.bpm) : "",
+      length: map.totalLength != null ? String(map.totalLength) : "",
+      maxCombo: map.maxCombo != null ? String(map.maxCombo) : "",
+    });
+    setSeason(map.season ?? "");
+    setCategory(map.category ?? "");
+    setMods(modBase(map));
+    setModPosition(map.modPosition != null ? String(map.modPosition) : "");
+    setCustomModName(map.customModName ?? "");
+    setCustomDTRate(map.customDTRate != null ? String(map.customDTRate) : "");
+    setComment(map.comment ?? "");
+    setMapType(map.isCustome ? "custom" : map.isOrigin ? "original" : "normal");
+  }, [map]);
+
+  const save = async () => {
+    if (!map) return;
+    const num = (v: string) => (v.trim() === "" ? null : Number(v));
+    const body: Record<string, unknown> = {
+      starRating: num(values.star),
+      ar: num(values.ar),
+      cs: num(values.cs),
+      od: num(values.od),
+      hp: num(values.hp),
+      bpm: num(values.bpm),
+      totalLength: num(values.length),
+      maxCombo: num(values.maxCombo),
+    };
+    // 赛季/阶段/MOD/MOD 位仅当发生变化时才提交，避免覆盖自定义 MOD 配置
+    if (season !== (map.season ?? "")) body.season = season || null;
+    if (category !== (map.category ?? "")) body.category = category || null;
+    if (mods !== modBase(map)) body.selectedMods = mods;
+    if (modPosition !== (map.modPosition != null ? String(map.modPosition) : "")) {
+      body.modPosition = modPosition.trim() === "" ? null : Number(modPosition);
+    }
+    if (customModName !== (map.customModName ?? "")) body.customModName = customModName || null;
+    if (customDTRate !== (map.customDTRate != null ? String(map.customDTRate) : "")) {
+      body.customDTRate = customDTRate.trim() === "" ? null : Number(customDTRate);
+    }
+    if (comment !== (map.comment ?? "")) body.comment = comment || null;
+    const origType = map.isCustome ? "custom" : map.isOrigin ? "original" : "normal";
+    if (mapType !== origType) {
+      body.isCustome = mapType === "custom";
+      body.isOrigin = mapType === "original";
+    }
+    setBusy(true);
+    const res = await api.patch(`/api/map-selections/${map.id}`, body);
+    setBusy(false);
+    if (res.ok) {
+      toast({ title: "参数已更新" });
+      onOpenChange(false);
+      onSaved();
+    } else {
+      toast({ variant: "destructive", title: "更新失败" });
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg" style={{ rotate: "0deg" }}>
+        <DialogHeader>
+          <DialogTitle>调整参数</DialogTitle>
+          <DialogDescription>{map ? `${map.title} - ${map.version}` : ""}</DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="grid gap-1.5">
+            <Label>赛季</Label>
+            <Select value={season} onValueChange={setSeason}>
+              <SelectTrigger>
+                <SelectValue placeholder="选择赛季" />
+              </SelectTrigger>
+              <SelectContent>
+                {seasonOptions.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>阶段</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="选择阶段" />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORY_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>MOD</Label>
+            <Select value={mods} onValueChange={setMods}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MODS_ORDER.map((m) => (
+                  <SelectItem key={m} value={m}>
+                    {m}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label>MOD 位</Label>
+            <Input value={modPosition} onChange={(e) => setModPosition(e.target.value)} />
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {STAT_FIELDS.map((f) => (
+            <div key={f.key} className="grid gap-1.5">
+              <Label>{f.label}</Label>
+              <Input
+                type="number"
+                step="any"
+                value={values[f.key]}
+                onChange={(e) => setValues((s) => ({ ...s, [f.key]: e.target.value }))}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="grid gap-1.5">
+            <Label>自定义 Mod 名（可选）</Label>
+            <Input
+              value={customModName}
+              onChange={(e) => setCustomModName(e.target.value)}
+              placeholder="如 LZ"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>自定义 DT 倍率（可选）</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={customDTRate}
+              onChange={(e) => setCustomDTRate(e.target.value)}
+              placeholder="如 1.5"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label>类型</Label>
+            <Select
+              value={mapType}
+              onValueChange={(v) => setMapType(v as "normal" | "original" | "custom")}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="normal">普通谱面</SelectItem>
+                <SelectItem value="original">原创图</SelectItem>
+                <SelectItem value="custom">定制图</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="grid gap-1.5">
+          <Label>备注</Label>
+          <Textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="可选备注"
+          />
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">取消</Button>
+          </DialogClose>
+          <Button variant="primary" onClick={save} disabled={busy}>
+            {busy ? "保存中…" : "保存"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function MapSelectionManagement() {
   const { user, settings } = useApp();
   const [season, setSeason] = useState("");
-  const [category, setCategory] = useState("全部");
+  const [category, setCategory] = useState("qualification");
   const [modFilter, setModFilter] = useState("全部");
   const [paddingFilter, setPaddingFilter] = useState("全部");
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"card" | "table">("card");
+  const [visible, setVisible] = useState(60);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [busy, setBusy] = useState("");
   const [batchOpen, setBatchOpen] = useState(false);
   const [commentsByMap, setCommentsByMap] = useState<Record<string, MapComment[]>>({});
 
   const seasonOptions = buildSeasonOptions(settings);
+
+  // 赛季筛选默认取当前赛季，未设置时取最新赛季
+  useEffect(() => {
+    if (season) return;
+    const cur = settings?.current_season;
+    if (cur && seasonOptions.some((o) => o.value === cur)) {
+      setSeason(cur);
+    } else if (seasonOptions.length > 0) {
+      setSeason(seasonOptions[seasonOptions.length - 1].value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings, seasonOptions, season]);
 
   const { data, loading, error, load } = useFetch<MapSelection[]>(() =>
     api.get(
@@ -353,6 +622,7 @@ export default function MapSelectionManagement() {
         m.creator,
         m.selectedMods,
         m.modPosition,
+        `${modBase(m)}${m.modPosition ?? ""}`,
         m.comment,
         String(m.beatmapId),
         String(m.beatmapsetId ?? ""),
@@ -366,7 +636,13 @@ export default function MapSelectionManagement() {
     });
   }, [data, modFilter, paddingFilter, search]);
 
-  const groups = useMemo(() => groupMaps(filtered), [filtered]);
+  // 懒加载：筛选条件变化时重置为初始条数
+  useEffect(() => {
+    setVisible(60);
+  }, [filtered]);
+
+  const lazyList = useMemo(() => filtered.slice(0, visible), [filtered, visible]);
+  const groups = useMemo(() => groupMaps(lazyList), [lazyList]);
 
   const modFilterOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -409,11 +685,24 @@ export default function MapSelectionManagement() {
   const [mods, setMods] = useState<string>(MODS_ORDER[0]);
   const [modPosition, setModPosition] = useState("");
   const [comment, setComment] = useState("");
-  const [approved, setApproved] = useState(true);
+  const [approved, setApproved] = useState(false);
+  const [addSeason, setAddSeason] = useState("");
+  const [addCategory, setAddCategory] = useState("");
+  const [mapType, setMapType] = useState<"normal" | "original" | "custom">("normal");
   const [modStats, setModStats] = useState<ModStatsResult["modStats"] | null>(null);
   const [calcBusy, setCalcBusy] = useState(false);
   const [customModName, setCustomModName] = useState("");
   const [customDTRate, setCustomDTRate] = useState("");
+  const [formStats, setFormStats] = useState<Record<string, string>>({
+    star: "",
+    ar: "",
+    cs: "",
+    od: "",
+    hp: "",
+    bpm: "",
+    length: "",
+    maxCombo: "",
+  });
 
   const parseUrl = async () => {
     if (!bmUrl.trim()) return;
@@ -434,6 +723,40 @@ export default function MapSelectionManagement() {
 
   const pickedInfo = parseResult.find((p) => String(p.id) === picked);
 
+  // 选中难度时用解析结果初始化表单参数
+  useEffect(() => {
+    if (!pickedInfo) return;
+    setFormStats({
+      star: pickedInfo.star_rating != null ? String(pickedInfo.star_rating) : "",
+      ar: pickedInfo.ar != null ? String(pickedInfo.ar) : "",
+      cs: pickedInfo.cs != null ? String(pickedInfo.cs) : "",
+      od: pickedInfo.od != null ? String(pickedInfo.od) : "",
+      hp: pickedInfo.hp != null ? String(pickedInfo.hp) : "",
+      bpm: pickedInfo.bpm != null ? String(pickedInfo.bpm) : "",
+      length: pickedInfo.total_length != null ? String(pickedInfo.total_length) : "",
+      maxCombo: pickedInfo.maxCombo != null ? String(pickedInfo.maxCombo) : "",
+    });
+  }, [pickedInfo]);
+
+
+  // 解析后即时重复检测：相同 BID / SID / 歌曲名
+  const duplicateInfo = useMemo(() => {
+    if (!pickedInfo) return null;
+    const maps = data ?? [];
+    const sameBid = maps.filter((m) => m.beatmapId === pickedInfo.id).length;
+    const sameSid = maps.filter(
+      (m) => pickedInfo.beatmapsetId != null && m.beatmapsetId === pickedInfo.beatmapsetId,
+    ).length;
+    const sameTitle = maps.filter(
+      (m) => pickedInfo.title && m.title === pickedInfo.title,
+    ).length;
+    const parts: string[] = [];
+    if (sameBid > 0) parts.push(`BID 重复 ${sameBid} 张`);
+    if (sameSid > 0) parts.push(`SID 重复 ${sameSid} 张`);
+    if (sameTitle > 0) parts.push(`歌曲重复 ${sameTitle} 张`);
+    return parts.length > 0 ? parts.join("，") : null;
+  }, [pickedInfo, data]);
+
   const calculateModStats = async () => {
     if (!pickedInfo) return;
     setCalcBusy(true);
@@ -448,6 +771,17 @@ export default function MapSelectionManagement() {
     setCalcBusy(false);
     if (res.ok) {
       setModStats(res.data.modStats);
+      const s = res.data.modStats;
+      setFormStats({
+        star: String(s.starRating),
+        ar: String(s.ar),
+        cs: String(s.cs),
+        od: String(s.od),
+        hp: String(s.hp),
+        bpm: String(s.bpm),
+        length: String(s.totalLength),
+        maxCombo: String(s.maxCombo),
+      });
       toast({ title: "Mod 属性已计算" });
     } else {
       toast({ variant: "destructive", title: "计算失败" });
@@ -460,6 +794,7 @@ export default function MapSelectionManagement() {
       return;
     }
     setBusy("add");
+    const num = (v: string) => (v.trim() === "" ? undefined : Number(v));
     const res = await api.post("/api/map-selections", {
       selectedBy: user?.osuId ?? "",
       url: pickedInfo.url ?? bmUrl,
@@ -467,12 +802,24 @@ export default function MapSelectionManagement() {
       modPosition: modPosition ? Number(modPosition) : null,
       comment: comment || null,
       approved,
-      moddedStats: modStats ?? undefined,
+      moddedStats: {
+        ar: num(formStats.ar),
+        cs: num(formStats.cs),
+        od: num(formStats.od),
+        hp: num(formStats.hp),
+        bpm: num(formStats.bpm),
+        totalLength: num(formStats.length),
+        maxCombo: num(formStats.maxCombo),
+        starRating: num(formStats.star),
+      },
       customModName: customModName || undefined,
       customDTRate: customDTRate ? Number(customDTRate) : undefined,
       beatmapId: pickedInfo.id,
-      season: season || null,
-      category: category === "全部" ? null : category,
+      beatmapsetId: pickedInfo.beatmapsetId,
+      season: addSeason || null,
+      category: addCategory || null,
+      isOrigin: mapType === "original",
+      isCustome: mapType === "custom",
     });
     setBusy("");
     if (res.ok) {
@@ -483,7 +830,7 @@ export default function MapSelectionManagement() {
       setPicked("");
       setComment("");
       setModPosition("");
-      setApproved(true);
+      setApproved(false);
       setModStats(null);
       setCustomModName("");
       setCustomDTRate("");
@@ -556,6 +903,7 @@ export default function MapSelectionManagement() {
   };
 
   const [commentTarget, setCommentTarget] = useState<MapSelection | null>(null);
+  const [adjustTarget, setAdjustTarget] = useState<MapSelection | null>(null);
 
   if (loading) return <LoadingBlock label="加载选图中…" />;
   if (error || !data) return <ErrorBlock message={error || "没有数据"} onRetry={load} />;
@@ -577,28 +925,81 @@ export default function MapSelectionManagement() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="font-display font-bold text-2xl text-[#2d2d2d]">选图管理</h2>
-          <p className="mt-1 text-xs text-[#b0a898]">共 {data.length} 张选图 · {paddingCount} 张测图中</p>
+          <p className="mt-1 text-xs text-[#b0a898]">共 {data.length} 张选图 · {paddingCount} 张审图中</p>
         </div>
         <Dialog
           open={addOpen}
           onOpenChange={(o) => {
             setAddOpen(o);
-            if (!o) {
+            if (o) {
+              setAddSeason(seasonOptions[seasonOptions.length - 1]?.value ?? "");
+            } else {
               setModStats(null);
               setCustomModName("");
               setCustomDTRate("");
+              setAddSeason("");
+              setMapType("normal");
+              setFormStats({ star: "", ar: "", cs: "", od: "", hp: "", bpm: "", length: "", maxCombo: "" });
             }
           }}
         >
           <DialogTrigger asChild>
             <Button variant="primary">+ 添加选图</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-xl">
+          <DialogContent className="max-w-xl" style={{ rotate: "0deg" }}>
             <DialogHeader>
               <DialogTitle>添加选图</DialogTitle>
               <DialogDescription>粘贴 osu 谱面链接，解析后选择难度与 MOD。</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-3">
+            <div className="grid gap-3 overflow-y-auto pr-1 max-h-[62vh]">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="grid gap-1.5">
+                  <Label>赛季</Label>
+                  <Select value={addSeason} onValueChange={setAddSeason}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="选择赛季" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {seasonOptions.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>阶段</Label>
+                  <Select value={addCategory} onValueChange={setAddCategory}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="选择阶段" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORY_OPTIONS.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                          {o.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>类型</Label>
+                  <Select
+                    value={mapType}
+                    onValueChange={(v) => setMapType(v as "normal" | "original" | "custom")}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">普通谱面</SelectItem>
+                      <SelectItem value="original">原创图</SelectItem>
+                      <SelectItem value="custom">定制图</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="flex items-end gap-2">
                 <div className="flex-1 grid gap-1.5">
                   <Label>谱面链接</Label>
@@ -633,6 +1034,39 @@ export default function MapSelectionManagement() {
                 </div>
               )}
               {pickedInfo && (
+                <div className="flex items-center gap-3 rounded-xl border-2 border-[#e0d8cc] bg-white p-3">
+                  {pickedInfo.cover_url ? (
+                    <img
+                      src={pickedInfo.cover_url}
+                      alt={pickedInfo.title}
+                      className="h-16 w-28 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="grid h-16 w-28 shrink-0 place-items-center rounded-lg bg-[#f5c040]/30 text-xs font-bold text-[#2d2d2d]">
+                      无封面
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate font-bold text-sm text-[#2d2d2d]">
+                      {[pickedInfo.artist, pickedInfo.title].filter(Boolean).join(" - ") || "未知曲目"}
+                    </p>
+                    <p className="truncate text-xs text-[#b0a898]">
+                      [{pickedInfo.version}] by {pickedInfo.creator ?? "-"}
+                    </p>
+                    {pickedInfo.star_rating != null && (
+                      <p className="mt-1 text-xs font-bold text-[#e85d75]">
+                        ★ {fmt(pickedInfo.star_rating)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {duplicateInfo && (
+                <p className="rounded-xl border-2 border-[#f5c040] bg-[#f5c040]/20 px-3 py-2 text-xs font-bold text-[#2d2d2d]">
+                  ⚠ 检测到重复选图：{duplicateInfo}
+                </p>
+              )}
+              {pickedInfo && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-1.5">
                     <Label>MOD</Label>
@@ -649,25 +1083,29 @@ export default function MapSelectionManagement() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-flow-col gap-3">
-                    <div className="flex-1 grid gap-1.5">
-                      <Label>MOD 位置</Label>
-                      <Input value={modPosition} onChange={(e) => setModPosition(e.target.value)} />
-                    </div>
-                    <div className="grid content-center gap-1.5">
-                      <Label>已审核</Label>
-                      <input
-                        type="checkbox"
-                        checked={approved}
-                        onChange={(e) => setApproved(e.target.checked)}
-                        className="h-5 w-5 accent-[#e85d75]"
-                      />
-                    </div>
+                  <div className="grid gap-1.5">
+                    <Label>MOD 位置</Label>
+                    <Input value={modPosition} onChange={(e) => setModPosition(e.target.value)} />
                   </div>
                 </div>
               )}
               {pickedInfo && (
                 <>
+                  <div className="grid grid-cols-4 gap-2">
+                    {STAT_FIELDS.map((f) => (
+                      <div key={f.key} className="grid gap-1.5">
+                        <Label>{f.label}</Label>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={formStats[f.key]}
+                          onChange={(e) =>
+                            setFormStats((s) => ({ ...s, [f.key]: e.target.value }))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="grid gap-1.5">
                       <Label>自定义 Mod 名（可选）</Label>
@@ -748,9 +1186,10 @@ export default function MapSelectionManagement() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {CATEGORIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
+              <SelectItem value="全部">全部</SelectItem>
+              {CATEGORY_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -772,15 +1211,15 @@ export default function MapSelectionManagement() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">测图状态</Label>
+          <Label className="text-xs text-[#b0a898]">审图状态</Label>
           <Select value={paddingFilter} onValueChange={setPaddingFilter}>
             <SelectTrigger className="w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="全部">全部</SelectItem>
-              <SelectItem value="测图中">测图中</SelectItem>
-              <SelectItem value="非测图">非测图</SelectItem>
+              <SelectItem value="测图中">审图中</SelectItem>
+              <SelectItem value="非测图">非审图</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -823,7 +1262,7 @@ export default function MapSelectionManagement() {
         <Badge variant="outline">{selectedIds.size} 已选</Badge>
         <span>
           当前筛选：{season || "全部赛季"} / {category} / {modFilter} / {paddingFilter} · 共{" "}
-          {filtered.length} 张
+          {filtered.length} 张{lazyList.length < filtered.length && `（已显示 ${lazyList.length}）`}
         </span>
       </div>
 
@@ -852,7 +1291,7 @@ export default function MapSelectionManagement() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((m) => (
+              {lazyList.map((m) => (
                 <tr key={m.id} className="border-b border-[#e0d8cc]/60 hover:bg-[#fdf6ee]">
                   <td className="px-3 py-2.5">
                     <span
@@ -864,7 +1303,9 @@ export default function MapSelectionManagement() {
                   </td>
                   <td className="px-3 py-2.5 font-mono text-xs text-[#e85d75]">{m.beatmapId}</td>
                   <td className="px-3 py-2.5 font-bold text-[#2d2d2d]">
-                    {[m.artist, m.title].filter(Boolean).join(" - ")}
+                    {[m.artist_unicode || m.artist, m.title_unicode || m.title]
+                      .filter(Boolean)
+                      .join(" - ")}
                     <span className="text-[#b0a898]"> [{m.version}]</span>
                   </td>
                   <td className="px-3 py-2.5 text-[#666666]">{m.creator ?? "-"}</td>
@@ -884,6 +1325,8 @@ export default function MapSelectionManagement() {
                         <Badge variant="yellow">待审核</Badge>
                       )}
                       {m.padding && <Badge variant="blue">padding</Badge>}
+                      {m.isOrigin && <Badge variant="blue">原创</Badge>}
+                      {m.isCustome && <Badge variant="yellow">定制</Badge>}
                     </div>
                   </td>
                   <td className="px-3 py-2.5">
@@ -926,14 +1369,16 @@ export default function MapSelectionManagement() {
                   const comments = commentsByMap[String(m.id)] ?? [];
                   const modColor = MOD_COLORS[modBase(m)] ?? "#666";
                   return (
-                    <Card
-                      key={m.id}
-                      className={cn(
-                        "group relative overflow-hidden p-0",
-                        m.approved && "border-l-8",
-                      )}
-                      style={m.approved ? { borderLeftColor: "#5cb8a5" } : undefined}
-                    >
+                      <ContextMenu key={m.id}>
+                        <ContextMenuTrigger asChild>
+                      <Card
+                        key={m.id}
+                        className={cn(
+                          "group relative overflow-hidden p-0",
+                          m.approved && "border-l-8",
+                        )}
+                        style={m.approved ? { borderLeftColor: "#5cb8a5" } : undefined}
+                      >
                       {/* Cover strip */}
                       <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
                         {m.coverUrl && (
@@ -963,32 +1408,93 @@ export default function MapSelectionManagement() {
                               {modLabel(m)}
                             </span>
                             {category === "全部" && m.category && (
-                              <Badge variant="outline">{m.category}</Badge>
+                              <Badge variant="outline">
+                                {CATEGORY_LABEL[m.category] ?? m.category}
+                              </Badge>
                             )}
+                            {season === "" && m.season && (
+                              <Badge variant="outline">{seasonLabel(settings, m.season)}</Badge>
+                            )}
+                            {m.isOrigin && <Badge variant="blue">原创</Badge>}
+                            {m.isCustome && <Badge variant="yellow">定制</Badge>}
                           </div>
                           <div className="flex items-center gap-1.5">
                             {!m.approved && (
-                              <input
-                                type="checkbox"
-                                checked={selectedIds.has(m.id)}
-                                onChange={() => toggleSelect(m.id)}
-                                className="h-4 w-4 accent-[#e85d75]"
+                              <button
+                                type="button"
+                                onClick={() => toggleSelect(m.id)}
                                 title="批量选择"
-                              />
+                                className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                              >
+                                <Checkbox checked={selectedIds.has(m.id)} className="pointer-events-none" />
+                              </button>
                             )}
-                            <button
-                              onClick={() => copyBid(m)}
-                              title="复制 BID"
-                              className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
-                            >
-                              <Clipboard className="h-3.5 w-3.5" />
-                            </button>
+                            <HoverCard openDelay={0} closeDelay={0}>
+                              <HoverCardTrigger asChild>
+                                <button
+                                  onClick={() => setCommentTarget(m)}
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                >
+                                  <MessageSquare className="h-3.5 w-3.5" />
+                                </button>
+                              </HoverCardTrigger>
+                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                <p className="text-xs font-bold text-[#2d2d2d]">添加评论</p>
+                              </HoverCardContent>
+                            </HoverCard>
+                            <HoverCard openDelay={0} closeDelay={0}>
+                              <HoverCardTrigger asChild>
+                                <a
+                                  href={sayobotUrl(m)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </a>
+                              </HoverCardTrigger>
+                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                <p className="text-xs font-bold text-[#2d2d2d]">Sayobot 下载</p>
+                              </HoverCardContent>
+                            </HoverCard>
+                            <HoverCard openDelay={0} closeDelay={0}>
+                              <HoverCardTrigger asChild>
+                                <a
+                                  href={osuMapUrl(m)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </a>
+                              </HoverCardTrigger>
+                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                <p className="text-xs font-bold text-[#2d2d2d]">打开 osu beatmap web 查看</p>
+                              </HoverCardContent>
+                            </HoverCard>
+                            <HoverCard openDelay={0} closeDelay={0}>
+                              <HoverCardTrigger asChild>
+                                <button
+                                  onClick={() => copyBid(m)}
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                >
+                                  <Clipboard className="h-3.5 w-3.5" />
+                                </button>
+                              </HoverCardTrigger>
+                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                <p className="text-xs font-bold text-[#2d2d2d]">
+                                  BID: <span className="font-mono text-[#e85d75]">{m.beatmapId}</span>
+                                </p>
+                              </HoverCardContent>
+                            </HoverCard>
                           </div>
                         </div>
 
                         {/* Title */}
                         <p className="mt-2 line-clamp-2 font-bold text-[#2d2d2d]">
-                          {[m.artist, m.title].filter(Boolean).join(" - ") || "未知曲目"}
+                          {[m.artist_unicode || m.artist, m.title_unicode || m.title]
+                            .filter(Boolean)
+                            .join(" - ") || "未知曲目"}
                         </p>
                         <p className="text-xs text-[#b0a898]">
                           [{m.version}] by {m.creator ?? "-"}
@@ -1002,7 +1508,7 @@ export default function MapSelectionManagement() {
                           {statCell("HP", fmt(m.hp))}
                           {statCell("时长", fmtLength(m.totalLength))}
                           {statCell("MaxCombo", m.maxCombo != null ? String(m.maxCombo) : "-")}
-                          {statCell("BPM", m.bpm != null ? String(m.bpm) : "-")}
+                          {statCell("BPM", fmt(m.bpm))}
                           {statCell("★", fmt(m.starRating), starColor(m.starRating))}
                         </div>
 
@@ -1033,59 +1539,90 @@ export default function MapSelectionManagement() {
 
                         {/* Comments preview */}
                         {comments.length > 0 && (
-                          <button
-                            onClick={() => setCommentTarget(m)}
-                            className="mt-2 flex items-center gap-1.5 rounded-lg bg-[#fdf6ee] px-2 py-1 text-left"
-                          >
-                            {comments.slice(0, 2).map((c) => (
-                              <span key={c.id} className="text-[10px] text-[#666666]">
-                                {c.username}: {c.comment.slice(0, 18)}
-                                {c.comment.length > 18 ? "…" : ""}
-                              </span>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {comments.slice(0, 3).map((c) => (
+                              <HoverCard key={c.id}>
+                                <HoverCardTrigger asChild>
+                                  <button
+                                    onClick={() => setCommentTarget(m)}
+                                    className="flex items-center gap-1.5 rounded-full border-2 border-[#e0d8cc] bg-white px-2 py-1 text-left transition hover:-translate-y-0.5"
+                                  >
+                                    <Avatar className="h-5 w-5">
+                                      {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
+                                      <AvatarFallback className="bg-[#f5c040]/30 text-[8px] font-bold text-[#2d2d2d]">
+                                        {c.username?.slice(0, 1).toUpperCase() || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-[10px] text-[#666666]">
+                                      {c.comment.slice(0, 12)}
+                                      {c.comment.length > 12 ? "…" : ""}
+                                    </span>
+                                  </button>
+                                </HoverCardTrigger>
+                                <HoverCardContent className="w-72">
+                                  <div className="flex items-center gap-2.5">
+                                    <Avatar className="h-10 w-10 rounded-xl">
+                                      {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
+                                      <AvatarFallback className="bg-[#f5c040]/30 font-bold text-[#2d2d2d]">
+                                        {c.username?.slice(0, 1).toUpperCase() || "?"}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0">
+                                      <p className="font-bold text-sm text-[#2d2d2d]">{c.username}</p>
+                                      <p className="text-xs text-[#b0a898]">
+                                        osuID: {c.userId}
+                                        {c.createdAt ? ` · ${formatDateTime(c.createdAt)}` : ""}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <p className="mt-3 text-sm leading-relaxed text-[#666666]">
+                                    {c.comment}
+                                  </p>
+                                </HoverCardContent>
+                              </HoverCard>
                             ))}
-                            {comments.length > 2 && (
-                              <span className="text-[10px] font-bold text-[#e85d75]">
-                                +{comments.length - 2}
-                              </span>
+                            {comments.length > 3 && (
+                              <button
+                                onClick={() => setCommentTarget(m)}
+                                className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[10px] font-bold text-[#e85d75]"
+                              >
+                                +{comments.length - 3}
+                              </button>
                             )}
-                          </button>
+                          </div>
                         )}
-
-                        {/* Actions */}
-                        <div className="mt-3 flex flex-wrap gap-1.5">
-                          <Button variant="outline" size="sm" onClick={() => void toggleApproved(m)}>
-                            {m.approved ? "取消审核" : "通过审核"}
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => void togglePadding(m)}>
-                            {m.padding ? "取消 padding" : "标为 padding"}
-                          </Button>
-                          <Button variant="yellow" size="sm" onClick={() => setCommentTarget(m)}>
-                            评论
-                          </Button>
-                          <a
-                            href={osuMapUrl(m)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex h-8 items-center rounded-lg border-2 border-[#e0d8cc] bg-white px-3 text-xs font-bold text-[#6b7fb5] shadow-[2px_2px_0px_rgba(0,0,0,0.06)] transition hover:-translate-y-0.5"
-                          >
-                            打开 osu
-                          </a>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => void removeMap(m)}
-                            disabled={busy === `delete-${m.id}`}
-                          >
-                            删除
-                          </Button>
-                        </div>
                       </div>
                     </Card>
+                    </ContextMenuTrigger>
+                    <ContextMenuContent>
+                      <ContextMenuItem onSelect={() => void toggleApproved(m)}>
+                        {m.approved ? "取消审核" : "通过审核"}
+                      </ContextMenuItem>
+                      <ContextMenuItem onSelect={() => void togglePadding(m)}>
+                        {m.padding ? "取消审图" : "标为审图"}
+                      </ContextMenuItem>
+                      <ContextMenuItem onSelect={() => setAdjustTarget(m)}>
+                        调整参数
+                      </ContextMenuItem>
+                      <ContextMenuSeparator />
+                      <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
+                        删除
+                      </ContextMenuItem>
+                    </ContextMenuContent>
+                    </ContextMenu>
                   );
                 })}
               </div>
             </section>
           ))}
+        </div>
+      )}
+
+      {lazyList.length < filtered.length && (
+        <div className="mt-6 flex justify-center">
+          <Button variant="outline" onClick={() => setVisible((v) => v + 60)}>
+            加载更多（{lazyList.length} / {filtered.length}）
+          </Button>
         </div>
       )}
 
@@ -1101,6 +1638,13 @@ export default function MapSelectionManagement() {
         open={!!commentTarget}
         onOpenChange={(o) => !o && setCommentTarget(null)}
         map={commentTarget}
+      />
+
+      <AdjustStatsDialog
+        open={!!adjustTarget}
+        onOpenChange={(o) => !o && setAdjustTarget(null)}
+        map={adjustTarget}
+        onSaved={load}
       />
     </div>
   );

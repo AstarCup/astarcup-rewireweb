@@ -14,10 +14,8 @@ import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn, fmt } from "@/lib/utils";
 import { useApp } from "@/lib/app-context";
-import { MODS_ORDER, seasonOptions as buildSeasonOptions, type MapSelection } from "@/lib/types";
+import { MODS_ORDER, CATEGORY_OPTIONS, seasonOptions as buildSeasonOptions, type MapSelection } from "@/lib/types";
 import { BulkDownload, MapHoverCard, downloadSingleMap } from "@/components/mappool/MapPoolTools";
-
-const CATEGORY_OPTIONS = ["全部", "资格赛", "32强", "16强", "8强", "半决赛", "决赛", "总决赛"];
 
 type ViewMode = "card" | "table";
 
@@ -331,9 +329,10 @@ export default function MappoolPage() {
                   <SelectValue placeholder="选择轮次" />
                 </SelectTrigger>
                 <SelectContent>
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
+                  <SelectItem value="全部">全部</SelectItem>
+                  {CATEGORY_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

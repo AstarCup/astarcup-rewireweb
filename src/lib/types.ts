@@ -21,7 +21,7 @@ export interface SessionUser {
   country?: string | null;
   userGroup: string;
   registrationStatus: string;
-  season?: string | null;
+  season?: string[] | null;
   accuracy?: number | null;
   stamina?: number | null;
   firstSight?: number | null;
@@ -426,6 +426,20 @@ export const CATEGORIES = [
   "决赛",
   "总决赛",
 ] as const;
+
+/** 图池阶段选项（value 为后端存储值，label 为中文显示） */
+export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: "qualification", label: "资格赛" },
+  { value: "ro16", label: "16强" },
+  { value: "quarterfinals", label: "8强" },
+  { value: "semifinals", label: "半决赛" },
+  { value: "finals", label: "决赛" },
+  { value: "grandfinals", label: "总决赛" },
+];
+
+export const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
+  CATEGORY_OPTIONS.map((o) => [o.value, o.label]),
+);
 
 /** Return unique mods in the canonical front-of-mod order. */
 export function modCountByOrder(list: string[]): string[] {

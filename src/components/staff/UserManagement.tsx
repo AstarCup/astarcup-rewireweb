@@ -113,11 +113,6 @@ export default function UserManagement() {
         注册用户
       </SectionTitle>
 
-      <div className="rounded-2xl border-2 border-[#e0d8cc] bg-[#fdf6ee] p-4 text-xs text-[#666666]">
-        报名流程说明：选手先在报名页提交报名 → 管理员在此「通过审核」后选手才能获得选手权限；
-        也可通过「设为管理员/玩家」调整角色分组，或直接修改报名状态。
-      </div>
-
       {/* 搜索与筛选 */}
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <div className="relative">

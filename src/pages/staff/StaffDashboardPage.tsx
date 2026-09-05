@@ -16,13 +16,13 @@ import SettingsManagement from "@/components/staff/SettingsManagement";
 
 const TABS = [
   { key: "overview", label: "概览", Comp: OverviewManagement },
-  { key: "schedules", label: "比赛预约管理", Comp: MatchScheduleManagement },
-  { key: "streaming", label: "房间加入", Comp: StreamingManagement },
   { key: "mappool", label: "选图管理", Comp: MapSelectionManagement },
   { key: "replays", label: "回放收集", Comp: ReplayCollectionManagement },
-  { key: "rooms", label: "房间管理", Comp: RoomManagement },
-  { key: "matchups", label: "对战列表", Comp: MatchupManagement },
   { key: "users", label: "用户管理", Comp: UserManagement },
+  { key: "matchups", label: "对战列表", Comp: MatchupManagement },
+  { key: "rooms", label: "房间管理", Comp: RoomManagement },
+  { key: "schedules", label: "比赛预约管理", Comp: MatchScheduleManagement },
+  { key: "streaming", label: "房间加入", Comp: StreamingManagement },
   { key: "settings", label: "系统设置", Comp: SettingsManagement },
 ] as const;
 
