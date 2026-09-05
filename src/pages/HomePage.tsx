@@ -57,6 +57,8 @@ const news = Object.entries(newsModules)
   });
 
 const medalColors = ["bg-[#f5c040]", "bg-[#cfd3c9]", "bg-[#e0a47e]"];
+const rankLabel = (rank: number) =>
+  rank === 1 ? "Winner" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank} 名`;
 
 export default function HomePage() {
   const { user, permissions } = useApp();
@@ -214,10 +216,10 @@ export default function HomePage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-bold text-[#2d2d2d]">{w.playerName}</span>
-                      <Badge variant="outline">{w.rank} 名</Badge>
+                      <Badge variant="outline">{rankLabel(w.rank)}</Badge>
                     </div>
                     <p className="mt-1 text-xs text-[#b0a898]">
-                      {w.country} · {w.season?.toUpperCase() ?? "Season"}
+                      {w.season?.toUpperCase() ?? "Season"}
                     </p>
                   </div>
                 </div>

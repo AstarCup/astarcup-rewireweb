@@ -7,7 +7,6 @@ import HomePage from "@/pages/HomePage";
 import RegisterPage from "@/pages/RegisterPage";
 import PlayerInfoPage from "@/pages/PlayerInfoPage";
 import StaffDashboardPage from "@/pages/staff/StaffDashboardPage";
-import ObsOverlayPage from "@/pages/obs/ObsOverlayPage";
 import NewsPage from "@/pages/NewsPage";
 import NewsDetailPage from "@/pages/NewsDetailPage";
 import GuidePage from "@/pages/GuidePage";
@@ -31,11 +30,6 @@ function PublicLayout() {
   );
 }
 
-function BareLayout() {
-  // OBS overlay occupies the whole viewport — no chrome.
-  return <Outlet />;
-}
-
 export default function App() {
   return (
     <>
@@ -55,9 +49,6 @@ export default function App() {
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/photos" element={<PhotosPage />} />
         <Route path="*" element={<NotFoundPage />} />
-      </Route>
-      <Route element={<BareLayout />}>
-        <Route path="/obs-overlay" element={<ObsOverlayPage />} />
       </Route>
     </Routes>
     </>

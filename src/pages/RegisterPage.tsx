@@ -53,7 +53,7 @@ export default function RegisterPage() {
   if (user) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 md:px-8">
-        <Logo className="text-2xl" />
+        <Logo full />
         <Card className="mt-8">
           <CardHeader>
             <CardTitle>已经登录</CardTitle>
@@ -85,7 +85,7 @@ export default function RegisterPage() {
   return (
     <div className="mx-auto max-w-xl px-4 py-16 md:px-8">
       <div className="flex justify-center">
-        <Logo className="text-2xl" />
+        <Logo full />
       </div>
 
       <Card className="mt-8 rotate-[0.2deg]">

@@ -1,9 +1,18 @@
+import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { LogOut, User, ShieldCheck } from "lucide-react";
+import { LogOut, Menu, User, ShieldCheck } from "lucide-react";
 import Logo from "./Logo";
 import MessageCenter from "./MessageCenter";
 import { useApp } from "@/lib/app-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Drawer,
+  DrawerTrigger,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +36,7 @@ const LINKS = [
 export default function Navbar() {
   const { user, permissions, logout } = useApp();
   const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -36,9 +46,52 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-40 border-b-2 border-[#e0d8cc] bg-[#fdf6ee]/95 px-4 md:px-8 backdrop-blur-sm relative paper-texture">
       <div className="flex h-16 items-center justify-between gap-6">
-        <Link to="/" aria-label="首页" className="hover:-translate-y-0.5 transition-transform duration-200">
-          <Logo />
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* 移动端：图标改为菜单按钮，点击打开 Drawer */}
+          <Drawer open={menuOpen} onOpenChange={setMenuOpen}>
+            <DrawerTrigger asChild>
+              <button
+                className="grid h-9 w-9 place-items-center rounded-xl bg-[#e85d75] text-[#fdf6ee] shadow-[2px_2px_0px_rgba(0,0,0,0.12)] rotate-[-2deg] transition-all duration-200 hover:-translate-y-0.5 md:hidden"
+                aria-label="打开菜单"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </DrawerTrigger>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerTitle>astracup</DrawerTitle>
+                <DrawerDescription>导航菜单</DrawerDescription>
+              </DrawerHeader>
+              <div className="grid gap-1 overflow-y-auto px-4 pb-6">
+                {LINKS.map((l) => (
+                  <NavLink
+                    key={l.to}
+                    to={l.to}
+                    end={l.to === "/"}
+                    onClick={() => setMenuOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        "rounded-xl px-3 py-2.5 text-sm font-bold text-[#666666] transition-all duration-200 hover:bg-white hover:text-[#2d2d2d]",
+                        isActive && "bg-white text-[#2d2d2d] shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
+                      )
+                    }
+                  >
+                    {l.label}
+                  </NavLink>
+                ))}
+              </div>
+            </DrawerContent>
+          </Drawer>
+
+          {/* 桌面端：显示品牌 Logo */}
+          <Link
+            to="/"
+            aria-label="首页"
+            className="hidden hover:-translate-y-0.5 transition-transform duration-200 md:block"
+          >
+            <Logo />
+          </Link>
+        </div>
 
         <div className="hidden items-center gap-1 md:flex">
           {LINKS.map((l) => (
