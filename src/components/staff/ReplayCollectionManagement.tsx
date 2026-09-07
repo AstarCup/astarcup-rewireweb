@@ -72,6 +72,13 @@ export default function ReplayCollectionManagement() {
 
   const curSeason = season || seasonOptions[seasonOptions.length - 1]?.value || "s1";
 
+  // 默认直接选中最新赛季，不提供「最新赛季」占位选项
+  useEffect(() => {
+    if (season) return;
+    const latest = seasonOptions[seasonOptions.length - 1]?.value;
+    if (latest) setSeason(latest);
+  }, [season, seasonOptions]);
+
   const loadPool = async () => {
     setLoading(true);
     const res = await api.get<MapSelection[]>(
@@ -254,7 +261,6 @@ export default function ReplayCollectionManagement() {
               <SelectValue placeholder="最新" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">最新赛季</SelectItem>
               {seasonOptions.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}

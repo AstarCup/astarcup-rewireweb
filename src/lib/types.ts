@@ -71,6 +71,8 @@ export interface MatchRoom {
   schedules?: MatchSchedule[];
   scheduleIds?: number[];
   scoresCount?: number;
+  /** 是否已被安排/占用（有赛程，或被 pending/scheduled 对战占用），不可再被预约 */
+  claimed?: boolean;
 }
 
 export interface MatchSchedule {

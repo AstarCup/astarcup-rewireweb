@@ -5,8 +5,8 @@ import { api, qs } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
 import { useFetch, useAsync, LoadingBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
-import { fmtInt } from "@/lib/utils";
-import type { MatchRoom, MatchSchedule, NextMatch, Settings } from "@/lib/types";
+import { fmtInt, formatDateTime } from "@/lib/utils";
+import type { MatchRoom, NextMatch, Settings } from "@/lib/types";
 import { seasonLabel } from "@/lib/types";
 import {
   Card,
@@ -38,14 +38,16 @@ import {
 
 const statusLabels: Record<string, string> = {
   available: "可预约",
+  pending: "待确认",
   scheduled: "已预约",
   completed: "已完成",
 };
 
-const statusBadgeVariant: Record<string, "teal" | "blue" | "yellow"> = {
+const statusBadgeVariant: Record<string, "teal" | "blue" | "yellow" | "primary"> = {
   available: "teal",
+  pending: "yellow",
   scheduled: "blue",
-  completed: "yellow",
+  completed: "primary",
 };
 
 const registrationLabels: Record<string, string> = {
@@ -68,7 +70,14 @@ export default function PlayerInfoPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string>("");
   const rooms = useAsync<MatchRoom[]>();
-  const booking = useAsync<MatchSchedule>();
+  const booking = useAsync<{ matchupId: number; messageId: number; room?: MatchRoom }>();
+  // 只显示可预约房间：未被安排/占用，且距比赛开始超过 2 小时（已过期或临近 2 小时内均不可约）
+  const BOOK_WINDOW_MS = 2 * 60 * 60 * 1000;
+  const bookableRooms = (rooms.data ?? []).filter((r) => {
+    if (r.claimed) return false;
+    if (!r.matchTime) return true;
+    return new Date(r.matchTime).getTime() - Date.now() > BOOK_WINDOW_MS;
+  });
 
   // Redirect unauthenticated users to register.
   useEffect(() => {
@@ -104,7 +113,7 @@ export default function PlayerInfoPage() {
   const confirmBooking = async () => {
     if (!nextMatch) return;
     const res = await booking.run(() =>
-      api.post<MatchSchedule>("/api/schedules", {
+      api.post<{ matchupId: number; messageId: number; room?: MatchRoom }>("/api/schedules", {
         matchupId: nextMatch.id,
         roomId: Number(selectedRoomId),
         sendNotification: true,
@@ -274,12 +283,22 @@ export default function PlayerInfoPage() {
                     )}
                   </div>
                 </div>
-                {nextMatch.room?.roomName && (
-                  <div className="rounded-xl bg-[#fdf6ee] px-4 py-3 text-sm text-[#666666]">
-                    已分配房间：
-                    <span className="font-bold text-[#2d2d2d]">
-                      {nextMatch.room.roomName}
-                    </span>
+                {nextMatch.room && (
+                  <div className="space-y-1 rounded-xl bg-[#fdf6ee] px-4 py-3 text-sm text-[#666666]">
+                    <div>
+                      房间：
+                      <span className="font-bold text-[#2d2d2d]">
+                        {nextMatch.room.roomName}
+                      </span>
+                    </div>
+                    <div>
+                      时间：
+                      <span className="font-bold text-[#2d2d2d]">
+                        {formatDateTime(
+                          nextMatch.room.matchDate || nextMatch.room.matchTime,
+                        )}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -317,15 +336,17 @@ export default function PlayerInfoPage() {
             </SelectTrigger>
             <SelectContent>
               {rooms.loading && <SelectItem value="-1">加载中…</SelectItem>}
-              {rooms.data && rooms.data.length === 0 && (
+              {rooms.data && bookableRooms.length === 0 && (
                 <SelectItem value="none" disabled>
                   暂无空闲房间
                 </SelectItem>
               )}
-              {rooms.data?.map((room) => (
+              {bookableRooms.map((room) => (
                 <SelectItem key={room.id} value={String(room.id)}>
-                  {room.roomName}{" "}
-                  {room.roundNumber ? `(Round ${room.roundNumber})` : ""}
+                  {room.roomName}
+                  {room.roundNumber ? ` (Round ${room.roundNumber})` : ""}
+                  {" · "}
+                  {formatDateTime(room.matchTime)}
                 </SelectItem>
               ))}
             </SelectContent>

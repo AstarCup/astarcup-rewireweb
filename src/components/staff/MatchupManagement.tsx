@@ -28,8 +28,9 @@ import type { PlayerMatchup, PlayerStub } from "@/lib/types";
 
 const STATUS_META: Record<string, { label: string; variant: "primary" | "teal" | "yellow" | "blue" | "outline" }> = {
   available: { label: "可预约", variant: "teal" },
-  scheduled: { label: "已排期", variant: "yellow" },
-  completed: { label: "已完成", variant: "blue" },
+  pending: { label: "待确认", variant: "yellow" },
+  scheduled: { label: "已排期", variant: "blue" },
+  completed: { label: "已完成", variant: "outline" },
 };
 
 function statusVariant(s: string): "primary" | "teal" | "yellow" | "blue" | "outline" {
@@ -191,6 +192,7 @@ export default function MatchupManagement() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="available">可预约</SelectItem>
+                    <SelectItem value="pending">待确认</SelectItem>
                     <SelectItem value="scheduled">已排期</SelectItem>
                     <SelectItem value="completed">已完成</SelectItem>
                   </SelectContent>

@@ -559,13 +559,11 @@ export default function MapSelectionManagement() {
 
   const seasonOptions = buildSeasonOptions(settings);
 
-  // 赛季筛选默认取当前赛季，未设置时取最新赛季；同步完成前不拉取图池数据
+  // 赛季筛选默认取当前赛季，未设置时取最新赛季；仅初始化一次，
+  // 用户后续选择（含「全部」）不再被覆盖
   const [seasonSettled, setSeasonSettled] = useState(false);
   useEffect(() => {
-    if (season) {
-      setSeasonSettled(true);
-      return;
-    }
+    if (seasonSettled) return;
     const cur = settings?.current_season;
     if (cur && seasonOptions.some((o) => o.value === cur)) {
       setSeason(cur);
@@ -576,7 +574,7 @@ export default function MapSelectionManagement() {
     }
     setSeasonSettled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings, seasonOptions, season]);
+  }, [settings, seasonOptions, seasonSettled]);
 
   const { data, loading, error, run } = useAsync<MapSelection[]>();
   const load = useCallback(
@@ -1178,7 +1176,7 @@ export default function MapSelectionManagement() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <Label className="text-xs text-[#b0a898]">赛季</Label>
-          <Select value={season} onValueChange={setSeason}>
+          <Select value={season} onValueChange={(v) => { setSeasonSettled(true); setSeason(v); }}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="全部" />
             </SelectTrigger>

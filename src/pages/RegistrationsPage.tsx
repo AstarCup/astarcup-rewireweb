@@ -170,9 +170,10 @@ export default function RegistrationsPage() {
 
   const currentSeason = settings?.current_season;
 
+  // 默认取当前赛季；仅当用户尚未选择时填充，选择「全部」("") 后不再覆盖
   useEffect(() => {
     if (!settings) return;
-    setSeason((s) => s ?? currentSeason ?? "");
+    setSeason((s) => (s === undefined ? currentSeason ?? "" : s));
   }, [settings, currentSeason]);
 
   const loadedRef = useRef(false);
@@ -237,7 +238,7 @@ export default function RegistrationsPage() {
           ))}
           <div className="ml-auto flex items-center gap-2">
             <Label className="text-xs text-[#b0a898]">赛季</Label>
-            <Select value={season} onValueChange={setSeason}>
+            <Select value={season ?? ""} onValueChange={setSeason}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="全部" />
               </SelectTrigger>
