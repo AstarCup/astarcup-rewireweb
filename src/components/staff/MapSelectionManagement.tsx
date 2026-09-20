@@ -86,15 +86,6 @@ const STAT_FIELDS: { key: string; label: string }[] = [
   { key: "maxCombo", label: "MaxCombo" },
 ];
 
-function modLabel(m: MapSelection): string {
-  const pos = m.modPosition ?? "";
-  if (m.customModName) return `${m.customModName}${pos}`;
-  if (m.selectedMods?.toUpperCase() === "DT" && m.customDTRate) {
-    return `DT${pos}-${Number(m.customDTRate).toFixed(2)}x`;
-  }
-  return `${m.selectedMods ?? "NM"}${pos}`;
-}
-
 function starColor(s: number | null): string {
   const v = s ?? 0;
   if (v < 2) return "#4a90d9";
@@ -300,8 +291,18 @@ function BatchApproveDialog({
                       className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
                       style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
                     >
-                      {modLabel(m)}
+                      {`${modBase(m)}${m.modPosition ?? ""}`}
                     </span>
+                    {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
+                      <span className="ml-1 text-xs font-bold text-[#a78bfa]">
+                        x{Number(m.customDTRate).toFixed(2)}
+                      </span>
+                    )}
+                    {m.customModName && (
+                      <span className="ml-1 text-xs font-bold text-(--pc-slate)">
+                        {m.customModName}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2 font-bold text-(--pc-ink)">{m.title}</td>
                   <td className="px-3 py-2 text-(--pc-slate)">{m.version}</td>
@@ -1337,8 +1338,18 @@ export default function MapSelectionManagement() {
                       className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
                       style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
                     >
-                      {modLabel(m)}
+                      {`${modBase(m)}${m.modPosition ?? ""}`}
                     </span>
+                    {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
+                      <span className="ml-1 text-xs font-bold text-[#a78bfa]">
+                        x{Number(m.customDTRate).toFixed(2)}
+                      </span>
+                    )}
+                    {m.customModName && (
+                      <span className="ml-1 text-xs font-bold text-(--pc-slate)">
+                        {m.customModName}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2.5 font-mono text-xs text-[#e85d75]">{m.beatmapId}</td>
                   <td className="px-3 py-2.5">
@@ -1456,8 +1467,18 @@ export default function MapSelectionManagement() {
                               className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
                               style={{ backgroundColor: modColor }}
                             >
-                              {modLabel(m)}
+                              {`${modBase(m)}${m.modPosition ?? ""}`}
                             </span>
+                            {m.customModName && (
+                              <span className="text-xs font-bold text-(--pc-slate)">
+                                {m.customModName}
+                              </span>
+                            )}
+                            {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
+                              <span className="text-xs font-bold text-[#a78bfa]">
+                                x{Number(m.customDTRate).toFixed(2)}
+                              </span>
+                            )}
                             {category === "全部" && m.category && (
                               <Badge variant="outline">
                                 {CATEGORY_LABEL[m.category] ?? m.category}
