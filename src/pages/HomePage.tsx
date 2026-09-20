@@ -39,6 +39,24 @@ const quickLinks = [
   { to: "/contact", label: "联系我们", desc: "STAFF · 报名 · 疑问", icon: MessageCircle },
 ];
 
+const projectLinks = [
+  {
+    label: "osu! Plus Plus",
+    desc: "OPP工具箱",
+    href: "https://github.com/osuplusplus/OPP",
+  },
+  {
+    label: "Ez2Lazer",
+    desc: "支持asio、强化mania的第三方客户端",
+    href: "https://github.com/SK-la/Ez2Lazer",
+  },
+  {
+    label: "g0v0 lazer",
+    desc: "咕服专用客户端，支持asio",
+    href: "https://github.com/GooGuTeam/g0v0/",
+  },
+];
+
 const newsModules = import.meta.glob("@/data/news/*.md", {
   query: "?raw",
   import: "default",
@@ -87,7 +105,7 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-6xl">
             <div className="flex flex-col items-start gap-6">
               <AnimatedLogo />
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex w-full flex-wrap items-center justify-center gap-3 pt-2">
                 {!user ? (
                   <Button asChild size="lg" variant="primary">
                     <Link to="/register">登录 / 报名</Link>
@@ -118,6 +136,24 @@ export default function HomePage() {
                 )}
               </div>
             </div>
+        </div>
+      </section>
+
+      {/* Project quick links */}
+      <section className="mx-auto max-w-6xl px-4 py-6 md:px-8">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {projectLinks.map((l) => (
+            <a
+              key={l.href}
+              href={l.href}
+              target="_blank"
+              rel="noreferrer"
+              className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
+            >
+              <p className="font-bold text-xl text-(--pc-ink)">{l.label}</p>
+              <p className="mt-1 text-xs text-(--pc-faint)">{l.desc}</p>
+            </a>
+          ))}
         </div>
       </section>
 

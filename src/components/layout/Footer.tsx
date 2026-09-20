@@ -3,7 +3,8 @@ import { useApp } from "@/lib/app-context";
 
 const EXTERNAL_LINKS = [
   { label: "osu! 官网", href: "https://osu.ppy.sh" },
-  { label: "g0v0 官网", href: "https://lazer-api.g0v0.top" },
+  { label: "g0v0 官网", href: "https://lazer.g0v0.top/" },
+  { label: "osu! Plus Plus", href: "https://github.com/osuplusplus/OPP" },
   { label: "QQ 群", href: "https://qm.qq.com/q/sFydxoQtaw" },
   { label: "Bilibili", href: "https://space.bilibili.com/11872433" },
 ];
