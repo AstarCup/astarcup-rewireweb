@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Copy, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -321,8 +321,17 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
 
 export default function MappoolPage() {
   const { settings } = useApp();
-  const seasonChosenRef = useRef(!!localStorage.getItem("mappool_season"));
-  const categoryChosenRef = useRef(!!localStorage.getItem("mappool_category"));
+  // 首次载入(init=false)允许自动同步到最新赛季/当前阶段并持久化；之后(init=true)保持用户选择
+  // 用 useState 初始化器在渲染期同步写入，确保一打开页面就落盘
+  const [init] = useState(() => {
+    const done = localStorage.getItem("mappool_init") === "true";
+    try {
+      localStorage.setItem("mappool_init", "true");
+    } catch {
+      /* ignore */
+    }
+    return done;
+  });
 
   const [category, setCategory] = useState<string>(
     () => localStorage.getItem("mappool_category") ?? "全部",
@@ -344,10 +353,7 @@ export default function MappoolPage() {
   };
   const [season, setSeason] = useState<string>(() => {
     const saved = localStorage.getItem("mappool_season");
-    if (saved) {
-      seasonChosenRef.current = true;
-      return saved;
-    }
+    if (saved) return saved;
     return settings?.current_season || "s1";
   });
 
@@ -358,22 +364,28 @@ export default function MappoolPage() {
       : [{ value: settings?.current_season || "s1", label: settings?.current_season || "S1" }];
   })();
 
-  // Sync season to the tournament setting until the user picks one.
+  // 仅在第一次载入时同步赛季到设置中的当前赛季，并持久化；之后保持用户选择
   useEffect(() => {
-    if (seasonChosenRef.current) return;
+    if (init) return;
     const cur = settings?.current_season;
-    if (cur && cur !== season) setSeason(cur);
+    if (cur && cur !== season) {
+      localStorage.setItem("mappool_season", cur);
+      setSeason(cur);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.current_season]);
+  }, [settings?.current_season, season]);
 
-  // 轮次默认取设置中的当前阶段（短码 → 类别长值），直到用户手动选择
+  // 仅在第一次载入时同步轮次到设置中的当前阶段（短码 → 类别长值），并持久化；之后保持用户选择
   useEffect(() => {
-    if (categoryChosenRef.current) return;
+    if (init) return;
     const stage = settings?.current_season_stage;
     const mapped = stage ? STAGE_TO_CATEGORY[stage] : undefined;
-    if (mapped && mapped !== category) setCategory(mapped);
+    if (mapped && mapped !== category) {
+      localStorage.setItem("mappool_category", mapped);
+      setCategory(mapped);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings?.current_season_stage]);
+  }, [settings?.current_season_stage, category]);
 
   // Reflect category in the URL.
   useEffect(() => {
@@ -384,12 +396,12 @@ export default function MappoolPage() {
   // 赛季/轮次同步完成前不拉取图池：等两个 Select 稳定到最终值再加载
   const settingsReady = !!settings?.seasons || !!settings?.current_season;
   const seasonSettled =
-    seasonChosenRef.current || !settings?.current_season || season === settings?.current_season;
+    init || !settings?.current_season || season === settings?.current_season;
   const stageMapped = settings?.current_season_stage
     ? STAGE_TO_CATEGORY[settings.current_season_stage]
     : undefined;
   const categorySettled =
-    categoryChosenRef.current || !settings?.current_season_stage || !stageMapped || category === stageMapped;
+    init || !settings?.current_season_stage || !stageMapped || category === stageMapped;
   const { data, loading, error, run } = useAsync<MapSelection[]>();
 
   const poolUrl = (s: string, c: string) =>
@@ -433,7 +445,7 @@ export default function MappoolPage() {
               <Select
                 value={season}
                 onValueChange={(v) => {
-                  seasonChosenRef.current = true;
+                  localStorage.setItem("mappool_season", v);
                   setSeason(v);
                 }}
               >
@@ -454,7 +466,7 @@ export default function MappoolPage() {
               <Select
                 value={category}
                 onValueChange={(v) => {
-                  categoryChosenRef.current = true;
+                  localStorage.setItem("mappool_category", v);
                   setCategory(v);
                 }}
               >

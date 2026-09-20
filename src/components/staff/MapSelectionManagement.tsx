@@ -545,8 +545,22 @@ function AdjustStatsDialog({
 
 export default function MapSelectionManagement() {
   const { user, settings } = useApp();
-  const [season, setSeason] = useState("");
-  const [category, setCategory] = useState("qualification");
+  // 与图池页共用 mappool_init：首次载入自动同步到当前赛季，之后保持用户选择
+  const [init] = useState(() => {
+    const done = localStorage.getItem("mappool_init") === "true";
+    try {
+      localStorage.setItem("mappool_init", "true");
+    } catch {
+      /* ignore */
+    }
+    return done;
+  });
+  const [season, setSeason] = useState<string>(
+    () => localStorage.getItem("mappool_season") ?? "",
+  );
+  const [category, setCategory] = useState<string>(
+    () => localStorage.getItem("mappool_category") ?? "qualification",
+  );
   const [modFilter, setModFilter] = useState("全部");
   const [paddingFilter, setPaddingFilter] = useState("全部");
   const [search, setSearch] = useState("");
@@ -559,22 +573,22 @@ export default function MapSelectionManagement() {
 
   const seasonOptions = buildSeasonOptions(settings);
 
-  // 赛季筛选默认取当前赛季，未设置时取最新赛季；仅初始化一次，
-  // 用户后续选择（含「全部」）不再被覆盖
-  const [seasonSettled, setSeasonSettled] = useState(false);
+  // 仅在第一次载入时同步赛季到当前赛季（未设置时取最新），并持久化；之后保持用户选择
   useEffect(() => {
-    if (seasonSettled) return;
+    if (init) return;
     const cur = settings?.current_season;
     if (cur && seasonOptions.some((o) => o.value === cur)) {
+      localStorage.setItem("mappool_season", cur);
       setSeason(cur);
     } else if (seasonOptions.length > 0) {
-      setSeason(seasonOptions[seasonOptions.length - 1].value);
-    } else {
-      return; // 设置尚未加载完成
+      const fallback = seasonOptions[seasonOptions.length - 1].value;
+      localStorage.setItem("mappool_season", fallback);
+      setSeason(fallback);
     }
-    setSeasonSettled(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings, seasonOptions, seasonSettled]);
+  }, [settings, seasonOptions, init]);
+
+  const seasonReady = init || !!settings?.seasons || !!settings?.current_season;
 
   const { data, loading, error, run } = useAsync<MapSelection[]>();
   const load = useCallback(
@@ -592,10 +606,10 @@ export default function MapSelectionManagement() {
   );
 
   useEffect(() => {
-    if (!seasonSettled) return;
+    if (!seasonReady) return;
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seasonSettled, load]);
+  }, [seasonReady, load]);
 
   // Batch-fetch comments for the visible pool.
   useEffect(() => {
@@ -916,7 +930,7 @@ export default function MapSelectionManagement() {
   const [commentTarget, setCommentTarget] = useState<MapSelection | null>(null);
   const [adjustTarget, setAdjustTarget] = useState<MapSelection | null>(null);
 
-  if (!seasonSettled || loading) return <LoadingBlock label="加载选图中…" />;
+  if (!seasonReady || loading) return <LoadingBlock label="加载选图中…" />;
   if (error || !data) return <ErrorBlock message={error || "没有数据"} onRetry={load} />;
 
   const selectedMaps = data.filter((m) => selectedIds.has(m.id));
@@ -1176,7 +1190,13 @@ export default function MapSelectionManagement() {
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <Label className="text-xs text-(--pc-faint)">赛季</Label>
-          <Select value={season} onValueChange={(v) => { setSeasonSettled(true); setSeason(v); }}>
+          <Select
+            value={season}
+            onValueChange={(v) => {
+              localStorage.setItem("mappool_season", v);
+              setSeason(v);
+            }}
+          >
             <SelectTrigger className="w-32">
               <SelectValue placeholder="全部" />
             </SelectTrigger>
@@ -1192,7 +1212,13 @@ export default function MapSelectionManagement() {
         </div>
         <div className="flex items-center gap-2">
           <Label className="text-xs text-(--pc-faint)">类别</Label>
-          <Select value={category} onValueChange={setCategory}>
+          <Select
+            value={category}
+            onValueChange={(v) => {
+              localStorage.setItem("mappool_category", v);
+              setCategory(v);
+            }}
+          >
             <SelectTrigger className="w-28">
               <SelectValue />
             </SelectTrigger>
@@ -1445,14 +1471,15 @@ export default function MapSelectionManagement() {
                           </div>
                           <div className="flex items-center gap-1.5">
                             {!m.approved && (
-                              <button
-                                type="button"
+                              <span
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => toggleSelect(m.id)}
                                 title="批量选择"
-                                className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                               >
                                 <Checkbox checked={selectedIds.has(m.id)} className="pointer-events-none" />
-                              </button>
+                              </span>
                             )}
                             <HoverCard openDelay={0} closeDelay={0}>
                               <HoverCardTrigger asChild>

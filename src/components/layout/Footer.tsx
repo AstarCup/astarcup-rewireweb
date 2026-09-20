@@ -18,7 +18,7 @@ export default function Footer() {
         <div>
           <Logo full />
           <p className="mt-2 max-w-xs text-xs text-(--pc-slate)">
-            一场由 osu! 社区玩家共同举办的赛事。
+            星域来了，好急好急。
           </p>
         </div>
         <div>
