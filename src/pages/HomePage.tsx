@@ -129,32 +129,32 @@ export default function HomePage() {
               href="https://qm.qq.com/q/sFydxoQtaw"
               target="_blank"
               rel="noreferrer"
-              className="group relative flex flex-col justify-end rounded-2xl border-2 border-[#e0d8cc] bg-white p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
+              className="group relative flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
             >
-              <p className="font-bold text-xl text-[#2d2d2d]">QQ Group</p>
+              <p className="font-bold text-xl text-(--pc-ink)">QQ Group</p>
               <img
                 src="/QQGroupQRcode.png"
                 alt="QQ 群二维码"
-                className="absolute right-3 top-3 w-32 rounded-xl bg-white p-2 shadow-[3px_3px_0px_rgba(0,0,0,0.1)] opacity-0 transition group-hover:opacity-100"
+                className="absolute right-3 top-3 w-32 rounded-xl bg-(--pc-white) p-2 shadow-[3px_3px_0px_rgba(0,0,0,0.1)] opacity-0 transition group-hover:opacity-100"
               />
             </a>
             <a
               href="https://space.bilibili.com/11872433"
               target="_blank"
               rel="noreferrer"
-              className="flex flex-col justify-end rounded-2xl border-2 border-[#e0d8cc] bg-white p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
+              className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
             >
-              <p className="font-bold text-xl text-[#2d2d2d]">Bilibili</p>
-              <p className="mt-1 text-xs text-[#b0a898]">比赛录像与精彩集锦</p>
+              <p className="font-bold text-xl text-(--pc-ink)">Bilibili</p>
+              <p className="mt-1 text-xs text-(--pc-faint)">比赛录像与精彩集锦</p>
             </a>
             <a
               href="https://live.bilibili.com/725565"
               target="_blank"
               rel="noreferrer"
-              className="flex flex-col justify-end rounded-2xl border-2 border-[#e0d8cc] bg-white p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
+              className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
             >
-              <p className="font-bold text-xl text-[#2d2d2d]">Live</p>
-              <p className="mt-1 text-xs text-[#b0a898]">赛事直播频道</p>
+              <p className="font-bold text-xl text-(--pc-ink)">Live</p>
+              <p className="mt-1 text-xs text-(--pc-faint)">赛事直播频道</p>
             </a>
           </div>
         </section>
@@ -178,8 +178,8 @@ export default function HomePage() {
                       <Icon className="h-6 w-6" />
                     </span>
                     <div>
-                      <h3 className="font-bold text-lg text-[#2d2d2d]">{item.label}</h3>
-                      <p className="mt-1 text-xs text-[#b0a898]">{item.desc}</p>
+                      <h3 className="font-bold text-lg text-(--pc-ink)">{item.label}</h3>
+                      <p className="mt-1 text-xs text-(--pc-faint)">{item.desc}</p>
                     </div>
                   </div>
                 </PaperStack>
@@ -215,10 +215,10 @@ export default function HomePage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-bold text-[#2d2d2d]">{w.playerName}</span>
+                      <span className="truncate font-bold text-(--pc-ink)">{w.playerName}</span>
                       <Badge variant="outline">{rankLabel(w.rank)}</Badge>
                     </div>
-                    <p className="mt-1 text-xs text-[#b0a898]">
+                    <p className="mt-1 text-xs text-(--pc-faint)">
                       {w.season?.toUpperCase() ?? "Season"}
                     </p>
                   </div>
@@ -238,7 +238,7 @@ export default function HomePage() {
               <PaperStack className="h-full" layers={i % 2 === 0 ? 2 : 3}>
                 <div className="flex h-full flex-col gap-2 p-6">
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-bold text-lg text-[#2d2d2d]">
+                    <h3 className="font-bold text-lg text-(--pc-ink)">
                       {n.data.title || "未命名资讯"}
                     </h3>
                     {n.data.date && (
@@ -248,7 +248,7 @@ export default function HomePage() {
                     )}
                   </div>
                   {n.data.description && (
-                    <p className="text-xs leading-relaxed text-[#666666]">
+                    <p className="text-xs leading-relaxed text-(--pc-slate)">
                       {n.data.description}
                     </p>
                   )}

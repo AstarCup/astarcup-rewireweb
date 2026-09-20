@@ -86,7 +86,7 @@ export function BulkDownload({ maps, className }: { maps: MapSelection[]; classN
         )}
       </Button>
       {skipped > 0 && !busy && (
-        <span className="text-xs text-[#b0a898]">{skipped} 张原创图不支持打包</span>
+        <span className="text-xs text-(--pc-faint)">{skipped} 张原创图不支持打包</span>
       )}
     </div>
   );
@@ -123,14 +123,14 @@ export function MapHoverCard({
 
   return (
     <div
-      className="fixed z-50 w-[320px] overflow-hidden rounded-2xl border-2 border-[#e0d8cc] bg-white shadow-[6px_6px_0px_rgba(0,0,0,0.14)]"
+      className="fixed z-50 w-[320px] overflow-hidden rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) shadow-[6px_6px_0px_rgba(0,0,0,0.14)]"
       style={{ left, top }}
     >
       {map.coverUrl ? (
         <img src={map.coverUrl} alt={map.title} className="h-28 w-full object-cover" />
       ) : (
         <div className="flex h-28 w-full items-center justify-center bg-[#f5c040]/30 px-4">
-          <span className="line-clamp-2 text-center text-sm font-bold text-[#2d2d2d]">
+          <span className="line-clamp-2 text-center text-sm font-bold text-(--pc-ink)">
             {map.title || "未命名图"}
           </span>
         </div>
@@ -144,27 +144,27 @@ export function MapHoverCard({
             <Badge className="border-[#5cb8a5] bg-[#5cb8a5] text-[#fdf6ee]">
               {map.selectedMods ?? "NM"}
             </Badge>
-            {map.isCustome && <Badge variant="yellow">原创</Badge>}
+            {map.isCustome && <Badge variant="yellow">订制</Badge>}
             {map.isOrigin && <Badge variant="blue">原创</Badge>}
           </div>
-          <p className="mt-2 font-bold text-sm text-[#2d2d2d]">{titleOf(map)}</p>
-          {map.creator && <p className="text-xs text-[#b0a898]">谱师：{map.creator}</p>}
+          <p className="mt-2 font-bold text-sm text-(--pc-ink)">{titleOf(map)}</p>
+          {map.creator && <p className="text-xs text-(--pc-faint)">谱师：{map.creator}</p>}
         </div>
         <div className="grid grid-cols-4 gap-1.5">
           {stats.map(([k, v]) => (
-            <div key={k} className="rounded-lg bg-[#fdf6ee] px-1.5 py-1 text-center">
-              <p className="text-[10px] text-[#b0a898]">{k}</p>
-              <p className="text-xs font-bold text-[#2d2d2d]">{v}</p>
+            <div key={k} className="rounded-lg bg-(--pc-paper) px-1.5 py-1 text-center">
+              <p className="text-[10px] text-(--pc-faint)">{k}</p>
+              <p className="text-xs font-bold text-(--pc-ink)">{v}</p>
             </div>
           ))}
         </div>
         {map.customModName && (
-          <p className="text-xs text-[#666666]">
+          <p className="text-xs text-(--pc-slate)">
             自定义 Mod：<span className="font-bold text-[#6b7fb5]">{map.customModName}</span>
             {map.customDTRate ? ` (DT ×${map.customDTRate})` : ""}
           </p>
         )}
-        {map.comment && <p className="text-xs text-[#b0a898]">备注：{map.comment}</p>}
+        {map.comment && <p className="text-xs text-(--pc-faint)">备注：{map.comment}</p>}
         <div className="flex flex-wrap gap-1.5">
           <Button variant="outline" size="sm" onClick={copyBid}>
             <Copy className="h-3.5 w-3.5" />

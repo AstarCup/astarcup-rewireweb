@@ -12,17 +12,17 @@ export default function Footer() {
   const { settings } = useApp();
   const name = settings?.tournament_name || "Astracup";
   return (
-    <footer className="border-t-2 border-[#e0d8cc] bg-white px-4 py-10 md:px-8">
+    <footer className="border-t-2 border-(--pc-border) bg-(--pc-white) px-4 py-10 md:px-8">
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2">
         <div>
           <Logo full />
-          <p className="mt-2 max-w-xs text-xs text-[#666666]">
+          <p className="mt-2 max-w-xs text-xs text-(--pc-slate)">
             一场由 osu! 社区玩家共同举办的赛事。
           </p>
         </div>
         <div>
-          <h4 className="text-xl font-bold text-[#2d2d2d]">相关链接</h4>
-          <ul className="mt-2 space-y-1.5 text-xs text-[#666666]">
+          <h4 className="text-xl font-bold text-(--pc-ink)">相关链接</h4>
+          <ul className="mt-2 space-y-1.5 text-xs text-(--pc-slate)">
             {EXTERNAL_LINKS.map((l) => (
               <li key={l.href}>
                 <a
@@ -38,7 +38,7 @@ export default function Footer() {
           </ul>
         </div>
       </div>
-      <div className="mx-auto mt-8 max-w-6xl border-t-2 border-[#e0d8cc] pt-4 text-xs text-[#b0a898]">
+      <div className="mx-auto mt-8 max-w-6xl border-t-2 border-(--pc-border) pt-4 text-xs text-(--pc-faint)">
         © 2025 - {new Date().getFullYear()} {name} · 闽ICP备2026007493号-1 · 闽公网安备35063002000143号
       </div>
     </footer>

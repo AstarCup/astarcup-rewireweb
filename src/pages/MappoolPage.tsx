@@ -114,16 +114,16 @@ function ModHeader({ group }: { group: ModGroup }) {
       >
         {MOD_DISPLAY[group.mod] ?? group.mod}
       </span>
-      <span className="text-xs text-[#666666]">{group.items.length} 张图</span>
+      <span className="text-xs text-(--pc-slate)">{group.items.length} 张图</span>
     </div>
   );
 }
 
 function statCell(label: string, value: string) {
   return (
-    <div className="rounded-xl bg-[#fdf6ee] px-2 py-1.5 text-center">
-      <p className="text-[10px] text-[#b0a898]">{label}</p>
-      <p className="font-sans text-sm font-bold text-[#2d2d2d]">{value}</p>
+    <div className="rounded-xl bg-(--pc-paper) px-2 py-1.5 text-center">
+      <p className="text-[10px] text-(--pc-faint)">{label}</p>
+      <p className="font-sans text-sm font-bold text-(--pc-ink)">{value}</p>
     </div>
   );
 }
@@ -146,7 +146,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
       href={osuLink(map)}
       target="_blank"
       rel="noreferrer"
-      className="group overflow-hidden rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
+      className="group overflow-hidden rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
     >
       <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
         {map.coverUrl ? (
@@ -158,7 +158,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
           />
         ) : (
           <div className="grid h-full w-full place-items-center bg-[#f5c040]/30 px-4">
-            <span className="line-clamp-2 text-center text-sm font-bold text-[#2d2d2d]">
+            <span className="line-clamp-2 text-center text-sm font-bold text-(--pc-ink)">
               {map.title || "未命名图"}
             </span>
           </div>
@@ -173,7 +173,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
               .catch(() => toast({ variant: "destructive", title: "复制失败" }));
           }}
           title="复制 BID"
-          className="absolute right-11 top-2 grid h-8 w-8 place-items-center rounded-lg bg-white/90 text-[#6b7fb5] shadow-[2px_2px_0px_rgba(0,0,0,0.1)] opacity-0 transition hover:text-[#e85d75] group-hover:opacity-100"
+          className="absolute right-11 top-2 grid h-8 w-8 place-items-center rounded-lg bg-(--pc-white)/90 text-[#6b7fb5] shadow-[2px_2px_0px_rgba(0,0,0,0.1)] opacity-0 transition hover:text-[#e85d75] group-hover:opacity-100"
         >
           <Copy className="h-4 w-4" />
         </button>
@@ -184,7 +184,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
             handleDownload();
           }}
           title="下载谱面"
-          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg bg-white/90 text-[#6b7fb5] shadow-[2px_2px_0px_rgba(0,0,0,0.1)] opacity-0 transition hover:text-[#e85d75] group-hover:opacity-100"
+          className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-lg bg-(--pc-white)/90 text-[#6b7fb5] shadow-[2px_2px_0px_rgba(0,0,0,0.1)] opacity-0 transition hover:text-[#e85d75] group-hover:opacity-100"
         >
           <Download className="h-4 w-4" />
         </button>
@@ -198,12 +198,14 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
             {map.selectedMods ?? "NM"}
             {map.modPosition ?? ""}
           </span>
+          {map.isOrigin && <Badge variant="blue">原创</Badge>}
+          {map.isCustome && <Badge variant="yellow">定制</Badge>}
           {map.category && (
             <Badge variant="outline">{CATEGORY_LABEL[map.category] ?? map.category}</Badge>
           )}
         </div>
-        <p className="mt-2 line-clamp-2 font-bold text-[#2d2d2d]">{title}</p>
-        <p className="text-xs text-[#b0a898]">
+        <p className="mt-2 line-clamp-2 font-bold text-(--pc-ink)">{title}</p>
+        <p className="text-xs text-(--pc-faint)">
           [{map.version}] by {map.creator ?? "-"}
         </p>
         <div className="mt-3 grid grid-cols-4 gap-1.5">
@@ -223,22 +225,23 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
 
 function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean }) {
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+    <div className="overflow-hidden rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
       <table className="w-full text-left text-sm">
         <thead>
-          <tr className="border-b-2 border-[#e0d8cc] bg-[#fdf6ee]">
-            <th className="px-4 py-3 font-bold text-[#666666]">MOD</th>
-            <th className="min-w-25 min-h-9 px-4 py-3 font-bold text-[#666666]">封面</th>
-            <th className="w-full px-4 py-3 font-bold text-[#666666]">图名</th>
-            <th className="px-4 py-3 font-bold text-[#666666]">AR</th>
-            <th className="px-4 py-3 font-bold text-[#666666]">CS</th>
-            <th className="px-4 py-3 font-bold text-[#666666]">OD</th>
-            <th className="px-4 py-3 font-bold text-[#666666]">星级</th>
-            <th className="px-4 py-3 font-bold text-[#666666]">BPM</th>
-            <th className="px-4 py-3 font-bold text-[#666666]">时长</th>
+          <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">MOD</th>
+            <th className="min-w-25 min-h-9 px-4 py-3 font-bold text-(--pc-slate)">封面</th>
+            <th className="w-full px-4 py-3 font-bold text-(--pc-slate)">图名</th>
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">AR</th>
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">CS</th>
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">OD</th>
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">BPM</th>
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">时长</th>
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">Max</th>
             {group.items.some((m) => m.moddedStats?.totalHitObjects != null) && (
-              <th className="px-4 py-3 font-bold text-[#666666]">物件数</th>
+              <th className="px-4 py-3 font-bold text-(--pc-slate)">物件数</th>
             )}
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">星级</th>
           </tr>
         </thead>
         <tbody>
@@ -257,7 +260,7 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                     .catch(() => toast({ variant: "destructive", title: "复制失败" }));
                 }}
                 title="点击复制 BID"
-                className="cursor-pointer border-b border-[#e0d8cc]/60 transition-colors hover:bg-[#fdf6ee]"
+                className="cursor-pointer border-b border-(--pc-border)/60 transition-colors hover:bg-(--pc-paper)"
               >
                 <td className="px-4 py-3">
                   <span
@@ -287,23 +290,26 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                     href={osuLink(m)}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-bold text-[#2d2d2d] transition-colors hover:text-[#e85d75]"
+                    className="font-bold text-(--pc-ink) transition-colors hover:text-[#e85d75]"
                   >
                     {title}
                   </a>
                   {m.version && (
-                    <span className="ml-1 text-xs text-[#b0a898]">[{m.version}]</span>
+                    <span className="ml-1 text-xs text-(--pc-faint)">[{m.version}]</span>
                   )}
                 </td>
-                <td className="px-4 py-3 font-sans text-[#666666]">{fmt(m.ar)}</td>
-                <td className="px-4 py-3 font-sans text-[#666666]">{fmt(m.cs)}</td>
-                <td className="px-4 py-3 font-sans text-[#666666]">{fmt(m.od)}</td>
-                <td className="px-4 py-3 font-sans text-[#e85d75]">{fmt(m.starRating)}★</td>
-                <td className="px-4 py-3 font-sans text-[#666666]">{m.bpm ?? "-"}</td>
-                <td className="px-4 py-3 font-sans text-[#666666]">{fmtLength(m.totalLength)}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">{m.bpm ?? "-"}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">
+                  {m.maxCombo != null ? m.maxCombo : "-"}
+                </td>
                 {objs != null && (
-                  <td className="px-4 py-3 font-sans text-[#666666]">{objs}</td>
+                  <td className="px-4 py-3 font-sans text-(--pc-slate)">{objs}</td>
                 )}
+                <td className="px-4 py-3 font-sans text-[#e85d75]">{fmt(m.starRating)}★</td>
               </tr>
             );
           })}
@@ -402,11 +408,11 @@ export default function MappoolPage() {
 
   if (String(settings?.mappool_visible ?? "true") === "false") {
     return (
-      <div className="bg-[#fdf6ee]">
+      <div className="bg-(--pc-paper)">
         <PageHeader title="图池" subtitle="本赛事的比赛选图池" />
         <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
-          <div className="rounded-2xl bg-white p-10 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="font-sans text-sm text-[#b0a898]">图池尚未公开，敬请期待</p>
+          <div className="rounded-2xl bg-(--pc-white) p-10 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+            <p className="font-sans text-sm text-(--pc-faint)">图池尚未公开，敬请期待</p>
           </div>
         </div>
       </div>
@@ -416,14 +422,14 @@ export default function MappoolPage() {
   const groups = groupMaps(data ?? []);
 
   return (
-    <div className="bg-[#fdf6ee]">
+    <div className="bg-(--pc-paper)">
       <PageHeader title="图池" subtitle="查看各轮次选图与竞赛信息" />
 
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-bold text-[#b0a898]">赛季</span>
+              <span className="text-xs font-bold text-(--pc-faint)">赛季</span>
               <Select
                 value={season}
                 onValueChange={(v) => {
@@ -444,7 +450,7 @@ export default function MappoolPage() {
               </Select>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-bold text-[#b0a898]">轮次</span>
+              <span className="text-xs font-bold text-(--pc-faint)">轮次</span>
               <Select
                 value={category}
                 onValueChange={(v) => {
@@ -468,7 +474,7 @@ export default function MappoolPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1 rounded-xl bg-white border-2 border-[#e0d8cc] p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
+            <div className="flex items-center gap-1 rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
               {(["card", "table"] as const).map((v) => (
                 <button
                   key={v}
@@ -480,7 +486,7 @@ export default function MappoolPage() {
                     "rounded-lg px-4 py-1.5 text-sm font-bold transition-colors",
                     view === v
                       ? "bg-[#6b7fb5] text-[#fdf6ee]"
-                      : "bg-transparent text-[#666666] hover:text-[#2d2d2d]",
+                      : "bg-transparent text-(--pc-slate) hover:text-(--pc-ink)",
                   )}
                 >
                   {v === "card" ? "卡片" : "表格"}
@@ -492,8 +498,8 @@ export default function MappoolPage() {
               className={cn(
                 "rounded-xl border-2 px-4 py-2 text-sm font-bold transition-all duration-200",
                 useUnicode
-                  ? "border-[#f5c040] bg-[#f5c040] text-[#2d2d2d] shadow-[2px_2px_0px_rgba(0,0,0,0.1)]"
-                  : "border-[#e0d8cc] bg-white text-[#666666] hover:text-[#2d2d2d]",
+                  ? "border-[#f5c040] bg-[#f5c040] text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.1)]"
+                  : "border-(--pc-border) bg-(--pc-white) text-(--pc-slate) hover:text-(--pc-ink)",
               )}
             >
               原曲名
@@ -511,8 +517,8 @@ export default function MappoolPage() {
         )}
 
         {settingsReady && !loading && !error && groups.length === 0 && (
-          <div className="rounded-2xl bg-white p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="font-sans text-sm text-[#b0a898]">该轮次暂未公开选图</p>
+          <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+            <p className="font-sans text-sm text-(--pc-faint)">该轮次暂未公开选图</p>
           </div>
         )}
 

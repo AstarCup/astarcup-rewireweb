@@ -52,7 +52,7 @@ function statusBadge(status?: string) {
       );
     case "registered":
       return (
-        <Badge variant="yellow" className="border-[#f5c040] bg-[#f5c040] text-[#2d2d2d]">
+        <Badge variant="yellow" className="border-[#f5c040] bg-[#f5c040] text-(--pc-ink)">
           待审核
         </Badge>
       );
@@ -103,7 +103,7 @@ function PlayerCard({
       <HoverCardTrigger asChild>
         <button
           onClick={() => onSelect(player)}
-          className="flex flex-col overflow-hidden rounded-2xl bg-white text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
+          className="flex flex-col overflow-hidden rounded-2xl bg-(--pc-white) text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
         >
           <div
             className={cn(
@@ -117,38 +117,38 @@ function PlayerCard({
             <span className="absolute right-2 top-2">{statusBadge(player.registrationStatus)}</span>
           </div>
           <div className="-mt-9 flex flex-col items-center gap-2 px-4 pb-4">
-            <Avatar className="h-16 w-16 rounded-2xl border-4 border-white bg-[#fdf6ee]">
+            <Avatar className="h-16 w-16 rounded-2xl border-4 border-white bg-(--pc-paper)">
               <AvatarImage src={player.avatarUrl ?? undefined} alt={player.username} />
-              <AvatarFallback className="bg-[#f5c040]/30 text-lg font-bold text-[#2d2d2d]">
+              <AvatarFallback className="bg-[#f5c040]/30 text-lg font-bold text-(--pc-ink)">
                 {player.username?.slice(0, 1).toUpperCase() ?? "?"}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="truncate font-bold text-[#2d2d2d]">{player.username}</p>
-              <p className="mt-0.5 text-xs text-[#b0a898]">{player.country ?? "-"}</p>
+              <p className="truncate font-bold text-(--pc-ink)">{player.username}</p>
+              <p className="mt-0.5 text-xs text-(--pc-faint)">{player.country ?? "-"}</p>
             </div>
             {/* 统计：PP / 世界排名 */}
             <div className="flex w-full items-center justify-around">
               <div className="flex-1">
-                <p className="text-xs text-[#b0a898]">PP</p>
+                <p className="text-xs text-(--pc-faint)">PP</p>
                 <p className="font-sans text-sm font-bold text-[#6b7fb5]">{fmtInt(player.pp)}</p>
               </div>
-              <div className="w-px self-stretch bg-[#e0d8cc]" />
+              <div className="w-px self-stretch bg-(--pc-border)" />
               <div className="flex-1">
-                <p className="text-xs text-[#b0a898]">世界排名</p>
-                <p className="font-sans text-sm font-bold text-[#2d2d2d]">
+                <p className="text-xs text-(--pc-faint)">世界排名</p>
+                <p className="font-sans text-sm font-bold text-(--pc-ink)">
                   {player.globalRank != null ? `#${fmtInt(player.globalRank)}` : "-"}
                 </p>
               </div>
             </div>
             {/* g0v0：头像 + 玩家名，置于最底部 */}
-            <div className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-[#e0d8cc] bg-white px-2 py-1">
+            <div className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1">
               {player.guServerUsername ? (
                 <>
                   <img
                     src={`https://a.g0v0.top/${player.guServerUserId}`}
                     alt=""
-                    className="h-5 w-5 rounded-full border border-[#e0d8cc] object-cover"
+                    className="h-5 w-5 rounded-full border border-(--pc-border) object-cover"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = "none";
                     }}
@@ -158,7 +158,7 @@ function PlayerCard({
                   </span>
                 </>
               ) : (
-                <span className="text-xs text-[#b0a898]/60">未绑定 g0v0</span>
+                <span className="text-xs text-(--pc-faint)/60">未绑定 g0v0</span>
               )}
             </div>
           </div>
@@ -166,7 +166,7 @@ function PlayerCard({
       </HoverCardTrigger>
       {player.season && player.season.length > 0 && (
         <HoverCardContent side="top" align="center" className="max-w-[240px]">
-          <p className="text-xs font-bold text-[#b0a898]">已报名参赛过的赛季</p>
+          <p className="text-xs font-bold text-(--pc-faint)">已报名参赛过的赛季</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {player.season.map((s) => (
               <Badge key={s} variant="yellow">
@@ -231,7 +231,7 @@ export default function RegistrationsPage() {
   const countFor = (k: FilterKey) => (k === "all" ? counts.all : k === "approved" ? counts.approved : counts.registered);
 
   return (
-    <div className="bg-[#fdf6ee]">
+    <div className="bg-(--pc-paper)">
       <PageHeader
         title="参赛选手"
         subtitle={loadingPlayers || error ? undefined : `共 ${counts.all} 名选手，${counts.approved} 名已审核`}
@@ -250,7 +250,7 @@ export default function RegistrationsPage() {
               <span
                 className={cn(
                   "rounded-full px-1.5 text-xs",
-                  filter === t.key ? "bg-[#fdf6ee]/25" : "bg-[#fdf6ee] text-[#666666]",
+                  filter === t.key ? "bg-(--pc-paper)/25" : "bg-(--pc-paper) text-(--pc-slate)",
                 )}
               >
                 {countFor(t.key)}
@@ -258,7 +258,7 @@ export default function RegistrationsPage() {
             </Button>
           ))}
           <div className="ml-auto flex items-center gap-2">
-            <Label className="text-xs text-[#b0a898]">赛季</Label>
+            <Label className="text-xs text-(--pc-faint)">赛季</Label>
             <Select value={season ?? ""} onValueChange={setSeason}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="全部" />
@@ -284,8 +284,8 @@ export default function RegistrationsPage() {
         )}
 
         {!loadingPlayers && !error && visible.length === 0 && (
-          <div className="rounded-2xl bg-white p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="font-sans text-sm text-[#b0a898]">暂无玩家报名</p>
+          <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+            <p className="font-sans text-sm text-(--pc-faint)">暂无玩家报名</p>
           </div>
         )}
 
@@ -308,47 +308,47 @@ export default function RegistrationsPage() {
                 <DialogDescription>{selected.country ?? "未知地区"}</DialogDescription>
               </DialogHeader>
               <div className="flex flex-col items-center gap-4 py-2 text-center">
-                <Avatar className="h-24 w-24 rounded-2xl border-2 border-[#e0d8cc]">
+                <Avatar className="h-24 w-24 rounded-2xl border-2 border-(--pc-border)">
                   <AvatarImage src={selected.avatarUrl ?? undefined} alt={selected.username} />
-                  <AvatarFallback className="bg-[#f5c040]/30 text-2xl font-bold text-[#2d2d2d]">
+                  <AvatarFallback className="bg-[#f5c040]/30 text-2xl font-bold text-(--pc-ink)">
                     {selected.username?.slice(0, 1).toUpperCase() ?? "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid w-full grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-white border-2 border-[#e0d8cc] p-3">
-                    <p className="text-xs text-[#b0a898]">PP</p>
+                  <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
+                    <p className="text-xs text-(--pc-faint)">PP</p>
                     <p className="mt-1 font-sans font-bold text-[#6b7fb5]">
                       {fmtInt(selected.pp)}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-white border-2 border-[#e0d8cc] p-3">
-                    <p className="text-xs text-[#b0a898]">世界排名</p>
-                    <p className="mt-1 font-sans font-bold text-[#2d2d2d]">
+                  <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
+                    <p className="text-xs text-(--pc-faint)">世界排名</p>
+                    <p className="mt-1 font-sans font-bold text-(--pc-ink)">
                       {selected.globalRank != null ? `#${fmtInt(selected.globalRank)}` : "-"}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-white border-2 border-[#e0d8cc] p-3">
-                    <p className="text-xs text-[#b0a898]">地区排名</p>
-                    <p className="mt-1 font-sans font-bold text-[#2d2d2d]">
+                  <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
+                    <p className="text-xs text-(--pc-faint)">地区排名</p>
+                    <p className="mt-1 font-sans font-bold text-(--pc-ink)">
                       {selected.countryRank != null ? `#${fmtInt(selected.countryRank)}` : "-"}
                     </p>
                   </div>
-                  <div className="rounded-xl bg-white border-2 border-[#e0d8cc] p-3">
-                    <p className="text-xs text-[#b0a898]">osuID</p>
-                    <p className="mt-1 font-mono text-sm font-bold text-[#2d2d2d]">
+                  <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
+                    <p className="text-xs text-(--pc-faint)">osuID</p>
+                    <p className="mt-1 font-mono text-sm font-bold text-(--pc-ink)">
                       {selected.osuId}
                     </p>
                   </div>
                 </div>
 
-                <div className="w-full rounded-xl border-2 border-[#e0d8cc] bg-white p-3 text-center">
-                  <p className="text-xs text-[#b0a898]">g0v0 服务器玩家</p>
+                <div className="w-full rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3 text-center">
+                  <p className="text-xs text-(--pc-faint)">g0v0 服务器玩家</p>
                   {selected.guServerUsername ? (
                     <div className="mt-1 flex items-center justify-center gap-2">
                       <img
                         src={`https://a.g0v0.top/${selected.guServerUserId}`}
                         alt=""
-                        className="h-8 w-8 rounded-full border-2 border-[#e0d8cc] object-cover"
+                        className="h-8 w-8 rounded-full border-2 border-(--pc-border) object-cover"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = "none";
                         }}
@@ -358,11 +358,11 @@ export default function RegistrationsPage() {
                       </span>
                     </div>
                   ) : (
-                    <p className="mt-1 font-bold text-[#b0a898]">未绑定</p>
+                    <p className="mt-1 font-bold text-(--pc-faint)">未绑定</p>
                   )}
                 </div>
 
-                <div className="flex justify-center rounded-xl border-2 border-[#e0d8cc] bg-white p-3">
+                <div className="flex justify-center rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3">
                   <RadarChart skills={radarSkills(selected)} size={230} />
                 </div>
 

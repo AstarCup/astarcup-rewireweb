@@ -26,10 +26,10 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-[#e0d8cc] bg-[#fdf6ee] text-[#2d2d2d]",
+        default: "border-(--pc-border) bg-(--pc-paper) text-(--pc-ink)",
         destructive: "border-[#e85d75] bg-[#e85d75] text-[#fdf6ee]",
         success: "border-[#5cb8a5] bg-[#5cb8a5] text-[#fdf6ee]",
-        warning: "border-[#f5c040] bg-[#f5c040] text-[#2d2d2d]",
+        warning: "border-[#f5c040] bg-[#f5c040] text-(--pc-ink)",
       },
     },
     defaultVariants: {
@@ -58,7 +58,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-lg border-2 border-[#e0d8cc] bg-white px-3 text-sm font-bold text-[#2d2d2d] transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50",
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm font-bold text-(--pc-ink) transition hover:-translate-y-0.5 disabled:pointer-events-none disabled:opacity-50",
       className,
     )}
     {...props}
@@ -73,7 +73,7 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-lg p-1 text-[#b0a898] opacity-70 transition hover:text-[#2d2d2d] group-[.variant-destructive]:hover:text-[#fdf6ee] group-[.variant-success]:hover:text-[#fdf6ee]",
+      "absolute right-2 top-2 rounded-lg p-1 text-(--pc-faint) opacity-70 transition hover:text-(--pc-ink) group-[.variant-destructive]:hover:text-[#fdf6ee] group-[.variant-success]:hover:text-[#fdf6ee]",
       className,
     )}
     toast-close=""

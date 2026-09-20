@@ -28,13 +28,13 @@ function statusBadge(status: string) {
       );
     case "completed":
       return (
-        <Badge variant="yellow" className="border-[#f5c040] bg-[#f5c040] text-[#2d2d2d]">
+        <Badge variant="yellow" className="border-[#f5c040] bg-[#f5c040] text-(--pc-ink)">
           已完成
         </Badge>
       );
     case "cancelled":
       return (
-        <Badge variant="outline" className="border-[#e85d75]/40 bg-white text-[#e85d75]">
+        <Badge variant="outline" className="border-[#e85d75]/40 bg-(--pc-white) text-[#e85d75]">
           已取消
         </Badge>
       );
@@ -85,34 +85,34 @@ function ScheduleItem({ item }: { item: MatchSchedule }) {
   ];
 
   return (
-    <div className="bg-white rounded-2xl shadow-[4px_4px_0px_rgba(0,0,0,0.08)] p-5 flex flex-col gap-4">
+    <div className="bg-(--pc-white) rounded-2xl shadow-[4px_4px_0px_rgba(0,0,0,0.08)] p-5 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
         {statusBadge(item.status)}
         {score != null && (
-          <span className="rounded-xl bg-[#fdf6ee] border-2 border-[#e0d8cc] px-3 py-1 font-sans text-sm font-bold text-[#2d2d2d]">
+          <span className="rounded-xl bg-(--pc-paper) border-2 border-(--pc-border) px-3 py-1 font-sans text-sm font-bold text-(--pc-ink)">
             {score}
           </span>
         )}
       </div>
 
       <div className="flex items-center justify-center gap-4">
-        <span className="flex-1 truncate font-bold text-[#2d2d2d]">
+        <span className="flex-1 truncate font-bold text-(--pc-ink)">
           {item.player1Username ?? `#${item.player1OsuId ?? "-"}`}
         </span>
-        <span className="font-sans text-sm font-bold text-[#b0a898]">VS</span>
-        <span className="flex-1 truncate text-right font-bold text-[#2d2d2d]">
+        <span className="font-sans text-sm font-bold text-(--pc-faint)">VS</span>
+        <span className="flex-1 truncate text-right font-bold text-(--pc-ink)">
           {item.player2Username ?? `#${item.player2OsuId ?? "-"}`}
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-[#666666]">
+      <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-(--pc-slate)">
         {room?.roundNumber != null && room.roundNumber > 0 && (
           <span className="rounded-lg bg-[#6b7fb5]/10 px-2 py-0.5 font-bold text-[#6b7fb5]">
             R{room.roundNumber}
           </span>
         )}
         {room?.matchNumber != null && room.matchNumber > 0 && (
-          <span className="rounded-lg bg-[#f5c040]/15 px-2 py-0.5 font-bold text-[#2d2d2d]">
+          <span className="rounded-lg bg-[#f5c040]/15 px-2 py-0.5 font-bold text-(--pc-ink)">
             第 {room.matchNumber} 场
           </span>
         )}
@@ -129,13 +129,13 @@ function ScheduleItem({ item }: { item: MatchSchedule }) {
                 href={l.href as string}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center rounded-xl border-2 border-[#e0d8cc] bg-white px-3 py-1.5 text-xs font-bold text-[#2d2d2d] shadow-[2px_2px_0px_rgba(0,0,0,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:text-[#e85d75]"
+                className="inline-flex items-center rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 py-1.5 text-xs font-bold text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:text-[#e85d75]"
               >
                 {l.label}
               </a>
             ))
         ) : (
-          <span className="text-xs text-[#b0a898]">暂无链接</span>
+          <span className="text-xs text-(--pc-faint)">暂无链接</span>
         )}
       </div>
     </div>
@@ -150,7 +150,7 @@ export default function SchedulePage() {
   const groups = groupSchedules(data ?? []);
 
   return (
-    <div className="bg-[#fdf6ee]">
+    <div className="bg-(--pc-paper)">
       <PageHeader title="赛程安排" subtitle="比赛对阵与每场直播、回放信息一览" />
 
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
@@ -158,8 +158,8 @@ export default function SchedulePage() {
         {error && <ErrorBlock message={error} onRetry={() => void load()} />}
 
         {!loading && !error && groups.length === 0 && (
-          <div className="rounded-2xl bg-white p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="font-sans text-sm text-[#b0a898]">暂无赛程</p>
+          <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+            <p className="font-sans text-sm text-(--pc-faint)">暂无赛程</p>
           </div>
         )}
 
@@ -172,9 +172,9 @@ export default function SchedulePage() {
                     {g.label}
                   </span>
                   {g.matchDate && (
-                    <span className="text-xs text-[#666666]">{formatDateTime(g.matchDate)}</span>
+                    <span className="text-xs text-(--pc-slate)">{formatDateTime(g.matchDate)}</span>
                   )}
-                  <span className="ml-auto rounded-full bg-[#fdf6ee] border border-[#e0d8cc] px-2 py-0.5 text-xs text-[#b0a898]">
+                  <span className="ml-auto rounded-full bg-(--pc-paper) border border-(--pc-border) px-2 py-0.5 text-xs text-(--pc-faint)">
                     {g.items.length} 场
                   </span>
                 </div>

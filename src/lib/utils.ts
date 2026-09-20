@@ -44,6 +44,26 @@ export function formatDate(iso?: string | null): string {
   });
 }
 
+/** 后端将本地(+8)墙钟时间按 UTC 序列化(+00:00)，此处按 +08:00 墙钟解析，避免偏移 8 小时 */
+export function formatWallClock(iso?: string | null): string {
+  if (!iso) return "-";
+  const naive = iso.replace(/Z$/, "").replace(/[+-]\d{2}:\d{2}$/, "");
+  const d = new Date(`${naive}+08:00`);
+  if (Number.isNaN(d.getTime())) return "-";
+  const s = d.toLocaleString("zh-CN", {
+    timeZone: "Asia/Shanghai",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const [datePart, timePart = ""] = s.split(" ");
+  const [y, m, day] = datePart.split("/");
+  return `${y}年${m}月${day}日 ${timePart}`;
+}
+
 /** Standard Paper Craft button shadow tokens. */
 export const hoverLift =
   "transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5";

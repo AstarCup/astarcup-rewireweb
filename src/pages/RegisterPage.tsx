@@ -64,8 +64,8 @@ export default function RegisterPage() {
               <ShieldCheck className="h-6 w-6" />
             </span>
             <div>
-              <p className="font-bold text-[#2d2d2d]">{user.username}</p>
-              <p className="text-xs text-[#b0a898]">{user.osuId}</p>
+              <p className="font-bold text-(--pc-ink)">{user.username}</p>
+              <p className="text-xs text-(--pc-faint)">{user.osuId}</p>
             </div>
           </CardContent>
           <CardFooter className="flex justify-between">
@@ -118,8 +118,8 @@ export default function RegisterPage() {
             {fetching ? "正在获取授权链接…" : "使用 osu! 账号登录"}
           </Button>
 
-          <div className="rounded-xl border-2 border-[#e0d8cc] bg-white p-4 text-xs leading-relaxed text-[#666666]">
-            <p className="mb-1 font-bold text-[#2d2d2d]">隐私说明</p>
+          <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4 text-xs leading-relaxed text-(--pc-slate)">
+            <p className="mb-1 font-bold text-(--pc-ink)">隐私说明</p>
             <p>
               登录仅获取你的昵称、头像及 basic profile（osuId、pp、排名等）用于赛事报名与
               对阵展示，不会公开其他私人信息。
@@ -137,7 +137,7 @@ export default function RegisterPage() {
       </Card>
 
       {success && (
-        <div className="mt-6 rounded-2xl bg-[#5cb8a5]/15 border-2 border-[#5cb8a5]/40 p-4 text-center text-sm font-bold text-[#2d2d2d]">
+        <div className="mt-6 rounded-2xl bg-[#5cb8a5]/15 border-2 border-[#5cb8a5]/40 p-4 text-center text-sm font-bold text-(--pc-ink)">
           登录成功！正在跳转首页…
         </div>
       )}

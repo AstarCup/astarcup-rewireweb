@@ -5,11 +5,6 @@ import { PageHeader } from "@/components/paper/paper";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-import m1 from "@/data/news/1.md?raw";
-import m2 from "@/data/news/2.md?raw";
-import m3 from "@/data/news/3.md?raw";
-import m4 from "@/data/news/4.md?raw";
-
 interface NewsItem {
   slug: string;
   title: string;
@@ -17,13 +12,15 @@ interface NewsItem {
   description: string;
 }
 
-const newsItems: NewsItem[] = [
-  { slug: "1", raw: m1 },
-  { slug: "2", raw: m2 },
-  { slug: "3", raw: m3 },
-  { slug: "4", raw: m4 },
-]
-  .map(({ slug, raw }) => {
+const newsModules = import.meta.glob("@/data/news/*.md", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
+const newsItems: NewsItem[] = Object.entries(newsModules)
+  .map(([path, raw]) => {
+    const slug = path.split("/").pop()?.replace(/\.md$/, "") ?? "";
     const { data } = parseFrontMatter(raw);
     return {
       slug,
@@ -46,8 +43,8 @@ export default function NewsPage() {
                 <Badge variant="yellow" className="mb-3">
                   {item.date ? formatDate(item.date) : "即将发布"}
                 </Badge>
-                <h2 className="font-bold text-xl text-[#2d2d2d]">{item.title}</h2>
-                <p className="mt-2 text-sm text-[#666666]">{item.description}</p>
+                <h2 className="font-bold text-xl text-(--pc-ink)">{item.title}</h2>
+                <p className="mt-2 text-sm text-(--pc-slate)">{item.description}</p>
                 <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[#e85d75]">
                   阅读全文 →
                 </span>

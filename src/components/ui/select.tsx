@@ -14,8 +14,8 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-xl bg-white px-3 py-3 text-sm text-foreground " +
-        "border-2 border-[#e0d8cc] transition-all duration-200 " +
+      "flex h-10 w-full items-center justify-between rounded-xl bg-(--pc-white) px-3 py-3 text-sm text-foreground " +
+        "border-2 border-(--pc-border) transition-all duration-200 " +
         "focus:border-[#e85d75] focus:outline-none focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)] " +
         "disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
       className,
@@ -66,8 +66,8 @@ const SelectContent = React.forwardRef<
     <SelectPrimitive.Content
       ref={ref}
       className={cn(
-        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-xl border-2 border-[#e0d8cc] " +
-          "bg-[#fdf6ee] text-foreground shadow-[4px_4px_0px_rgba(0,0,0,0.14)]",
+        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-xl border-2 border-(--pc-border) " +
+          "bg-(--pc-paper) text-foreground shadow-[4px_4px_0px_rgba(0,0,0,0.14)]",
         position === "popper" && "data-[side=bottom]:translate-y-1",
         className,
       )}
@@ -96,7 +96,7 @@ const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn("px-2 py-1.5 text-xs font-bold text-[#b0a898]", className)}
+    className={cn("px-2 py-1.5 text-xs font-bold text-(--pc-faint)", className)}
     {...props}
   />
 ));
@@ -129,7 +129,7 @@ const SelectSeparator = React.forwardRef<
   React.ComponentRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
 >(({ className, ...props }, ref) => (
-  <SelectPrimitive.Separator ref={ref} className={cn("-mx-1 my-1 h-px bg-[#e0d8cc]", className)} {...props} />
+  <SelectPrimitive.Separator ref={ref} className={cn("-mx-1 my-1 h-px bg-(--pc-border)", className)} {...props} />
 ));
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 

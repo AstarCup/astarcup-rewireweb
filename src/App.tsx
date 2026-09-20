@@ -19,7 +19,7 @@ import NotFoundPage from "@/pages/NotFoundPage";
 
 function PublicLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-[#fdf6ee] paper-texture">
+    <div className="flex min-h-screen flex-col bg-(--pc-paper) paper-texture">
       <ScrollToTop />
       <Navbar />
       <main className="flex-1">

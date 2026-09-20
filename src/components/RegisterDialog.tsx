@@ -179,7 +179,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
         </DialogHeader>
         <div className="grid max-h-[65vh] gap-4 overflow-y-auto pr-1">
           {alreadyRegistered && (
-            <p className="rounded-xl bg-[#5cb8a5]/10 p-3 text-sm font-bold text-[#2d2d2d]">
+            <p className="rounded-xl bg-[#5cb8a5]/10 p-3 text-sm font-bold text-(--pc-ink)">
               当前报名状态：{REG_STATUS_LABEL[regStatus] ?? regStatus}，无需重复报名。
             </p>
           )}
@@ -195,10 +195,10 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           )}
           {!g0v0Bound && (
             <div className="rounded-xl border-2 border-[#f5c040] bg-[#f5c040]/10 p-4">
-              <p className="text-sm font-bold text-[#2d2d2d]">
+              <p className="text-sm font-bold text-(--pc-ink)">
                 尚未绑定 g0v0 服务器账号
               </p>
-              <p className="mt-1 text-xs text-[#666666]">
+              <p className="mt-1 text-xs text-(--pc-slate)">
                 报名比赛前需先绑定 g0v0 私服账号，绑定后才能提交报名。
               </p>
               <Button
@@ -212,24 +212,24 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
               </Button>
             </div>
           )}
-          <div className="rounded-xl border-2 border-[#e0d8cc] bg-white p-4 text-sm">
+          <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4 text-sm">
             <div className="grid grid-cols-2 gap-2">
-              <p className="text-[#666666]">用户名：<span className="font-bold text-[#2d2d2d]">{user?.username}</span></p>
-              <p className="text-[#666666]">PP：<span className="font-bold text-[#2d2d2d]">{fmtInt(userPp)}</span></p>
-              <p className="text-[#666666]">全球排名：<span className="font-bold text-[#2d2d2d]">#{fmtInt(user?.globalRank)}</span></p>
-              <p className="text-[#666666]">地区：<span className="font-bold text-[#2d2d2d]">{user?.country ?? "-"}</span></p>
+              <p className="text-(--pc-slate)">用户名：<span className="font-bold text-(--pc-ink)">{user?.username}</span></p>
+              <p className="text-(--pc-slate)">PP：<span className="font-bold text-(--pc-ink)">{fmtInt(userPp)}</span></p>
+              <p className="text-(--pc-slate)">全球排名：<span className="font-bold text-(--pc-ink)">#{fmtInt(user?.globalRank)}</span></p>
+              <p className="text-(--pc-slate)">地区：<span className="font-bold text-(--pc-ink)">{user?.country ?? "-"}</span></p>
             </div>
           </div>
 
           {/* 技能自评 */}
-          <div className="rounded-xl border-2 border-[#e0d8cc] bg-white p-4">
-            <p className="text-sm font-bold text-[#2d2d2d]">
+          <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
+            <p className="text-sm font-bold text-(--pc-ink)">
               技能自评（选填）：给你自己打个分，或者用来迷惑别人。
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3">
               {SKILL_FIELDS.map((f) => (
                 <label key={f.key} className="grid gap-1">
-                  <span className="text-xs text-[#666666]">{f.label}</span>
+                  <span className="text-xs text-(--pc-slate)">{f.label}</span>
                   <input
                     type="number"
                     min="0"
@@ -240,7 +240,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                       setSkills((prev) => ({ ...prev, [f.key]: e.target.value }))
                     }
                     placeholder="0-10"
-                    className="h-9 rounded-lg border-2 border-[#e0d8cc] bg-white px-3 text-sm text-[#2d2d2d] outline-none focus:border-[#e85d75]"
+                    className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-[#e85d75]"
                   />
                 </label>
               ))}
@@ -251,28 +251,28 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           </div>
 
           {/* 自定义键值对 */}
-          <div className="rounded-xl border-2 border-[#e0d8cc] bg-white p-4">
-            <p className="text-sm font-bold text-[#2d2d2d]">自定义键值对</p>
+          <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
+            <p className="text-sm font-bold text-(--pc-ink)">自定义键值对</p>
             <div className="mt-3 grid grid-cols-2 gap-3">
               <label className="grid gap-1">
-                <span className="text-xs text-[#666666]">自定义键</span>
+                <span className="text-xs text-(--pc-slate)">自定义键</span>
                 <div className="relative">
                   <input
                     type="text"
                     value={customKey}
                     onChange={(e) => handleCustomKey(e.target.value)}
                     placeholder="随便输点什么"
-                    className={`h-9 w-full rounded-lg border-2 bg-white px-3 pr-8 text-sm text-[#2d2d2d] outline-none ${
+                    className={`h-9 w-full rounded-lg border-2 bg-(--pc-white) px-3 pr-8 text-sm text-(--pc-ink) outline-none ${
                       customKeyState === "invalid"
                         ? "border-[#e85d75]"
                         : customKeyState === "valid"
                           ? "border-[#5cb8a5]"
-                          : "border-[#e0d8cc]"
+                          : "border-(--pc-border)"
                     }`}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs">
                     {customKeyState === "checking" && (
-                      <span className="animate-pulse text-[#b0a898]">检</span>
+                      <span className="animate-pulse text-(--pc-faint)">检</span>
                     )}
                     {customKeyState === "valid" && (
                       <span className="font-bold text-[#5cb8a5]">✓</span>
@@ -287,27 +287,27 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                 )}
               </label>
               <label className="grid gap-1">
-                <span className="text-xs text-[#666666]">自定义值</span>
+                <span className="text-xs text-(--pc-slate)">自定义值</span>
                 <input
                   type="number"
                   step="0.001"
                   value={customValue}
                   onChange={(e) => setCustomValue(e.target.value)}
                   placeholder="输入数值"
-                  className="h-9 rounded-lg border-2 border-[#e0d8cc] bg-white px-3 text-sm text-[#2d2d2d] outline-none focus:border-[#e85d75]"
+                  className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-[#e85d75]"
                 />
               </label>
             </div>
           </div>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-[#e0d8cc] bg-white p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
             <input
               type="checkbox"
               checked={regAgreed}
               onChange={(e) => setRegAgreed(e.target.checked)}
               className="mt-0.5 h-4 w-4 accent-[#e85d75]"
             />
-            <span className="text-xs leading-relaxed text-[#666666]">
+            <span className="text-xs leading-relaxed text-(--pc-slate)">
               我已阅读并了解{" "}
               <Link to="/guide" className="font-bold text-[#6b7fb5] underline">
                 比赛手册

@@ -19,7 +19,7 @@ export function PaperStack({
       {layers >= 3 && (
         <span aria-hidden className="paper-stack__under paper-stack__under--2 rounded-2xl bg-[#5cb8a5]/70" />
       )}
-      <div className="relative rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+      <div className="relative rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
         {children}
       </div>
     </div>
@@ -48,7 +48,7 @@ export function SectionTitle({
           {tag}
         </span>
       )}
-      <h2 className="font-bold text-2xl md:text-3xl text-[#2d2d2d]">{children}</h2>
+      <h2 className="font-bold text-2xl md:text-3xl text-(--pc-ink)">{children}</h2>
     </div>
   );
 }
@@ -64,7 +64,7 @@ export function PageHeader({
   accent?: string;
 }) {
   return (
-    <header className="relative overflow-hidden border-b-2 border-[#e0d8cc] px-4 py-12 md:px-8 md:py-16 bg-[#fdf6ee]">
+    <header className="relative overflow-hidden border-b-2 border-(--pc-border) px-4 py-12 md:px-8 md:py-16 bg-(--pc-paper)">
       <span
         aria-hidden
         className="absolute -left-6 top-6 h-24 w-24 rotate-[-6deg] rounded-2xl opacity-40"
@@ -75,9 +75,9 @@ export function PageHeader({
         className="absolute right-10 top-8 h-14 w-14 rotate-12 rounded-xl bg-[#f5c040] opacity-50"
       />
       <div className="relative mx-auto max-w-6xl">
-        <h1 className="font-bold text-4xl md:text-6xl text-[#2d2d2d]">{title}</h1>
+        <h1 className="font-bold text-4xl md:text-6xl text-(--pc-ink)">{title}</h1>
         {subtitle && (
-          <p className="mt-3 max-w-xl text-sm md:text-base text-[#666666]">{subtitle}</p>
+          <p className="mt-3 max-w-xl text-sm md:text-base text-(--pc-slate)">{subtitle}</p>
         )}
       </div>
     </header>

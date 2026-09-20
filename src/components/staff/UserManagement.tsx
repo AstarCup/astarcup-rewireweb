@@ -116,7 +116,7 @@ export default function UserManagement() {
       {/* 搜索与筛选 */}
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#b0a898]" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--pc-faint)" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -136,15 +136,15 @@ export default function UserManagement() {
             ))}
           </SelectContent>
         </Select>
-        <span className="text-xs text-[#b0a898]">
+        <span className="text-xs text-(--pc-faint)">
           共 {data.length} 人 · 筛选出 {filtered.length} 人
         </span>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+      <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
         <table className="w-full min-w-[860px] text-sm">
           <thead>
-            <tr className="border-b-2 border-[#e0d8cc] text-left text-xs text-[#b0a898]">
+            <tr className="border-b-2 border-(--pc-border) text-left text-xs text-(--pc-faint)">
               <th className="px-4 py-3 font-bold">用户</th>
               <th className="px-4 py-3 font-bold">osuId</th>
               <th className="px-4 py-3 font-bold">分组</th>
@@ -156,7 +156,7 @@ export default function UserManagement() {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-[#b0a898]">
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-(--pc-faint)">
                   没有匹配的用户
                 </td>
               </tr>
@@ -164,17 +164,17 @@ export default function UserManagement() {
             {filtered.map((u) => {
               const regStatus = u.registrationStatus ?? "not_registered";
               return (
-                <tr key={u.osuId} className="border-b border-[#e0d8cc] last:border-0">
+                <tr key={u.osuId} className="border-b border-(--pc-border) last:border-0">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
                         {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.username} />}
                         <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
                       </Avatar>
-                      <span className="font-bold text-[#2d2d2d]">{u.username}</span>
+                      <span className="font-bold text-(--pc-ink)">{u.username}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-[#666666]">{u.osuId}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-(--pc-slate)">{u.osuId}</td>
                   <td className="px-4 py-3">
                     <Badge variant={groupVariant(u.userGroup)}>{u.userGroup}</Badge>
                   </td>
@@ -183,7 +183,7 @@ export default function UserManagement() {
                       {REG_STATUS_LABEL[regStatus] ?? regStatus}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-[#666666]">{formatDate(u.createdAt)}</td>
+                  <td className="px-4 py-3 text-(--pc-slate)">{formatDate(u.createdAt)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-1.5">
                       {regStatus !== "approved" && (

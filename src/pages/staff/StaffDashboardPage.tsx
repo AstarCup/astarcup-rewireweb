@@ -45,7 +45,7 @@ export default function StaffDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fdf6ee]">
+      <div className="min-h-screen bg-(--pc-paper)">
         <LoadingBlock label="加载会话中…" />
       </div>
     );
@@ -53,12 +53,12 @@ export default function StaffDashboardPage() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-[#fdf6ee]">
+      <div className="min-h-screen bg-(--pc-paper)">
         <PageHeader title="管理后台" subtitle="工作人员专用" />
         <div className="mx-auto max-w-2xl px-4 py-12">
-          <div className="rounded-2xl bg-white p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+          <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
             <p className="text-2xl font-bold text-[#e85d75]">没有访问权限</p>
-            <p className="mt-3 text-sm text-[#666666]">
+            <p className="mt-3 text-sm text-(--pc-slate)">
               此页面为工作人员管理后台，仅管理员可访问。
             </p>
             <Link
@@ -76,7 +76,7 @@ export default function StaffDashboardPage() {
   const ActiveComp = active.Comp;
 
   return (
-    <div className="min-h-screen bg-[#fdf6ee] pb-16">
+    <div className="min-h-screen bg-(--pc-paper) pb-16">
       <div className="mx-auto max-w-6xl px-4 pt-8">
         {/* Horizontal scrollable tab bar */}
         <div className="flex gap-2 overflow-x-auto pb-3">
@@ -89,7 +89,7 @@ export default function StaffDashboardPage() {
                 "hover:-translate-y-0.5 active:translate-y-0.5",
                 activeTab === t.key
                   ? "border-[#e85d75] bg-[#e85d75] text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
-                  : "border-[#e0d8cc] bg-white text-[#2d2d2d] shadow-[2px_2px_0px_rgba(0,0,0,0.06)]",
+                  : "border-(--pc-border) bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]",
               )}
             >
               {t.label}
@@ -98,7 +98,7 @@ export default function StaffDashboardPage() {
         </div>
 
         {/* Content panel */}
-        <div className="rounded-2xl bg-[#fdf6ee]" key={activeTab}>
+        <div className="rounded-2xl bg-(--pc-paper)" key={activeTab}>
           <ActiveComp />
         </div>
       </div>

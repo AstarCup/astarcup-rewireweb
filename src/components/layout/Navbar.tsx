@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { LogOut, Menu, User, ShieldCheck } from "lucide-react";
 import Logo from "./Logo";
 import MessageCenter from "./MessageCenter";
+import ThemeToggle from "./ThemeToggle";
 import { useApp } from "@/lib/app-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -44,7 +45,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 border-b-2 border-[#e0d8cc] bg-[#fdf6ee]/95 px-4 md:px-8 backdrop-blur-sm relative paper-texture">
+    <nav className="sticky top-0 z-40 border-b-2 border-(--pc-border) bg-(--pc-paper)/95 px-4 md:px-8 backdrop-blur-sm relative paper-texture">
       <div className="flex h-16 items-center justify-between gap-6">
         <div className="flex items-center gap-2">
           {/* 移动端：图标改为菜单按钮，点击打开 Drawer */}
@@ -71,8 +72,8 @@ export default function Navbar() {
                     onClick={() => setMenuOpen(false)}
                     className={({ isActive }) =>
                       cn(
-                        "rounded-xl px-3 py-2.5 text-sm font-bold text-[#666666] transition-all duration-200 hover:bg-white hover:text-[#2d2d2d]",
-                        isActive && "bg-white text-[#2d2d2d] shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
+                        "rounded-xl px-3 py-2.5 text-sm font-bold text-(--pc-slate) transition-all duration-200 hover:bg-(--pc-white) hover:text-(--pc-ink)",
+                        isActive && "bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
                       )
                     }
                   >
@@ -100,8 +101,8 @@ export default function Navbar() {
               to={l.to}
               className={({ isActive }) =>
                 cn(
-                  "rounded-xl px-3 py-2 text-sm font-bold text-[#666666] transition-all duration-200 hover:-translate-y-0.5 hover:text-[#2d2d2d]",
-                  isActive && "bg-white text-[#2d2d2d] shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
+                  "rounded-xl px-3 py-2 text-sm font-bold text-(--pc-slate) transition-all duration-200 hover:-translate-y-0.5 hover:text-(--pc-ink)",
+                  isActive && "bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
                 )
               }
             >
@@ -111,6 +112,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {user ? (
             <>
               {permissions?.isadmin && (
@@ -126,7 +128,7 @@ export default function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex items-center gap-2 rounded-xl bg-white p-1 pr-2 shadow-[2px_2px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none"
+                    className="flex items-center gap-2 rounded-xl bg-(--pc-white) p-1 pr-2 shadow-[2px_2px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none"
                     aria-label="用户菜单"
                   >
                     <Avatar className="h-8 w-8">

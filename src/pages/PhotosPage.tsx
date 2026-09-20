@@ -31,7 +31,7 @@ const winners = winnersJson as unknown as WinnersData;
 
 const FRAMES: Record<string, string> = {
   gold: "bg-[#f5c040]",
-  silver: "bg-[#e0d8cc]",
+  silver: "bg-(--pc-border)",
   bronze: "bg-[#d8a76e]",
 };
 
@@ -54,16 +54,16 @@ export default function PhotosPage() {
           <Button variant={season === "s2" ? "primary" : "outline"} disabled>
             S2
           </Button>
-          <span className="text-sm text-[#b0a898]">当前赛季：{season.toUpperCase()}</span>
+          <span className="text-sm text-(--pc-faint)">当前赛季：{season.toUpperCase()}</span>
         </div>
 
         <SectionTitle tag="获奖选手">本届获胜选手</SectionTitle>
         {cards.length === 0 ? (
-          <p className="text-[#b0a898]">暂无选手信息。</p>
+          <p className="text-(--pc-faint)">暂无选手信息。</p>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => {
-              const frame = FRAMES[card.frameStyle] ?? "bg-white";
+              const frame = FRAMES[card.frameStyle] ?? "bg-(--pc-white)";
               return (
                 <div
                   key={card.id}
@@ -75,19 +75,19 @@ export default function PhotosPage() {
                         src={card.avatarUrl}
                         alt={card.playerName}
                         loading="lazy"
-                        className="h-20 w-20 rounded-full border-2 border-[#e0d8cc] object-cover"
+                        className="h-20 w-20 rounded-full border-2 border-(--pc-border) object-cover"
                       />
                     ) : (
-                      <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#e0d8cc] bg-[#fdf6ee] font-bold text-2xl text-[#b0a898]">
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-(--pc-border) bg-(--pc-paper) font-bold text-2xl text-(--pc-faint)">
                         {card.playerName.slice(0, 1).toUpperCase()}
                       </div>
                     )}
-                    <div className="mt-4 text-sm font-bold text-[#b0a898]">
+                    <div className="mt-4 text-sm font-bold text-(--pc-faint)">
                       {rankLabels[card.rank] ?? `第 ${card.rank} 名`}
                     </div>
-                    <h3 className="mt-1 font-bold text-xl text-[#2d2d2d]">{card.playerName}</h3>
+                    <h3 className="mt-1 font-bold text-xl text-(--pc-ink)">{card.playerName}</h3>
                     {card.country && (
-                      <span className="mt-1 text-sm text-[#666666]">{card.country}</span>
+                      <span className="mt-1 text-sm text-(--pc-slate)">{card.country}</span>
                     )}
                   </Card>
                 </div>
@@ -100,7 +100,7 @@ export default function PhotosPage() {
           比赛剪影
         </SectionTitle>
         {photos.length === 0 ? (
-          <p className="text-[#b0a898]">暂无照片。</p>
+          <p className="text-(--pc-faint)">暂无照片。</p>
         ) : (
           <div className="grid gap-8 sm:grid-cols-2">
             {photos.map((photo) => (
@@ -111,7 +111,7 @@ export default function PhotosPage() {
                   loading="lazy"
                   className="w-full rounded-2xl object-cover shadow-[4px_4px_0px_rgba(0,0,0,0.08)]"
                 />
-                <figcaption className="mt-3 text-center text-sm text-[#666666]">
+                <figcaption className="mt-3 text-center text-sm text-(--pc-slate)">
                   {photo.caption}
                 </figcaption>
               </figure>

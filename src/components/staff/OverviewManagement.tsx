@@ -48,15 +48,15 @@ export default function OverviewManagement() {
   return (
     <div>
       {/* Welcome banner */}
-      <div className="mb-6 flex items-center gap-4 rounded-2xl bg-white p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+      <div className="mb-6 flex items-center gap-4 rounded-2xl bg-(--pc-white) p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
         <Avatar className="h-16 w-16 rounded-2xl border-2 border-[#e85d75]">
           <AvatarImage src={user?.avatarUrl ?? undefined} alt={user?.username ?? ""} />
-          <AvatarFallback className="bg-[#f5c040]/30 text-xl font-bold text-[#2d2d2d]">
+          <AvatarFallback className="bg-[#f5c040]/30 text-xl font-bold text-(--pc-ink)">
             {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
           </AvatarFallback>
         </Avatar>
         <div>
-          <p className="font-bold text-xl text-[#2d2d2d]">欢迎回来，{user?.username ?? "Staff"}</p>
+          <p className="font-bold text-xl text-(--pc-ink)">欢迎回来，{user?.username ?? "Staff"}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {permissions?.isadmin && <Badge variant="primary">管理员</Badge>}
             {permissions?.isplayer && <Badge variant="teal">选手</Badge>}
@@ -73,8 +73,8 @@ export default function OverviewManagement() {
         {STAT_CARDS.map((c) => (
           <Card key={c.key} className="relative overflow-hidden p-4">
             <span aria-hidden className={cn("absolute left-0 top-0 h-1 w-full", c.accent)} />
-            <p className="text-xs font-bold text-[#666666]">{c.label}</p>
-            <p className="mt-2 text-3xl font-bold text-[#2d2d2d]">
+            <p className="text-xs font-bold text-(--pc-slate)">{c.label}</p>
+            <p className="mt-2 text-3xl font-bold text-(--pc-ink)">
               {fmtInt(stats[c.key])}
             </p>
           </Card>
@@ -88,25 +88,25 @@ export default function OverviewManagement() {
           <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-3">
             <div>
               <CardDescription>当前赛季</CardDescription>
-              <p className="mt-1 text-lg font-bold text-[#2d2d2d]">
+              <p className="mt-1 text-lg font-bold text-(--pc-ink)">
                 {seasonLabel(settings, stats.tournamentSettings.currentSeason) || "-"}
               </p>
             </div>
             <div>
               <CardDescription>当前阶段</CardDescription>
-              <p className="mt-1 text-lg font-bold text-[#2d2d2d]">
+              <p className="mt-1 text-lg font-bold text-(--pc-ink)">
                 {stats.tournamentSettings.currentSeasonStage || "-"}
               </p>
             </div>
             <div>
               <CardDescription>PP 门槛</CardDescription>
-              <p className="mt-1 text-lg font-bold text-[#2d2d2d]">
+              <p className="mt-1 text-lg font-bold text-(--pc-ink)">
                 {fmt(stats.tournamentSettings.minPp)} ~ {fmt(stats.tournamentSettings.maxPp)}
               </p>
             </div>
             <div>
               <CardDescription>管理员数量</CardDescription>
-              <p className="mt-1 text-lg font-bold text-[#2d2d2d]">
+              <p className="mt-1 text-lg font-bold text-(--pc-ink)">
                 {fmtInt(stats.tournamentSettings.adminCount)}
               </p>
             </div>
@@ -143,13 +143,13 @@ export default function OverviewManagement() {
               const open = expanded === season;
               const rows = seasons[season];
               return (
-                <div key={season} className="mb-3 rounded-xl border-2 border-[#e0d8cc] p-4">
+                <div key={season} className="mb-3 rounded-xl border-2 border-(--pc-border) p-4">
                   <button
                     onClick={() => setExpanded(open ? null : season)}
                     className="flex w-full items-center justify-between gap-3 text-left"
                   >
-                    <span className="font-bold text-[#2d2d2d]">{season}</span>
-                    <span className="text-sm text-[#b0a898]">
+                    <span className="font-bold text-(--pc-ink)">{season}</span>
+                    <span className="text-sm text-(--pc-faint)">
                       {open ? "收起 ▲" : "展开 ▼"}
                     </span>
                   </button>
@@ -158,24 +158,24 @@ export default function OverviewManagement() {
                       {rows.map((row) => (
                         <div
                           key={row.category}
-                          className="rounded-xl bg-[#fdf6ee] p-4"
+                          className="rounded-xl bg-(--pc-paper) p-4"
                         >
                           <div className="mb-2 flex items-center justify-between">
-                            <span className="font-bold text-[#2d2d2d]">{row.label}</span>
+                            <span className="font-bold text-(--pc-ink)">{row.label}</span>
                             <span className="flex gap-2">
                               <Badge variant="primary">{fmtInt(row.count)} 张</Badge>
                               <Badge variant="yellow">T {fmtInt(row.testingCount)}</Badge>
                               <Badge variant="blue">P {fmtInt(row.pendingCount)}</Badge>
                             </span>
                           </div>
-                          <div className="space-y-1 text-xs text-[#666666]">
+                          <div className="space-y-1 text-xs text-(--pc-slate)">
                             {AVG_ROWS.map((r) => (
                               <div
                                 key={r.label}
                                 className="flex items-center justify-between"
                               >
                                 <span>{r.label}</span>
-                                <span className="font-bold text-[#2d2d2d]">
+                                <span className="font-bold text-(--pc-ink)">
                                   {fmt(r.pick(row))}
                                 </span>
                               </div>

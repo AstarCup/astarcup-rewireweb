@@ -7,8 +7,8 @@ export default function NotFoundPage() {
       <p className="font-display text-8xl font-bold text-[#e85d75] drop-shadow-[3px_3px_0px_rgba(0,0,0,0.12)]">
         404
       </p>
-      <h1 className="mt-4 font-bold text-2xl text-[#2d2d2d]">页面不存在</h1>
-      <p className="mt-3 text-sm text-[#666666]">
+      <h1 className="mt-4 font-bold text-2xl text-(--pc-ink)">页面不存在</h1>
+      <p className="mt-3 text-sm text-(--pc-slate)">
         你访问的页面可能已被移动、重命名或删除。
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

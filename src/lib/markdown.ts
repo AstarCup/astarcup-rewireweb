@@ -118,12 +118,42 @@ export function renderMarkdown(src: string): string {
     } else if ((m = /^>\s?(.*)/.exec(trimmed))) {
       closeList();
       out.push(`<blockquote>${inline(m[1])}</blockquote>`);
-    } else if ((m = /^\|/.exec(trimmed))) {
-      // naive table
+    } else if ((m = /^\s*\|/.exec(line))) {
+      // GFM 表格：连续收集 | 行，第二行为分隔行时去掉
       closeList();
-      const cells = trimmed.split("|").filter((c) => c.trim().length > 0);
-      if (/^[\s\-:]+$/.test(cells[0] || "")) continue;
-      out.push(`<p>${cells.map((c) => `<code>${escapeHtml(c.trim())}</code>`).join(" ")}</p>`);
+      const rows: string[][] = [];
+      while (i < lines.length && /^\s*\|/.test(lines[i])) {
+        const l = lines[i];
+        const cells = l
+          .trim()
+          .replace(/^\|/, "")
+          .replace(/\|$/, "")
+          .split("|")
+          .map((c) => c.trim());
+        rows.push(cells);
+        i++;
+      }
+      i--;
+      if (rows.length === 0) continue;
+      let body = rows.slice(1);
+      const isSep = (r: string[]) =>
+        r.length > 0 && r.every((c) => /^:?-{1,}:?$/.test(c));
+      if (body.length > 0 && isSep(body[0])) body = body.slice(1);
+      out.push("<table>");
+      out.push(
+        `<thead><tr>${rows[0]
+          .map((c) => `<th>${inline(c)}</th>`)
+          .join("")}</tr></thead>`,
+      );
+      out.push(
+        `<tbody>${body
+          .map(
+            (r) =>
+              `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`,
+          )
+          .join("")}</tbody>`,
+      );
+      out.push("</table>");
     } else {
       closeList();
       out.push(`<p>${inline(trimmed)}</p>`);

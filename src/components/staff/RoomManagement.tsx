@@ -303,13 +303,13 @@ export default function RoomManagement() {
                         type="button"
                         role="combobox"
                         aria-expanded={dateOpen}
-                        className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-[#e0d8cc] bg-white px-3 text-sm text-[#2d2d2d] outline-none transition focus:border-[#e85d75] focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
+                        className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-[#e85d75] focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
                         onClick={() => {
                           if (!dateObj && form.match_date) setDateObj(new Date(form.match_date));
                         }}
                       >
                         {dateObj ? format(dateObj, "yyyy年M月d日") : form.match_date || "选择日期"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-[#b0a898]" />
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto overflow-hidden p-0" align="start">
@@ -408,10 +408,10 @@ export default function RoomManagement() {
                       type="button"
                       role="combobox"
                       aria-expanded={batchDateOpen}
-                      className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-[#e0d8cc] bg-white px-3 text-sm text-[#2d2d2d] outline-none transition focus:border-[#e85d75] focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
+                      className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-[#e85d75] focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
                     >
                       {batchDateObj ? format(batchDateObj, "yyyy年M月d日") : "选择日期"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-[#b0a898]" />
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto overflow-hidden p-0" align="start">
@@ -455,12 +455,12 @@ export default function RoomManagement() {
                   />
                 </div>
               </div>
-              <div className="rounded-xl border-2 border-[#e0d8cc] bg-[#fdf6ee] p-3 text-xs text-[#666666]">
+              <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-3 text-xs text-(--pc-slate)">
                 将创建 {ALL_TIMES.length} 个房间（{ALL_TIMES[0]} ~ {ALL_TIMES[ALL_TIMES.length - 1]}），房间名「
                 {STAGE_CN[batchStage] ?? "阶段"} 1」至「{STAGE_CN[batchStage] ?? "阶段"} {ALL_TIMES.length}」。
               </div>
               {batchBusy && (
-                <div className="h-2 overflow-hidden rounded-full bg-[#fdf6ee]">
+                <div className="h-2 overflow-hidden rounded-full bg-(--pc-paper)">
                   <div
                     className="h-full rounded-full bg-[#5cb8a5] transition-all duration-200"
                     style={{ width: `${(batchProgress / ALL_TIMES.length) * 100}%` }}
@@ -499,12 +499,12 @@ export default function RoomManagement() {
               <DialogDescription>勾选要删除的房间，确认后逐个删除（不可撤销）。</DialogDescription>
             </DialogHeader>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-[#b0a898]">已选 {deleteIds.size} / {data.length} 个房间</span>
+              <span className="text-xs text-(--pc-faint)">已选 {deleteIds.size} / {data.length} 个房间</span>
               <Button variant="outline" size="sm" onClick={toggleDeleteAll}>
                 {deleteIds.size === data.length ? "取消全选" : "全选"}
               </Button>
             </div>
-            <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-[#e0d8cc]">
+            <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-(--pc-border)">
               {data.map((room) => {
                 const stageLabel =
                   ROUND_OPTIONS.find((o) => o.value === String(room.roundNumber))?.label ??
@@ -512,7 +512,7 @@ export default function RoomManagement() {
                 return (
                   <label
                     key={room.id}
-                    className="flex cursor-pointer items-center gap-3 border-b border-[#e0d8cc]/60 px-3 py-2.5 last:border-0 hover:bg-[#fdf6ee]"
+                    className="flex cursor-pointer items-center gap-3 border-b border-(--pc-border)/60 px-3 py-2.5 last:border-0 hover:bg-(--pc-paper)"
                   >
                     <input
                       type="checkbox"
@@ -520,8 +520,8 @@ export default function RoomManagement() {
                       onChange={() => toggleDeleteId(room.id)}
                       className="h-4 w-4 accent-[#e85d75]"
                     />
-                    <span className="font-bold text-[#2d2d2d]">{room.roomName}</span>
-                    <span className="text-xs text-[#b0a898]">
+                    <span className="font-bold text-(--pc-ink)">{room.roomName}</span>
+                    <span className="text-xs text-(--pc-faint)">
                       {stageLabel} · {formatMatchTime(room.matchTime)}
                     </span>
                   </label>
@@ -546,20 +546,20 @@ export default function RoomManagement() {
       </div>
 
       {data.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#b0a898]">还没有房间。</p>
+        <p className="py-10 text-center text-sm text-(--pc-faint)">还没有房间。</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+        <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
           <table className="w-full min-w-[820px] text-left text-sm">
             <thead>
-              <tr className="border-b-2 border-[#e0d8cc] bg-[#fdf6ee]">
-                <th className="px-4 py-3 font-bold text-[#666666]">房间名称</th>
-                <th className="px-4 py-3 font-bold text-[#666666]">阶段</th>
-                <th className="px-4 py-3 font-bold text-[#666666]">编号</th>
-                <th className="px-4 py-3 font-bold text-[#666666]">比赛时间</th>
-                <th className="px-4 py-3 font-bold text-[#666666]">人数</th>
-                <th className="px-4 py-3 font-bold text-[#666666]">状态</th>
-                <th className="px-4 py-3 font-bold text-[#666666]">预约</th>
-                <th className="px-4 py-3 font-bold text-[#666666]">操作</th>
+              <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">房间名称</th>
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">阶段</th>
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">编号</th>
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">比赛时间</th>
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">人数</th>
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">状态</th>
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">预约</th>
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -569,23 +569,23 @@ export default function RoomManagement() {
                   ROUND_OPTIONS.find((o) => o.value === String(room.roundNumber))?.label ??
                   `R${room.roundNumber}`;
                 return (
-                  <tr key={room.id} className="border-b border-[#e0d8cc]/60 hover:bg-[#fdf6ee]">
+                  <tr key={room.id} className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
                     <td className="px-4 py-3">
-                      <p className="font-bold text-[#2d2d2d]">{room.roomName}</p>
+                      <p className="font-bold text-(--pc-ink)">{room.roomName}</p>
                       {room.description && (
-                        <p className="mt-0.5 text-xs text-[#b0a898]">{room.description}</p>
+                        <p className="mt-0.5 text-xs text-(--pc-faint)">{room.description}</p>
                       )}
                     </td>
-                    <td className="px-4 py-3 font-sans text-[#666666]">{stageLabel}</td>
-                    <td className="px-4 py-3 font-sans text-[#666666]">{room.matchNumber}</td>
-                    <td className="px-4 py-3 font-sans text-[#666666]">
+                    <td className="px-4 py-3 font-sans text-(--pc-slate)">{stageLabel}</td>
+                    <td className="px-4 py-3 font-sans text-(--pc-slate)">{room.matchNumber}</td>
+                    <td className="px-4 py-3 font-sans text-(--pc-slate)">
                       {formatMatchTime(room.matchTime)}
                     </td>
-                    <td className="px-4 py-3 font-sans text-[#666666]">{room.maxParticipants}</td>
+                    <td className="px-4 py-3 font-sans text-(--pc-slate)">{room.maxParticipants}</td>
                     <td className="px-4 py-3">
                       <Badge variant={statusVariant(room.status)}>{room.status}</Badge>
                     </td>
-                    <td className="px-4 py-3 font-sans text-[#666666]">
+                    <td className="px-4 py-3 font-sans text-(--pc-slate)">
                       {scheduleCount > 0 ? scheduleCount : "—"}
                     </td>
                     <td className="px-4 py-3">

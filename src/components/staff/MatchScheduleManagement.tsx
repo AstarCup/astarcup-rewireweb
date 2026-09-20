@@ -69,17 +69,17 @@ function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: Schedu
   return (
     <Card className="p-5">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-base font-bold text-[#2d2d2d]">
-          {s.player1Username || "?"} <span className="text-[#b0a898]">vs</span>{" "}
+        <p className="text-base font-bold text-(--pc-ink)">
+          {s.player1Username || "?"} <span className="text-(--pc-faint)">vs</span>{" "}
           {s.player2Username || "?"}
         </p>
         <Badge variant={statusVariant(s.status)}>{statusLabel(s.status)}</Badge>
       </div>
-      {roomName && <p className="mt-1 text-xs text-[#b0a898]">房间：{roomName}</p>}
+      {roomName && <p className="mt-1 text-xs text-(--pc-faint)">房间：{roomName}</p>}
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="grid gap-1.5">
-          <Label className="text-xs text-[#666666]">红方比分</Label>
+          <Label className="text-xs text-(--pc-slate)">红方比分</Label>
           <Input
             type="number"
             value={form.red}
@@ -88,7 +88,7 @@ function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: Schedu
           />
         </div>
         <div className="grid gap-1.5">
-          <Label className="text-xs text-[#666666]">蓝方比分</Label>
+          <Label className="text-xs text-(--pc-slate)">蓝方比分</Label>
           <Input
             type="number"
             value={form.blue}
@@ -100,15 +100,15 @@ function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: Schedu
 
       <div className="mt-3 space-y-2">
         <div className="grid gap-1.5">
-          <Label className="text-xs text-[#666666]">比赛链接</Label>
+          <Label className="text-xs text-(--pc-slate)">比赛链接</Label>
           <Input value={form.link} onChange={setField("link")} placeholder={s.matchLink || "mech.ink"} />
         </div>
         <div className="grid gap-1.5">
-          <Label className="text-xs text-[#666666]">直播链接</Label>
+          <Label className="text-xs text-(--pc-slate)">直播链接</Label>
           <Input value={form.stream} onChange={setField("stream")} placeholder={s.streamLink || "bilibili"} />
         </div>
         <div className="grid gap-1.5">
-          <Label className="text-xs text-[#666666]">回放链接</Label>
+          <Label className="text-xs text-(--pc-slate)">回放链接</Label>
           <Input value={form.replay} onChange={setField("replay")} placeholder={s.replayLink || "可选"} />
         </div>
       </div>
@@ -314,12 +314,12 @@ export default function MatchScheduleManagement() {
       </div>
 
       {data.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#b0a898]">还没有赛程。</p>
+        <p className="py-10 text-center text-sm text-(--pc-faint)">还没有赛程。</p>
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([room, list]) => (
             <div key={room}>
-              <p className="mb-3 flex items-center gap-2 text-sm font-bold text-[#2d2d2d]">
+              <p className="mb-3 flex items-center gap-2 text-sm font-bold text-(--pc-ink)">
                 {room}
                 <Badge variant="outline">{list.length}</Badge>
               </p>

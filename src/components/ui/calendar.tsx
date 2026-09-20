@@ -12,7 +12,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
       showOutsideDays={showOutsideDays}
       locale={zhCN}
       className={cn(
-        "rounded-2xl bg-white p-3 shadow-[4px_4px_0px_rgba(0,0,0,0.08)]",
+        "rounded-2xl bg-(--pc-white) p-3 shadow-[4px_4px_0px_rgba(0,0,0,0.08)]",
         className,
       )}
       style={
@@ -28,10 +28,10 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         } as React.CSSProperties
       }
       classNames={{
-        caption_label: "font-bold text-[#2d2d2d]",
-        weekday: "text-[#b0a898]",
+        caption_label: "font-bold text-(--pc-ink)",
+        weekday: "text-(--pc-faint)",
         day_button:
-          "rounded-lg text-[#2d2d2d] hover:bg-[#6b7fb5]/10 hover:text-[#2d2d2d] p-3",
+          "rounded-lg text-(--pc-ink) hover:bg-[#6b7fb5]/10 hover:text-(--pc-ink) p-3",
         day_selected: "bg-[#e85d75] text-[#fdf6ee] hover:bg-[#e85d75] hover:text-[#fdf6ee]",
         ...classNames,
       }}

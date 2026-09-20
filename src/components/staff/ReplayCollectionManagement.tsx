@@ -255,7 +255,7 @@ export default function ReplayCollectionManagement() {
       {/* Filters + actions */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">赛季</Label>
+          <Label className="text-xs text-(--pc-faint)">赛季</Label>
           <Select value={season} onValueChange={setSeason}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="最新" />
@@ -270,7 +270,7 @@ export default function ReplayCollectionManagement() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">阶段</Label>
+          <Label className="text-xs text-(--pc-faint)">阶段</Label>
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="w-32">
               <SelectValue />
@@ -286,7 +286,7 @@ export default function ReplayCollectionManagement() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">MOD</Label>
+          <Label className="text-xs text-(--pc-faint)">MOD</Label>
           <Select value={modFilter} onValueChange={setModFilter}>
             <SelectTrigger className="w-32">
               <SelectValue />
@@ -307,7 +307,7 @@ export default function ReplayCollectionManagement() {
         </div>
       </div>
 
-      <p className="mt-3 text-xs text-[#b0a898]">
+      <p className="mt-3 text-xs text-(--pc-faint)">
         共 {maps.length} 张测图中选图 · 点击卡片或「上传回放」按钮选择 .osr 文件
       </p>
 
@@ -316,7 +316,7 @@ export default function ReplayCollectionManagement() {
       ) : error ? (
         <ErrorBlock message={error} onRetry={() => void loadPool()} />
       ) : filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#b0a898]">
+        <p className="py-10 text-center text-sm text-(--pc-faint)">
           当前条件下没有测图中的选图。
         </p>
       ) : (
@@ -330,7 +330,7 @@ export default function ReplayCollectionManagement() {
                 >
                   {MOD_DISPLAY[g.mod] ?? g.mod}
                 </span>
-                <span className="text-xs text-[#666666]">{g.items.length} 张图</span>
+                <span className="text-xs text-(--pc-slate)">{g.items.length} 张图</span>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {g.items.map((m) => {
@@ -355,10 +355,10 @@ export default function ReplayCollectionManagement() {
                         </span>
                       </div>
                       <div className="p-4">
-                        <p className="line-clamp-2 font-bold text-[#2d2d2d]">
+                        <p className="line-clamp-2 font-bold text-(--pc-ink)">
                           {[m.artist, m.title].filter(Boolean).join(" - ") || "未知曲目"}
                         </p>
-                        <p className="text-xs text-[#b0a898]">
+                        <p className="text-xs text-(--pc-faint)">
                           [{m.version}] by {m.creator ?? "-"}
                         </p>
                         <p className="mt-1 text-xs font-bold" style={{ color: starColor(m.starRating) }}>
@@ -367,7 +367,7 @@ export default function ReplayCollectionManagement() {
 
                         <div className="mt-3 flex flex-wrap items-center gap-1.5">
                           {usernames.length === 0 ? (
-                            <span className="text-xs text-[#b0a898]">还没人上传</span>
+                            <span className="text-xs text-(--pc-faint)">还没人上传</span>
                           ) : (
                             usernames.map((u) => (
                               <Badge key={u} variant={u === user?.username ? "teal" : "outline"}>

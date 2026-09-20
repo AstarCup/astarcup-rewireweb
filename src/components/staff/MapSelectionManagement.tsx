@@ -219,14 +219,14 @@ function CommentDialog({
         </DialogHeader>
         <div className="space-y-3">
           {loading ? (
-            <p className="py-4 text-center text-xs text-[#b0a898]">加载评论中…</p>
+            <p className="py-4 text-center text-xs text-(--pc-faint)">加载评论中…</p>
           ) : comments.length === 0 ? (
-            <p className="py-4 text-center text-xs text-[#b0a898]">暂无评论。</p>
+            <p className="py-4 text-center text-xs text-(--pc-faint)">暂无评论。</p>
           ) : (
             comments.map((c) => (
-              <div key={c.id} className="rounded-xl border-2 border-[#e0d8cc] p-3">
+              <div key={c.id} className="rounded-xl border-2 border-(--pc-border) p-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2d2d2d]">{c.username}</span>
+                  <span className="text-xs font-bold text-(--pc-ink)">{c.username}</span>
                   <button
                     onClick={() => void remove(c.id)}
                     disabled={delBusy === c.id}
@@ -235,7 +235,7 @@ function CommentDialog({
                     {delBusy === c.id ? "…" : "删除"}
                   </button>
                 </div>
-                <p className="mt-1 text-sm text-[#666666]">{c.comment}</p>
+                <p className="mt-1 text-sm text-(--pc-slate)">{c.comment}</p>
               </div>
             ))
           )}
@@ -282,19 +282,19 @@ function BatchApproveDialog({
           <DialogTitle>批量过审确认</DialogTitle>
           <DialogDescription>将下列 {maps.length} 张选图标记为已审核。</DialogDescription>
         </DialogHeader>
-        <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-[#e0d8cc]">
+        <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-(--pc-border)">
           <table className="w-full text-left text-sm">
-            <thead className="sticky top-0 bg-[#fdf6ee]">
-              <tr className="border-b-2 border-[#e0d8cc]">
-                <th className="px-3 py-2 font-bold text-[#666666]">MOD</th>
-                <th className="px-3 py-2 font-bold text-[#666666]">歌曲</th>
-                <th className="px-3 py-2 font-bold text-[#666666]">难度</th>
-                <th className="px-3 py-2 font-bold text-[#666666]">提名者</th>
+            <thead className="sticky top-0 bg-(--pc-paper)">
+              <tr className="border-b-2 border-(--pc-border)">
+                <th className="px-3 py-2 font-bold text-(--pc-slate)">MOD</th>
+                <th className="px-3 py-2 font-bold text-(--pc-slate)">歌曲</th>
+                <th className="px-3 py-2 font-bold text-(--pc-slate)">难度</th>
+                <th className="px-3 py-2 font-bold text-(--pc-slate)">提名者</th>
               </tr>
             </thead>
             <tbody>
               {maps.map((m) => (
-                <tr key={m.id} className="border-b border-[#e0d8cc]/60">
+                <tr key={m.id} className="border-b border-(--pc-border)/60">
                   <td className="px-3 py-2">
                     <span
                       className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
@@ -303,9 +303,9 @@ function BatchApproveDialog({
                       {modLabel(m)}
                     </span>
                   </td>
-                  <td className="px-3 py-2 font-bold text-[#2d2d2d]">{m.title}</td>
-                  <td className="px-3 py-2 text-[#666666]">{m.version}</td>
-                  <td className="px-3 py-2 text-[#b0a898]">
+                  <td className="px-3 py-2 font-bold text-(--pc-ink)">{m.title}</td>
+                  <td className="px-3 py-2 text-(--pc-slate)">{m.version}</td>
+                  <td className="px-3 py-2 text-(--pc-faint)">
                     {m.selectedByUsername || m.selectedBy || "-"}
                   </td>
                 </tr>
@@ -922,8 +922,8 @@ export default function MapSelectionManagement() {
   const selectedMaps = data.filter((m) => selectedIds.has(m.id));
 
   const statCell = (label: string, value: string, color?: string) => (
-    <div className="rounded-xl bg-[#fdf6ee] px-2 py-1.5 text-center">
-      <p className="text-[10px] text-[#b0a898]">{label}</p>
+    <div className="rounded-xl bg-(--pc-paper) px-2 py-1.5 text-center">
+      <p className="text-[10px] text-(--pc-faint)">{label}</p>
       <p className="font-sans text-sm font-bold" style={{ color: color ?? "#2d2d2d" }}>
         {value}
       </p>
@@ -935,8 +935,8 @@ export default function MapSelectionManagement() {
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="font-display font-bold text-2xl text-[#2d2d2d]">选图管理</h2>
-          <p className="mt-1 text-xs text-[#b0a898]">共 {data.length} 张选图 · {paddingCount} 张审图中</p>
+          <h2 className="font-display font-bold text-2xl text-(--pc-ink)">选图管理</h2>
+          <p className="mt-1 text-xs text-(--pc-faint)">共 {data.length} 张选图 · {paddingCount} 张审图中</p>
         </div>
         <Dialog
           open={addOpen}
@@ -1045,7 +1045,7 @@ export default function MapSelectionManagement() {
                 </div>
               )}
               {pickedInfo && (
-                <div className="flex items-center gap-3 rounded-xl border-2 border-[#e0d8cc] bg-white p-3">
+                <div className="flex items-center gap-3 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3">
                   {pickedInfo.cover_url ? (
                     <img
                       src={pickedInfo.cover_url}
@@ -1053,15 +1053,15 @@ export default function MapSelectionManagement() {
                       className="h-16 w-28 shrink-0 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="grid h-16 w-28 shrink-0 place-items-center rounded-lg bg-[#f5c040]/30 text-xs font-bold text-[#2d2d2d]">
+                    <div className="grid h-16 w-28 shrink-0 place-items-center rounded-lg bg-[#f5c040]/30 text-xs font-bold text-(--pc-ink)">
                       无封面
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="truncate font-bold text-sm text-[#2d2d2d]">
+                    <p className="truncate font-bold text-sm text-(--pc-ink)">
                       {[pickedInfo.artist, pickedInfo.title].filter(Boolean).join(" - ") || "未知曲目"}
                     </p>
-                    <p className="truncate text-xs text-[#b0a898]">
+                    <p className="truncate text-xs text-(--pc-faint)">
                       [{pickedInfo.version}] by {pickedInfo.creator ?? "-"}
                     </p>
                     {pickedInfo.star_rating != null && (
@@ -1073,7 +1073,7 @@ export default function MapSelectionManagement() {
                 </div>
               )}
               {duplicateInfo && (
-                <p className="rounded-xl border-2 border-[#f5c040] bg-[#f5c040]/20 px-3 py-2 text-xs font-bold text-[#2d2d2d]">
+                <p className="rounded-xl border-2 border-[#f5c040] bg-[#f5c040]/20 px-3 py-2 text-xs font-bold text-(--pc-ink)">
                   ⚠ 检测到重复选图：{duplicateInfo}
                 </p>
               )}
@@ -1143,7 +1143,7 @@ export default function MapSelectionManagement() {
                       {calcBusy ? "计算中…" : "计算 MOD 属性"}
                     </Button>
                     {modStats && (
-                      <span className="text-xs text-[#666666]">
+                      <span className="text-xs text-(--pc-slate)">
                         星级 {fmt(modStats.starRating)} · AR {fmt(modStats.ar)} · CS {fmt(modStats.cs)} · OD{" "}
                         {fmt(modStats.od)}
                       </span>
@@ -1175,7 +1175,7 @@ export default function MapSelectionManagement() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">赛季</Label>
+          <Label className="text-xs text-(--pc-faint)">赛季</Label>
           <Select value={season} onValueChange={(v) => { setSeasonSettled(true); setSeason(v); }}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="全部" />
@@ -1191,7 +1191,7 @@ export default function MapSelectionManagement() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">类别</Label>
+          <Label className="text-xs text-(--pc-faint)">类别</Label>
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="w-28">
               <SelectValue />
@@ -1207,7 +1207,7 @@ export default function MapSelectionManagement() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">MOD</Label>
+          <Label className="text-xs text-(--pc-faint)">MOD</Label>
           <Select value={modFilter} onValueChange={setModFilter}>
             <SelectTrigger className="w-36">
               <SelectValue />
@@ -1222,7 +1222,7 @@ export default function MapSelectionManagement() {
           </Select>
         </div>
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-[#b0a898]">审图状态</Label>
+          <Label className="text-xs text-(--pc-faint)">审图状态</Label>
           <Select value={paddingFilter} onValueChange={setPaddingFilter}>
             <SelectTrigger className="w-32">
               <SelectValue />
@@ -1249,7 +1249,7 @@ export default function MapSelectionManagement() {
             批量过审 ({selectedIds.size})
           </Button>
         )}
-        <div className="ml-auto flex items-center gap-1 rounded-xl border-2 border-[#e0d8cc] bg-white p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
+        <div className="ml-auto flex items-center gap-1 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
           {(["card", "table"] as const).map((v) => (
             <button
               key={v}
@@ -1258,7 +1258,7 @@ export default function MapSelectionManagement() {
                 "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors",
                 view === v
                   ? "bg-[#6b7fb5] text-[#fdf6ee]"
-                  : "bg-transparent text-[#666666] hover:text-[#2d2d2d]",
+                  : "bg-transparent text-(--pc-slate) hover:text-(--pc-ink)",
               )}
             >
               {v === "card" ? <LayoutGrid className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
@@ -1269,7 +1269,7 @@ export default function MapSelectionManagement() {
       </div>
 
       {/* Summary */}
-      <div className="mt-4 flex items-center gap-2 text-xs text-[#b0a898]">
+      <div className="mt-4 flex items-center gap-2 text-xs text-(--pc-faint)">
         <Badge variant="outline">{selectedIds.size} 已选</Badge>
         <span>
           当前筛选：{season || "全部赛季"} / {category} / {modFilter} / {paddingFilter} · 共{" "}
@@ -1278,32 +1278,32 @@ export default function MapSelectionManagement() {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#b0a898]">
+        <p className="py-10 text-center text-sm text-(--pc-faint)">
           {data.length === 0 ? "暂无选图" : "没有符合筛选条件的选图"}
         </p>
       ) : view === "table" ? (
         /* ---------- Table view ---------- */
-        <div className="mt-4 overflow-x-auto rounded-2xl bg-white shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+        <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
           <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
-              <tr className="border-b-2 border-[#e0d8cc] bg-[#fdf6ee]">
-                <th className="px-3 py-2.5 font-bold text-[#666666]">MOD</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">BID</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">歌曲</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">谱师</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">★</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">CS</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">AR</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">OD</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">BPM</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">时长</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">状态</th>
-                <th className="px-3 py-2.5 font-bold text-[#666666]">操作</th>
+              <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">MOD</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">BID</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">歌曲</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">谱师</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">★</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">CS</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">AR</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">OD</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">BPM</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">时长</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">状态</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">操作</th>
               </tr>
             </thead>
             <tbody>
               {lazyList.map((m) => (
-                <tr key={m.id} className="border-b border-[#e0d8cc]/60 hover:bg-[#fdf6ee]">
+                <tr key={m.id} className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
                   <td className="px-3 py-2.5">
                     <span
                       className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
@@ -1313,21 +1313,21 @@ export default function MapSelectionManagement() {
                     </span>
                   </td>
                   <td className="px-3 py-2.5 font-mono text-xs text-[#e85d75]">{m.beatmapId}</td>
-                  <td className="px-3 py-2.5 font-bold text-[#2d2d2d]">
+                  <td className="px-3 py-2.5 font-bold text-(--pc-ink)">
                     {[m.artist_unicode || m.artist, m.title_unicode || m.title]
                       .filter(Boolean)
                       .join(" - ")}
-                    <span className="text-[#b0a898]"> [{m.version}]</span>
+                    <span className="text-(--pc-faint)"> [{m.version}]</span>
                   </td>
-                  <td className="px-3 py-2.5 text-[#666666]">{m.creator ?? "-"}</td>
+                  <td className="px-3 py-2.5 text-(--pc-slate)">{m.creator ?? "-"}</td>
                   <td className="px-3 py-2.5 font-sans font-bold" style={{ color: starColor(m.starRating) }}>
                     {fmt(m.starRating)}
                   </td>
-                  <td className="px-3 py-2.5 font-sans text-[#666666]">{fmt(m.cs)}</td>
-                  <td className="px-3 py-2.5 font-sans text-[#666666]">{fmt(m.ar)}</td>
-                  <td className="px-3 py-2.5 font-sans text-[#666666]">{fmt(m.od)}</td>
-                  <td className="px-3 py-2.5 font-sans text-[#666666]">{m.bpm ?? "-"}</td>
-                  <td className="px-3 py-2.5 font-sans text-[#666666]">{fmtLength(m.totalLength)}</td>
+                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
+                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
+                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
+                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{m.bpm ?? "-"}</td>
+                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex flex-wrap gap-1">
                       {m.approved ? (
@@ -1373,7 +1373,7 @@ export default function MapSelectionManagement() {
                 >
                   {MOD_DISPLAY[g.mod] ?? g.mod}
                 </span>
-                <span className="text-xs text-[#666666]">{g.items.length} 张图</span>
+                <span className="text-xs text-(--pc-slate)">{g.items.length} 张图</span>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {g.items.map((m) => {
@@ -1401,7 +1401,7 @@ export default function MapSelectionManagement() {
                           </span>
                         )}
                         {m.padding && (
-                          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-lg bg-[#e0a47e]/90 px-2 py-0.5 text-xs font-bold text-[#2d2d2d]">
+                          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-lg bg-[#e0a47e]/90 px-2 py-0.5 text-xs font-bold text-(--pc-ink)">
                             <CircleArrowRight className="h-3.5 w-3.5" />
                             测图中
                           </span>
@@ -1435,7 +1435,7 @@ export default function MapSelectionManagement() {
                                 type="button"
                                 onClick={() => toggleSelect(m.id)}
                                 title="批量选择"
-                                className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                               >
                                 <Checkbox checked={selectedIds.has(m.id)} className="pointer-events-none" />
                               </button>
@@ -1444,13 +1444,13 @@ export default function MapSelectionManagement() {
                               <HoverCardTrigger asChild>
                                 <button
                                   onClick={() => setCommentTarget(m)}
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                                 >
                                   <MessageSquare className="h-3.5 w-3.5" />
                                 </button>
                               </HoverCardTrigger>
                               <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-[#2d2d2d]">添加评论</p>
+                                <p className="text-xs font-bold text-(--pc-ink)">添加评论</p>
                               </HoverCardContent>
                             </HoverCard>
                             <HoverCard openDelay={0} closeDelay={0}>
@@ -1459,13 +1459,13 @@ export default function MapSelectionManagement() {
                                   href={sayobotUrl(m)}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                                 >
                                   <Download className="h-3.5 w-3.5" />
                                 </a>
                               </HoverCardTrigger>
                               <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-[#2d2d2d]">Sayobot 下载</p>
+                                <p className="text-xs font-bold text-(--pc-ink)">Sayobot 下载</p>
                               </HoverCardContent>
                             </HoverCard>
                             <HoverCard openDelay={0} closeDelay={0}>
@@ -1474,26 +1474,26 @@ export default function MapSelectionManagement() {
                                   href={osuMapUrl(m)}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                                 >
                                   <ExternalLink className="h-3.5 w-3.5" />
                                 </a>
                               </HoverCardTrigger>
                               <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-[#2d2d2d]">打开 osu beatmap web 查看</p>
+                                <p className="text-xs font-bold text-(--pc-ink)">打开 osu beatmap web 查看</p>
                               </HoverCardContent>
                             </HoverCard>
                             <HoverCard openDelay={0} closeDelay={0}>
                               <HoverCardTrigger asChild>
                                 <button
                                   onClick={() => copyBid(m)}
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[#b0a898] transition hover:text-[#e85d75]"
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                                 >
                                   <Clipboard className="h-3.5 w-3.5" />
                                 </button>
                               </HoverCardTrigger>
                               <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-[#2d2d2d]">
+                                <p className="text-xs font-bold text-(--pc-ink)">
                                   BID: <span className="font-mono text-[#e85d75]">{m.beatmapId}</span>
                                 </p>
                               </HoverCardContent>
@@ -1502,12 +1502,12 @@ export default function MapSelectionManagement() {
                         </div>
 
                         {/* Title */}
-                        <p className="mt-2 line-clamp-2 font-bold text-[#2d2d2d]">
+                        <p className="mt-2 line-clamp-2 font-bold text-(--pc-ink)">
                           {[m.artist_unicode || m.artist, m.title_unicode || m.title]
                             .filter(Boolean)
                             .join(" - ") || "未知曲目"}
                         </p>
-                        <p className="text-xs text-[#b0a898]">
+                        <p className="text-xs text-(--pc-faint)">
                           [{m.version}] by {m.creator ?? "-"}
                         </p>
 
@@ -1532,18 +1532,18 @@ export default function MapSelectionManagement() {
                               className="h-6 w-6 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="grid h-6 w-6 place-items-center rounded-full bg-[#f5c040]/30 text-[10px] font-bold text-[#2d2d2d]">
+                            <div className="grid h-6 w-6 place-items-center rounded-full bg-[#f5c040]/30 text-[10px] font-bold text-(--pc-ink)">
                               {(m.selectedByUsername || m.selectedBy || "?").slice(0, 1)}
                             </div>
                           )}
-                          <span className="text-xs text-[#666666]">
+                          <span className="text-xs text-(--pc-slate)">
                             {m.selectedByUsername || m.selectedBy || "未知提名者"}
                           </span>
                         </div>
 
                         {/* Note */}
                         {m.comment && (
-                          <p className="mt-2 rounded-lg bg-[#fdf6ee] px-2 py-1 text-xs text-[#b0a898]">
+                          <p className="mt-2 rounded-lg bg-(--pc-paper) px-2 py-1 text-xs text-(--pc-faint)">
                             备注：{m.comment}
                           </p>
                         )}
@@ -1556,15 +1556,15 @@ export default function MapSelectionManagement() {
                                 <HoverCardTrigger asChild>
                                   <button
                                     onClick={() => setCommentTarget(m)}
-                                    className="flex items-center gap-1.5 rounded-full border-2 border-[#e0d8cc] bg-white px-2 py-1 text-left transition hover:-translate-y-0.5"
+                                    className="flex items-center gap-1.5 rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1 text-left transition hover:-translate-y-0.5"
                                   >
                                     <Avatar className="h-5 w-5">
                                       {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
-                                      <AvatarFallback className="bg-[#f5c040]/30 text-[8px] font-bold text-[#2d2d2d]">
+                                      <AvatarFallback className="bg-[#f5c040]/30 text-[8px] font-bold text-(--pc-ink)">
                                         {c.username?.slice(0, 1).toUpperCase() || "?"}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-[10px] text-[#666666]">
+                                    <span className="text-[10px] text-(--pc-slate)">
                                       {c.comment.slice(0, 12)}
                                       {c.comment.length > 12 ? "…" : ""}
                                     </span>
@@ -1574,19 +1574,19 @@ export default function MapSelectionManagement() {
                                   <div className="flex items-center gap-2.5">
                                     <Avatar className="h-10 w-10 rounded-xl">
                                       {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
-                                      <AvatarFallback className="bg-[#f5c040]/30 font-bold text-[#2d2d2d]">
+                                      <AvatarFallback className="bg-[#f5c040]/30 font-bold text-(--pc-ink)">
                                         {c.username?.slice(0, 1).toUpperCase() || "?"}
                                       </AvatarFallback>
                                     </Avatar>
                                     <div className="min-w-0">
-                                      <p className="font-bold text-sm text-[#2d2d2d]">{c.username}</p>
-                                      <p className="text-xs text-[#b0a898]">
+                                      <p className="font-bold text-sm text-(--pc-ink)">{c.username}</p>
+                                      <p className="text-xs text-(--pc-faint)">
                                         osuID: {c.userId}
                                         {c.createdAt ? ` · ${formatDateTime(c.createdAt)}` : ""}
                                       </p>
                                     </div>
                                   </div>
-                                  <p className="mt-3 text-sm leading-relaxed text-[#666666]">
+                                  <p className="mt-3 text-sm leading-relaxed text-(--pc-slate)">
                                     {c.comment}
                                   </p>
                                 </HoverCardContent>
@@ -1595,7 +1595,7 @@ export default function MapSelectionManagement() {
                             {comments.length > 3 && (
                               <button
                                 onClick={() => setCommentTarget(m)}
-                                className="grid h-7 w-7 place-items-center rounded-full bg-[#fdf6ee] text-[10px] font-bold text-[#e85d75]"
+                                className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-[10px] font-bold text-[#e85d75]"
                               >
                                 +{comments.length - 3}
                               </button>

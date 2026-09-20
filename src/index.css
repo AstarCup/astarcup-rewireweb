@@ -51,6 +51,51 @@
   --pc-border: #e0d8cc;
 }
 
+.dark {
+  color-scheme: dark;
+
+  /* ---- shadcn tokens（暗色） ---- */
+  --background: 30 18% 8%;
+  --foreground: 40 25% 88%;
+  --card: 30 16% 11%;
+  --card-foreground: 40 25% 88%;
+  --popover: 30 16% 11%;
+  --popover-foreground: 40 25% 88%;
+  --primary: 350 75% 64%;
+  --primary-foreground: 0 0% 9%;
+  --secondary: 30 16% 13%;
+  --secondary-foreground: 40 25% 88%;
+  --muted: 30 12% 15%;
+  --muted-foreground: 40 12% 56%;
+  --accent: 168 39% 54%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 30 12% 19%;
+  --input: 30 12% 19%;
+  --ring: 350 75% 64%;
+  --sidebar: 30 16% 11%;
+  --sidebar-foreground: 40 25% 88%;
+  --sidebar-primary: 350 75% 64%;
+  --sidebar-primary-foreground: 0 0% 9%;
+  --sidebar-accent: 168 39% 54%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 30 12% 19%;
+  --sidebar-ring: 350 75% 64%;
+
+  /* ---- Paper Craft palette（暗色） ---- */
+  --pc-primary: #f07a90;
+  --pc-teal: #5cb8a5;
+  --pc-yellow: #f5c040;
+  --pc-blue: #8598cc;
+  --pc-paper: #17130e;
+  --pc-white: #221c14;
+  --pc-ink: #ece4d5;
+  --pc-slate: #b6aa95;
+  --pc-faint: #857961;
+  --pc-border: #3a332a;
+}
+
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -125,6 +170,13 @@
   }
   ::-webkit-scrollbar-corner {
     background: transparent;
+  }
+  .dark * {
+    scrollbar-color: #3a332a transparent;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #3a332a;
+    background-clip: padding-box;
   }
 }
 

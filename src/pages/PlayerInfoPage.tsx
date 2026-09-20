@@ -213,7 +213,7 @@ export default function PlayerInfoPage() {
       )}
 
       <div className="flex items-center justify-between gap-4">
-        <h1 className="font-bold text-3xl text-[#2d2d2d] md:text-4xl">个人中心</h1>
+        <h1 className="font-bold text-3xl text-(--pc-ink) md:text-4xl">个人中心</h1>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline">
             <Link to="/">
@@ -245,26 +245,26 @@ export default function PlayerInfoPage() {
               </Avatar>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="truncate font-bold text-xl text-[#2d2d2d]">{user.username}</p>
+                  <p className="truncate font-bold text-xl text-(--pc-ink)">{user.username}</p>
                 </div>
-                <p className="mt-1 text-xs text-[#b0a898]">osuId: {user.osuId}</p>
+                <p className="mt-1 text-xs text-(--pc-faint)">osuId: {user.osuId}</p>
               </div>
             </div>
 
             <Separator />
 
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-xl bg-[#fdf6ee] p-3">
-                <p className="text-lg font-bold text-[#2d2d2d]">{fmtInt(user.pp)}</p>
-                <p className="text-xs text-[#b0a898]">PP</p>
+              <div className="rounded-xl bg-(--pc-paper) p-3">
+                <p className="text-lg font-bold text-(--pc-ink)">{fmtInt(user.pp)}</p>
+                <p className="text-xs text-(--pc-faint)">PP</p>
               </div>
-              <div className="rounded-xl bg-[#fdf6ee] p-3">
-                <p className="text-lg font-bold text-[#2d2d2d]">#{fmtInt(user.globalRank)}</p>
-                <p className="text-xs text-[#b0a898]">全球排名</p>
+              <div className="rounded-xl bg-(--pc-paper) p-3">
+                <p className="text-lg font-bold text-(--pc-ink)">#{fmtInt(user.globalRank)}</p>
+                <p className="text-xs text-(--pc-faint)">全球排名</p>
               </div>
-              <div className="rounded-xl bg-[#fdf6ee] p-3">
-                <p className="text-lg font-bold text-[#2d2d2d]">#{fmtInt(user.countryRank)}</p>
-                <p className="text-xs text-[#b0a898]">地区排名</p>
+              <div className="rounded-xl bg-(--pc-paper) p-3">
+                <p className="text-lg font-bold text-(--pc-ink)">#{fmtInt(user.countryRank)}</p>
+                <p className="text-xs text-(--pc-faint)">地区排名</p>
               </div>
             </div>
 
@@ -289,7 +289,7 @@ export default function PlayerInfoPage() {
 
             {user.season && user.season.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-xs font-bold text-[#b0a898]">已报名参赛过的赛季</p>
+                <p className="text-xs font-bold text-(--pc-faint)">已报名参赛过的赛季</p>
                 <div className="flex flex-wrap items-center gap-2">
                   {user.season.map((s) => (
                     <Badge key={s} variant="yellow">
@@ -315,16 +315,16 @@ export default function PlayerInfoPage() {
           <CardContent className="space-y-3">
             {user.g0v0Bound ? (
               <>
-                <div className="rounded-xl bg-[#fdf6ee] px-4 py-3">
-                  <p className="text-xs text-[#b0a898]">已绑定</p>
-                  <p className="mt-0.5 font-bold text-[#2d2d2d]">
+                <div className="rounded-xl bg-(--pc-paper) px-4 py-3">
+                  <p className="text-xs text-(--pc-faint)">已绑定</p>
+                  <p className="mt-0.5 font-bold text-(--pc-ink)">
                     {user.guServerUsername}
                   </p>
-                  <p className="text-xs text-[#b0a898]">
+                  <p className="text-xs text-(--pc-faint)">
                     g0v0 ID：{user.guServerUserId}
                   </p>
                   {user.guServerBindAt && (
-                    <p className="text-xs text-[#b0a898]">
+                    <p className="text-xs text-(--pc-faint)">
                       绑定于 {formatDateTime(user.guServerBindAt)}
                     </p>
                   )}
@@ -339,7 +339,7 @@ export default function PlayerInfoPage() {
               </>
             ) : (
               <>
-                <p className="text-sm text-[#b0a898]">
+                <p className="text-sm text-(--pc-faint)">
                   尚未绑定 g0v0 服务器账号，绑定后才能报名比赛。
                 </p>
                 <Button
@@ -381,10 +381,10 @@ export default function PlayerInfoPage() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-bold text-lg text-[#2d2d2d]">
+                      <p className="font-bold text-lg text-(--pc-ink)">
                         {nextMatch.opponent.username}
                       </p>
-                      <p className="text-xs text-[#b0a898]">opponent</p>
+                      <p className="text-xs text-(--pc-faint)">opponent</p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -399,16 +399,16 @@ export default function PlayerInfoPage() {
                   </div>
                 </div>
                 {nextMatch.room && (
-                  <div className="space-y-1 rounded-xl bg-[#fdf6ee] px-4 py-3 text-sm text-[#666666]">
+                  <div className="space-y-1 rounded-xl bg-(--pc-paper) px-4 py-3 text-sm text-(--pc-slate)">
                     <div>
                       房间：
-                      <span className="font-bold text-[#2d2d2d]">
+                      <span className="font-bold text-(--pc-ink)">
                         {nextMatch.room.roomName}
                       </span>
                     </div>
                     <div>
                       时间：
-                      <span className="font-bold text-[#2d2d2d]">
+                      <span className="font-bold text-(--pc-ink)">
                         {formatDateTime(
                           nextMatch.room.matchDate || nextMatch.room.matchTime,
                         )}
@@ -419,7 +419,7 @@ export default function PlayerInfoPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 py-12">
-                <p className="text-sm text-[#b0a898]">暂无下一轮对阵</p>
+                <p className="text-sm text-(--pc-faint)">暂无下一轮对阵</p>
               </div>
             )}
           </CardContent>

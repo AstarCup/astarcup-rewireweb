@@ -44,10 +44,10 @@ export default function MessageCenter() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="relative grid h-10 w-10 place-items-center rounded-xl bg-white shadow-[2px_2px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none"
+          className="relative grid h-10 w-10 place-items-center rounded-xl bg-(--pc-white) shadow-[2px_2px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none"
           aria-label="消息通知"
         >
-          <Bell className="h-5 w-5 text-[#2d2d2d]" />
+          <Bell className="h-5 w-5 text-(--pc-ink)" />
           {unread > 0 && (
             <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#e85d75] px-1 text-[10px] font-bold text-[#fdf6ee]">
               {unread > 99 ? "99+" : unread}
@@ -56,26 +56,26 @@ export default function MessageCenter() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[360px] p-0">
-        <div className="flex items-center justify-between border-b-2 border-[#e0d8cc] px-4 py-3">
-          <p className="font-bold text-[#2d2d2d]">消息通知</p>
+        <div className="flex items-center justify-between border-b-2 border-(--pc-border) px-4 py-3">
+          <p className="font-bold text-(--pc-ink)">消息通知</p>
           <Badge variant={unread > 0 ? "primary" : "outline"}>{unread} 未读</Badge>
         </div>
         <div className="max-h-96 overflow-y-auto">
           {messages.length === 0 ? (
-            <p className="py-10 text-center text-sm text-[#b0a898]">暂无消息</p>
+            <p className="py-10 text-center text-sm text-(--pc-faint)">暂无消息</p>
           ) : (
             messages.map((m) => (
-              <div key={m.id} className="border-b border-[#e0d8cc]/60 px-4 py-3">
+              <div key={m.id} className="border-b border-(--pc-border)/60 px-4 py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-bold text-[#2d2d2d]">
+                  <p className="truncate text-sm font-bold text-(--pc-ink)">
                     {m.title || "通知"}
                   </p>
                   <Badge variant={m.status === "unread" ? "yellow" : "outline"}>
                     {STATUS_LABEL[m.status] ?? m.status}
                   </Badge>
                 </div>
-                {m.content && <p className="mt-1 text-xs text-[#666666]">{m.content}</p>}
-                <p className="mt-1 text-[10px] text-[#b0a898]">
+                {m.content && <p className="mt-1 text-xs text-(--pc-slate)">{m.content}</p>}
+                <p className="mt-1 text-[10px] text-(--pc-faint)">
                   {m.senderUsername} · {formatDateTime(m.createdAt)}
                 </p>
                 {m.type === "match_invitation" && m.status === "unread" && (

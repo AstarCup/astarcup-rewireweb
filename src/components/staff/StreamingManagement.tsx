@@ -3,6 +3,7 @@ import { useApp } from "@/lib/app-context";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { formatWallClock } from "@/lib/utils";
 import { SectionTitle } from "@/components/paper/paper";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,15 @@ const ROLE_META: Record<StaffRole, { variant: "primary" | "teal" | "yellow" | "b
   commentator: { variant: "yellow" },
   streamer: { variant: "blue" },
 };
+
+// 比赛时间：日期取 matchDate、时间取 matchTime，按 +8 墙钟展示
+function roomSchedule(room: MatchRoom): string {
+  const naive = (iso?: string | null) =>
+    (iso ?? "").replace(/Z$/, "").replace(/[+-]\d{2}:\d{2}$/, "");
+  const datePart = naive(room.matchDate).slice(0, 10) || naive(room.matchTime).slice(0, 10);
+  const timePart = naive(room.matchTime).slice(11, 16) || "00:00";
+  return formatWallClock(`${datePart}T${timePart}:00+00:00`);
+}
 
 export default function StreamingManagement() {
   const { user } = useApp();
@@ -187,11 +197,11 @@ export default function StreamingManagement() {
             {counts?.map(({ room, referee, commentator, streamer }) => (
               <Card key={room.id} className="p-5">
                 <div className="flex items-center justify-between">
-                  <p className="font-bold text-[#2d2d2d]">{room.roomName}</p>
+                  <p className="font-bold text-(--pc-ink)">{room.roomName}</p>
                   <Badge variant={room.status === "full" ? "primary" : "teal"}>{room.status}</Badge>
                 </div>
-                <p className="mt-1 text-xs text-[#b0a898]">
-                  {room.roundNumber} 轮 · {room.matchDate || "-"}
+                <p className="mt-1 text-xs text-(--pc-faint)">
+                  {room.roundNumber} 轮 · {roomSchedule(room)}
                 </p>
                 <div className="mt-3 flex gap-2">
                   <Badge variant="teal">裁判 {referee}</Badge>
@@ -206,7 +216,7 @@ export default function StreamingManagement() {
             人员安排列表
           </SectionTitle>
           {list.length === 0 ? (
-            <p className="py-8 text-center text-sm text-[#b0a898]">暂无安排。</p>
+            <p className="py-8 text-center text-sm text-(--pc-faint)">暂无安排。</p>
           ) : (
             <div className="mt-4 space-y-3">
               {list.map((a) => {
@@ -218,10 +228,10 @@ export default function StreamingManagement() {
                         {ROLE_LABEL[a.role as StaffRole] ?? a.role}
                       </Badge>
                       <div>
-                        <p className="font-bold text-[#2d2d2d]">{a.staffUsername}</p>
-                        <p className="text-xs text-[#b0a898]">osuId: {a.staffOsuId}</p>
+                        <p className="font-bold text-(--pc-ink)">{a.staffUsername}</p>
+                        <p className="text-xs text-(--pc-faint)">osuId: {a.staffOsuId}</p>
                       </div>
-                      <span className="text-sm text-[#666666]">· {rm?.roomName ?? "-"}</span>
+                      <span className="text-sm text-(--pc-slate)">· {rm?.roomName ?? "-"}</span>
                     </div>
                     <Button
                       variant="destructive"
@@ -235,7 +245,7 @@ export default function StreamingManagement() {
                 );
               })}
               {remaining.length > 0 && (
-                <p className="text-xs text-[#b0a898]">
+                <p className="text-xs text-(--pc-faint)">
                   {remaining.length} 条安排与现存房间不匹配（房间可能已删除）。
                 </p>
               )}

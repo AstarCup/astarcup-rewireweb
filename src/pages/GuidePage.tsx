@@ -33,7 +33,7 @@ export default function GuidePage() {
               {se === "s1" ? "S1" : "S2"}
             </Button>
           ))}
-          <span className="text-sm text-[#b0a898]">{doc.data.title}</span>
+          <span className="text-sm text-(--pc-faint)">{doc.data.title}</span>
         </div>
         <div className="prose-article" dangerouslySetInnerHTML={{ __html: html }} />
       </div>

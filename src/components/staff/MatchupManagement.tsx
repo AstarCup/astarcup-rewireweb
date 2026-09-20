@@ -173,19 +173,19 @@ export default function MatchupManagement() {
       </div>
 
       {data.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#b0a898]">还没有对战。</p>
+        <p className="py-10 text-center text-sm text-(--pc-faint)">还没有对战。</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {data.map((m) => (
             <Card key={m.id} className="p-5">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-bold text-[#2d2d2d]">
-                  {m.player1Username} <span className="text-[#b0a898]">vs</span> {m.player2Username}
+                <p className="font-bold text-(--pc-ink)">
+                  {m.player1Username} <span className="text-(--pc-faint)">vs</span> {m.player2Username}
                 </p>
                 <Badge variant={statusVariant(m.status)}>{statusLabel(m.status)}</Badge>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Label className="mr-1 text-xs text-[#b0a898]">状态</Label>
+                <Label className="mr-1 text-xs text-(--pc-faint)">状态</Label>
                 <Select value={m.status} onValueChange={(v) => updateStatus(m, v)}>
                   <SelectTrigger className="h-9 w-32">
                     <SelectValue />

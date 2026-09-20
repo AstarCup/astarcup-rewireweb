@@ -71,10 +71,10 @@ function StageCombobox({ value, onChange }: { value: string; onChange: (v: strin
           type="button"
           role="combobox"
           aria-expanded={open}
-          className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-[#e0d8cc] bg-white px-3 text-sm text-[#2d2d2d] outline-none transition focus:border-[#e85d75]"
+          className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-[#e85d75]"
         >
           {current ? `${current.label} (${current.value})` : value || "选择阶段"}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-[#b0a898]" />
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0" align="start">
@@ -96,7 +96,7 @@ function StageCombobox({ value, onChange }: { value: string; onChange: (v: strin
                     className={cn("mr-2 h-4 w-4", value === o.value ? "opacity-100" : "opacity-0")}
                   />
                   {o.label}
-                  <span className="ml-auto text-xs text-[#b0a898]">{o.value}</span>
+                  <span className="ml-auto text-xs text-(--pc-faint)">{o.value}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -267,8 +267,8 @@ export default function SettingsManagement() {
           {/* 赛季池 */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-bold text-[#2d2d2d]">赛季池</p>
-              <p className="text-xs text-[#b0a898]">赛季 ID · 赛季名 · 赛季状态</p>
+              <p className="font-bold text-(--pc-ink)">赛季池</p>
+              <p className="text-xs text-(--pc-faint)">赛季 ID · 赛季名 · 赛季状态</p>
             </div>
             <div className="flex items-end gap-2">
               <Input
@@ -291,7 +291,7 @@ export default function SettingsManagement() {
           </div>
 
           {seasons.length === 0 ? (
-            <p className="mt-4 rounded-xl bg-[#fdf6ee] p-4 text-sm text-[#b0a898]">
+            <p className="mt-4 rounded-xl bg-(--pc-paper) p-4 text-sm text-(--pc-faint)">
               还没有任何赛季。
             </p>
           ) : (
@@ -299,7 +299,7 @@ export default function SettingsManagement() {
               {seasons.map((s, i) => (
                 <div
                   key={i}
-                  className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-[#e0d8cc] bg-white p-3"
+                  className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3"
                 >
                   <Badge variant="outline">{s.id}</Badge>
                   <Input
@@ -352,10 +352,10 @@ export default function SettingsManagement() {
 
           {/* 开关 */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-[#e0d8cc] bg-white p-4">
+            <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
               <div>
-                <p className="font-bold text-[#2d2d2d]">开放报名</p>
-                <p className="text-xs text-[#b0a898]">允许新玩家报名</p>
+                <p className="font-bold text-(--pc-ink)">开放报名</p>
+                <p className="text-xs text-(--pc-faint)">允许新玩家报名</p>
               </div>
               <input
                 type="checkbox"
@@ -364,10 +364,10 @@ export default function SettingsManagement() {
                 className="h-5 w-5 accent-[#e85d75]"
               />
             </label>
-            <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-[#e0d8cc] bg-white p-4">
+            <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
               <div>
-                <p className="font-bold text-[#2d2d2d]">图池可见</p>
-                <p className="text-xs text-[#b0a898]">向玩家展示图池</p>
+                <p className="font-bold text-(--pc-ink)">图池可见</p>
+                <p className="text-xs text-(--pc-faint)">向玩家展示图池</p>
               </div>
               <input
                 type="checkbox"
