@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Home, LogOut, ShieldCheck, Trophy, User } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Gamepad2, Home, LogOut, ShieldCheck, Trophy, User } from "lucide-react";
 import { api, qs } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
 import { useFetch, useAsync, LoadingBlock } from "@/hooks/useFetch";
@@ -87,6 +87,39 @@ export default function PlayerInfoPage() {
   // Registration dialog state
   const [registerOpen, setRegisterOpen] = useState(false);
 
+  // ---- g0v0 服务器绑定 ----
+  const [searchParams] = useSearchParams();
+  const [bindBusy, setBindBusy] = useState(false);
+
+  // OAuth 回调后跳转提示 + 清理地址栏参数
+  useEffect(() => {
+    const b = searchParams.get("bound");
+    if (b === "1") toast({ title: "g0v0 绑定成功" });
+    else if (b === "error") {
+      const reason = searchParams.get("reason") ?? "";
+      const text: Record<string, string> = {
+        disabled: "绑定功能未启用",
+        state_mismatch: "安全校验失败，请重新绑定",
+        no_code: "未获取到授权码",
+        network: "网络错误，无法连接 g0v0 服务器",
+        token_failed: "换取 g0v0 令牌失败",
+        token_missing: "令牌响应缺少 access_token",
+        token_parse: "令牌响应解析失败",
+        me_failed: "获取 g0v0 用户信息失败",
+        me_parse: "g0v0 用户信息响应解析失败",
+        me_id_missing: "g0v0 用户信息缺少 id",
+        db_error: "写入绑定信息失败",
+      };
+      toast({
+        variant: "destructive",
+        title: "g0v0 绑定失败",
+        description: text[reason] ?? reason,
+      });
+    }
+    if (b) window.history.replaceState(null, "", "/player-info");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
@@ -101,6 +134,37 @@ export default function PlayerInfoPage() {
 
   const isAdmin = !!permissions?.isadmin;
   const canBook = nextMatch?.status === "available";
+
+  // ---- g0v0 服务器绑定 ----
+  const handleBind = async () => {
+    setBindBusy(true);
+    const res = await api.get<{ authUrl: string }>("/api/bind/url");
+    setBindBusy(false);
+    if (res.ok && res.data.authUrl) {
+      window.location.href = res.data.authUrl;
+    } else {
+      toast({
+        variant: "destructive",
+        title: "绑定失败",
+        description: !res.ok ? res.error.message : "未获取到授权地址，请稍后重试",
+      });
+    }
+  };
+  const handleUnbind = async () => {
+    setBindBusy(true);
+    const res = await api.post("/api/bind/unbind");
+    setBindBusy(false);
+    if (res.ok) {
+      toast({ title: "已解除 g0v0 绑定" });
+      await refresh();
+    } else {
+      toast({
+        variant: "destructive",
+        title: "解绑失败",
+        description: res.error?.message,
+      });
+    }
+  };
 
   const openBookingDialog = async () => {
     setSelectedRoomId("");
@@ -235,6 +299,57 @@ export default function PlayerInfoPage() {
                   ))}
                 </div>
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* g0v0 服务器绑定 */}
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gamepad2 className="h-5 w-5 text-[#5cb8a5]" />
+              g0v0 服务器绑定
+            </CardTitle>
+            <CardDescription>报名比赛前需先绑定 g0v0 私服账号</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {user.g0v0Bound ? (
+              <>
+                <div className="rounded-xl bg-[#fdf6ee] px-4 py-3">
+                  <p className="text-xs text-[#b0a898]">已绑定</p>
+                  <p className="mt-0.5 font-bold text-[#2d2d2d]">
+                    {user.guServerUsername}
+                  </p>
+                  <p className="text-xs text-[#b0a898]">
+                    g0v0 ID：{user.guServerUserId}
+                  </p>
+                  {user.guServerBindAt && (
+                    <p className="text-xs text-[#b0a898]">
+                      绑定于 {formatDateTime(user.guServerBindAt)}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => void handleUnbind()}
+                  disabled={bindBusy}
+                >
+                  解绑
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-[#b0a898]">
+                  尚未绑定 g0v0 服务器账号，绑定后才能报名比赛。
+                </p>
+                <Button
+                  variant="teal"
+                  onClick={() => void handleBind()}
+                  disabled={bindBusy}
+                >
+                  {bindBusy ? "跳转中…" : "绑定 g0v0 账号"}
+                </Button>
+              </>
             )}
           </CardContent>
         </Card>

@@ -49,6 +49,19 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
     "checking" | "valid" | "invalid" | null
   >(null);
   const [customKeyError, setCustomKeyError] = useState("");
+  const [bindBusy, setBindBusy] = useState(false);
+
+  const g0v0Bound = !!user?.g0v0Bound;
+  const handleBind = async () => {
+    setBindBusy(true);
+    const res = await api.get<{ authUrl: string }>("/api/bind/url");
+    setBindBusy(false);
+    if (res.ok && res.data.authUrl) {
+      window.location.href = res.data.authUrl;
+    } else {
+      setRegMsg(!res.ok ? res.error.message : "未获取到授权地址，请稍后重试");
+    }
+  };
 
   const regEnabled = String(settings?.registration_enabled ?? true) !== "false";
   const regStatus = user?.registrationStatus ?? "not_registered";
@@ -91,30 +104,26 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
   };
 
   const submitRegistration = async () => {
+    if (!g0v0Bound) {
+      setRegMsg("请先绑定 g0v0 服务器账号后再报名");
+      return;
+    }
     if (!regAgreed) {
       setRegMsg("请先阅读并同意报名须知");
       return;
     }
-    for (const f of SKILL_FIELDS) {
-      if (!skills[f.key]) {
-        setRegMsg(`请填写${f.label}评分`);
-        return;
-      }
-    }
-    if (!customKey.trim()) {
-      setRegMsg("请填写自定义键");
-      return;
-    }
-    if (customKeyState === "invalid") {
+    // 技能评分与自定义键值均为选填；填了自定义键才做违规词校验
+    if (customKey.trim() && customKeyState === "invalid") {
       setRegMsg("自定义键包含违规词，请修改");
       return;
     }
-    if (!customValue || Number.isNaN(Number(customValue))) {
+    if (customValue && Number.isNaN(Number(customValue))) {
       setRegMsg("自定义值必须是数字");
       return;
     }
     setRegBusy(true);
     setRegMsg(null);
+    const toNum = (s: string) => (s.trim() === "" ? null : Number(s));
     const res = await api.post("/api/users", {
       osuId: user?.osuId,
       username: user?.username,
@@ -123,13 +132,13 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
       pp: user?.pp,
       global_rank: user?.globalRank,
       country_rank: user?.countryRank,
-      accuracy: Number(skills.accuracy),
-      stamina: Number(skills.stamina),
-      firstSight: Number(skills.firstSight),
-      strategy: Number(skills.strategy),
-      experience: Number(skills.experience),
-      customKey: customKey.trim(),
-      customValue: Number(customValue),
+      accuracy: toNum(skills.accuracy),
+      stamina: toNum(skills.stamina),
+      firstSight: toNum(skills.firstSight),
+      strategy: toNum(skills.strategy),
+      experience: toNum(skills.experience),
+      customKey: customKey.trim() || null,
+      customValue: customValue.trim() === "" ? null : Number(customValue),
     });
     setRegBusy(false);
     if (res.ok) {
@@ -184,6 +193,25 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
               你的 PP（{fmtInt(userPp)}）不在报名区间 {fmtInt(minPp)} ~ {fmtInt(maxPp)} 内，无法报名。
             </p>
           )}
+          {!g0v0Bound && (
+            <div className="rounded-xl border-2 border-[#f5c040] bg-[#f5c040]/10 p-4">
+              <p className="text-sm font-bold text-[#2d2d2d]">
+                尚未绑定 g0v0 服务器账号
+              </p>
+              <p className="mt-1 text-xs text-[#666666]">
+                报名比赛前需先绑定 g0v0 私服账号，绑定后才能提交报名。
+              </p>
+              <Button
+                variant="yellow"
+                size="sm"
+                className="mt-3"
+                onClick={() => void handleBind()}
+                disabled={bindBusy}
+              >
+                {bindBusy ? "跳转中…" : "去绑定 g0v0 账号"}
+              </Button>
+            </div>
+          )}
           <div className="rounded-xl border-2 border-[#e0d8cc] bg-white p-4 text-sm">
             <div className="grid grid-cols-2 gap-2">
               <p className="text-[#666666]">用户名：<span className="font-bold text-[#2d2d2d]">{user?.username}</span></p>
@@ -196,7 +224,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           {/* 技能自评 */}
           <div className="rounded-xl border-2 border-[#e0d8cc] bg-white p-4">
             <p className="text-sm font-bold text-[#2d2d2d]">
-              给你自己打个分，或者用来迷惑别人。
+              技能自评（选填）：给你自己打个分，或者用来迷惑别人。
             </p>
             <div className="mt-3 grid grid-cols-2 gap-3">
               {SKILL_FIELDS.map((f) => (
@@ -302,7 +330,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           <Button
             variant="primary"
             onClick={() => void submitRegistration()}
-            disabled={regBusy || !regEnabled || (maxPp > 0 && !ppOk)}
+            disabled={regBusy || !regEnabled || (maxPp > 0 && !ppOk) || !g0v0Bound}
           >
             {regBusy ? "提交中…" : "确认报名"}
           </Button>

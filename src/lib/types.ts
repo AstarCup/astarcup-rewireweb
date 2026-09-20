@@ -30,6 +30,11 @@ export interface SessionUser {
   customKey?: string | null;
   customValue?: number | null;
   cover?: OsuCover | null;
+  /** g0v0 私服绑定 */
+  guServerUserId?: string | null;
+  guServerUsername?: string | null;
+  guServerBindAt?: string | null;
+  g0v0Bound?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

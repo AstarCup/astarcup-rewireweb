@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { parseFrontMatter, renderMarkdown } from "@/lib/markdown";
-import { useApp } from "@/lib/app-context";
 import { PageHeader } from "@/components/paper/paper";
 import { Button } from "@/components/ui/button";
 import "@/components/paper/prose.css";
@@ -11,10 +10,11 @@ import s2 from "@/data/guide/s2.md?raw";
 type Season = "s1" | "s2";
 
 const guides: Record<Season, string> = { s1, s2 };
+const SEASONS: Season[] = ["s1", "s2"];
 
 export default function GuidePage() {
-  const { settings } = useApp();
-  const [season, setSeason] = useState<Season>(settings?.current_season === "s2" ? "s2" : "s1");
+  // 默认加载最新一季的比赛手册
+  const [season, setSeason] = useState<Season>(SEASONS[SEASONS.length - 1]);
 
   const doc = useMemo(() => parseFrontMatter(guides[season]), [season]);
   const html = renderMarkdown(doc.content);

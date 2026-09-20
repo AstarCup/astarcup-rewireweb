@@ -127,18 +127,39 @@ function PlayerCard({
               <p className="truncate font-bold text-[#2d2d2d]">{player.username}</p>
               <p className="mt-0.5 text-xs text-[#b0a898]">{player.country ?? "-"}</p>
             </div>
+            {/* 统计：PP / 世界排名 */}
             <div className="flex w-full items-center justify-around">
               <div className="flex-1">
                 <p className="text-xs text-[#b0a898]">PP</p>
-                <p className="font-sans text-lg font-bold text-[#6b7fb5]">{fmtInt(player.pp)}</p>
+                <p className="font-sans text-sm font-bold text-[#6b7fb5]">{fmtInt(player.pp)}</p>
               </div>
               <div className="w-px self-stretch bg-[#e0d8cc]" />
               <div className="flex-1">
                 <p className="text-xs text-[#b0a898]">世界排名</p>
-                <p className="font-sans text-lg font-bold text-[#2d2d2d]">
+                <p className="font-sans text-sm font-bold text-[#2d2d2d]">
                   {player.globalRank != null ? `#${fmtInt(player.globalRank)}` : "-"}
                 </p>
               </div>
+            </div>
+            {/* g0v0：头像 + 玩家名，置于最底部 */}
+            <div className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-[#e0d8cc] bg-white px-2 py-1">
+              {player.guServerUsername ? (
+                <>
+                  <img
+                    src={`https://a.g0v0.top/${player.guServerUserId}`}
+                    alt=""
+                    className="h-5 w-5 rounded-full border border-[#e0d8cc] object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                  <span className="truncate text-xs font-bold text-[#5cb8a5]">
+                    {player.guServerUsername}
+                  </span>
+                </>
+              ) : (
+                <span className="text-xs text-[#b0a898]/60">未绑定 g0v0</span>
+              )}
             </div>
           </div>
         </button>
@@ -318,6 +339,27 @@ export default function RegistrationsPage() {
                       {selected.osuId}
                     </p>
                   </div>
+                </div>
+
+                <div className="w-full rounded-xl border-2 border-[#e0d8cc] bg-white p-3 text-center">
+                  <p className="text-xs text-[#b0a898]">g0v0 服务器玩家</p>
+                  {selected.guServerUsername ? (
+                    <div className="mt-1 flex items-center justify-center gap-2">
+                      <img
+                        src={`https://a.g0v0.top/${selected.guServerUserId}`}
+                        alt=""
+                        className="h-8 w-8 rounded-full border-2 border-[#e0d8cc] object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                      <span className="font-bold text-[#5cb8a5]">
+                        {selected.guServerUsername}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="mt-1 font-bold text-[#b0a898]">未绑定</p>
+                  )}
                 </div>
 
                 <div className="flex justify-center rounded-xl border-2 border-[#e0d8cc] bg-white p-3">
