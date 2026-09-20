@@ -301,7 +301,7 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
-                <td className="px-4 py-3 font-sans text-(--pc-slate)">{m.bpm ?? "-"}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.bpm)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">
                   {m.maxCombo != null ? m.maxCombo : "-"}

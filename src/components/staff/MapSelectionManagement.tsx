@@ -924,7 +924,7 @@ export default function MapSelectionManagement() {
   const statCell = (label: string, value: string, color?: string) => (
     <div className="rounded-xl bg-(--pc-paper) px-2 py-1.5 text-center">
       <p className="text-[10px] text-(--pc-faint)">{label}</p>
-      <p className="font-sans text-sm font-bold" style={{ color: color ?? "#2d2d2d" }}>
+      <p className="font-sans text-sm font-bold" style={{ color: color ?? "var(--pc-ink)" }}>
         {value}
       </p>
     </div>
@@ -1289,21 +1289,23 @@ export default function MapSelectionManagement() {
               <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">MOD</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">BID</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">封面</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">歌曲</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">谱师</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">★</th>
-                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">CS</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">AR</th>
+                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">CS</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">OD</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">BPM</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">时长</th>
                 <th className="px-3 py-2.5 font-bold text-(--pc-slate)">状态</th>
-                <th className="px-3 py-2.5 font-bold text-(--pc-slate)">操作</th>
               </tr>
             </thead>
             <tbody>
               {lazyList.map((m) => (
-                <tr key={m.id} className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
+                <ContextMenu key={m.id}>
+                  <ContextMenuTrigger asChild>
+                <tr className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
                   <td className="px-3 py-2.5">
                     <span
                       className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
@@ -1313,6 +1315,18 @@ export default function MapSelectionManagement() {
                     </span>
                   </td>
                   <td className="px-3 py-2.5 font-mono text-xs text-[#e85d75]">{m.beatmapId}</td>
+                  <td className="px-3 py-2.5">
+                    {m.coverUrl ? (
+                      <img
+                        src={m.coverUrl}
+                        alt=""
+                        className="h-10 w-16 rounded-md object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="h-10 w-16 rounded-md bg-[#f5c040]/30" />
+                    )}
+                  </td>
                   <td className="px-3 py-2.5 font-bold text-(--pc-ink)">
                     {[m.artist_unicode || m.artist, m.title_unicode || m.title]
                       .filter(Boolean)
@@ -1323,10 +1337,10 @@ export default function MapSelectionManagement() {
                   <td className="px-3 py-2.5 font-sans font-bold" style={{ color: starColor(m.starRating) }}>
                     {fmt(m.starRating)}
                   </td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
                   <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
+                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
                   <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{m.bpm ?? "-"}</td>
+                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.bpm)}</td>
                   <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex flex-wrap gap-1">
@@ -1340,23 +1354,23 @@ export default function MapSelectionManagement() {
                       {m.isCustome && <Badge variant="yellow">定制</Badge>}
                     </div>
                   </td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex flex-wrap gap-1">
-                      <Button variant="outline" size="sm" onClick={() => void toggleApproved(m)}>
-                        {m.approved ? "取消审核" : "通过"}
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => void togglePadding(m)}>
-                        {m.padding ? "去 padding" : "padding"}
-                      </Button>
-                      <Button variant="yellow" size="sm" onClick={() => setCommentTarget(m)}>
-                        评论
-                      </Button>
-                      <Button variant="destructive" size="sm" onClick={() => void removeMap(m)}>
-                        删除
-                      </Button>
-                    </div>
-                  </td>
                 </tr>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onSelect={() => void toggleApproved(m)}>
+                    {m.approved ? "取消审核" : "通过审核"}
+                  </ContextMenuItem>
+                  <ContextMenuItem onSelect={() => void togglePadding(m)}>
+                    {m.padding ? "取消审图" : "标为审图"}
+                  </ContextMenuItem>
+                  <ContextMenuItem onSelect={() => setCommentTarget(m)}>评论</ContextMenuItem>
+                  <ContextMenuItem onSelect={() => setAdjustTarget(m)}>调整参数</ContextMenuItem>
+                  <ContextMenuSeparator />
+                  <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
+                    删除
+                  </ContextMenuItem>
+                </ContextMenuContent>
+                </ContextMenu>
               ))}
             </tbody>
           </table>
