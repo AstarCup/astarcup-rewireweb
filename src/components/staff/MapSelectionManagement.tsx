@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  BarChart3,
   CheckSquare,
   CircleArrowRight,
   Clipboard,
@@ -47,9 +48,9 @@ import {
 } from "@/components/ui/context-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
-import { cn, fmt, formatDateTime } from "@/lib/utils";
+import { cn, fmt, fmtInt, formatDateTime } from "@/lib/utils";
 import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, seasonLabel } from "@/lib/types";
-import type { MapSelection, BeatmapInfo, MapComment, ModStatsResult } from "@/lib/types";
+import type { MapSelection, BeatmapInfo, MapComment, ModStatsResult, StaffStats, SeasonMappoolStat } from "@/lib/types";
 
 const MOD_COLORS: Record<string, string> = {
   NM: "#6b7fb5",
@@ -77,6 +78,223 @@ function modBase(m: MapSelection): string {
 
 /** 列表视图排序用的 MOD 顺序（未列出的 mod 排在最后） */
 const MOD_LIST_ORDER: readonly string[] = ["NM", "HD", "HR", "DT", "LZ", "TB"];
+
+/** 单个 MOD 分组（如 NM）的统计：数量、各属性平均值、测图与待审分解 */
+function groupStats(items: MapSelection[]) {
+  const avgOn = (list: MapSelection[], f: (m: MapSelection) => number | null | undefined): number => {
+    const vals = list.map(f).filter((v): v is number => v != null);
+    if (vals.length === 0) return 0;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  };
+  const avg = (f: (m: MapSelection) => number | null | undefined) => avgOn(items, f);
+  const round = (n: number) => Math.round(n);
+  const testing = items.filter((m) => m.padding);
+  const pending = items.filter((m) => !m.approved && !m.padding);
+  return {
+    count: items.length,
+    testing: testing.length,
+    pending: pending.length,
+    avgStar: avg((m) => m.starRating),
+    avgStarTesting: avgOn(testing, (m) => m.starRating),
+    avgStarPending: avgOn(pending, (m) => m.starRating),
+    avgLen: round(avg((m) => m.totalLength)),
+    avgLenTesting: round(avgOn(testing, (m) => m.totalLength)),
+    avgLenPending: round(avgOn(pending, (m) => m.totalLength)),
+    avgAr: avg((m) => m.ar),
+    avgCs: avg((m) => m.cs),
+    avgOd: avg((m) => m.od),
+    avgHp: avg((m) => m.hp),
+    avgBpm: avg((m) => m.bpm),
+    avgMaxCombo: round(avg((m) => m.maxCombo)),
+  };
+}
+
+/** 单个 MOD 分组（如 NM）的完整统计卡片（HoverCard 用）：按图状态拆成 已审核 / 测图中 / 待审 三张横向排列 */
+function ModStatCard({ mod, items }: { mod: string; items: MapSelection[] }) {
+  const toSub = (
+    list: MapSelection[],
+    title: string,
+    accent: string,
+  ) => {
+    const g = groupStats(list);
+    return {
+      id: title,
+      title,
+      accent,
+      count: list.length,
+      star: g.avgStar,
+      ar: g.avgAr,
+      cs: g.avgCs,
+      od: g.avgOd,
+      hp: g.avgHp,
+      bpm: g.avgBpm,
+      length: g.avgLen,
+      maxCombo: g.avgMaxCombo,
+    };
+  };
+  const subs = [
+    toSub(items.filter((m) => m.approved), "已审核", "#5cb8a5"),
+    toSub(items.filter((m) => m.padding), "测图中", "#f5c040"),
+    toSub(items.filter((m) => !m.approved && !m.padding), "待审", "#6b7fb5"),
+  ];
+  const s = groupStats(items);
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <span
+          className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+          style={{ backgroundColor: MOD_COLORS[mod] ?? "#666" }}
+        >
+          {MOD_DISPLAY[mod] ?? mod}
+        </span>
+        <span className="flex gap-2">
+          <Badge variant="primary">{fmtInt(s.count)} 张</Badge>
+          <Badge variant="yellow">T {fmtInt(s.testing)}</Badge>
+          <Badge variant="blue">P {fmtInt(s.pending)}</Badge>
+        </span>
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {subs.map((sub) => (
+          <StatSubCard key={sub.id} {...sub} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** 单个状态（已审核 / 测图中 / 待审）的统计子卡片 */
+function StatSubCard({
+  title,
+  accent,
+  count,
+  star,
+  ar,
+  cs,
+  od,
+  hp,
+  bpm,
+  length,
+  maxCombo,
+}: {
+  title: string;
+  accent: string;
+  count: number;
+  star: number;
+  ar: number;
+  cs: number;
+  od: number;
+  hp: number;
+  bpm: number;
+  length: number;
+  maxCombo: number;
+}) {
+  const rows: { label: string; value: number }[] = [
+    { label: "平均星数", value: star },
+    { label: "平均 AR", value: ar },
+    { label: "平均 CS", value: cs },
+    { label: "平均 OD", value: od },
+    { label: "平均 HP", value: hp },
+    { label: "平均 BPM", value: bpm },
+    { label: "平均长度", value: length },
+    { label: "平均 MaxCombo", value: maxCombo },
+  ];
+  return (
+    <div className="min-w-48 flex-1 rounded-xl bg-(--pc-paper) p-3">
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="font-bold text-(--pc-ink)" style={{ color: accent }}>
+          {title}
+        </span>
+        <Badge variant="outline">{fmtInt(count)} 张</Badge>
+      </div>
+      <div className="space-y-1 text-xs text-(--pc-slate)">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-center justify-between">
+            <span>{r.label}</span>
+            <span className="font-bold text-(--pc-ink)">{fmt(r.value)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** 单个阶段（如 QUA）的图池统计卡片：按图状态拆成 已审核 / 测图中 / 待审 三张 */
+function StageStatCard({ row }: { row: SeasonMappoolStat }) {
+  const subs: {
+    id: string;
+    title: string;
+    accent: string;
+    count: number;
+    star: number;
+    ar: number;
+    cs: number;
+    od: number;
+    hp: number;
+    bpm: number;
+    length: number;
+    maxCombo: number;
+  }[] = [
+      {
+        id: "approved",
+        title: "已审核",
+        accent: "#5cb8a5",
+        count: row.count,
+        star: row.avgStarRating,
+        ar: row.avgAr,
+        cs: row.avgCs,
+        od: row.avgOd,
+        hp: row.avgHp,
+        bpm: row.avgBpm,
+        length: row.avgLength,
+        maxCombo: row.avgMaxCombo,
+      },
+      {
+        id: "testing",
+        title: "测图中",
+        accent: "#f5c040",
+        count: row.testingCount,
+        star: row.avgStarRatingTesting,
+        ar: row.avgArTesting,
+        cs: row.avgCsTesting,
+        od: row.avgOdTesting,
+        hp: row.avgHpTesting,
+        bpm: row.avgBpmTesting,
+        length: row.avgLengthTesting,
+        maxCombo: row.avgMaxComboTesting,
+      },
+      {
+        id: "pending",
+        title: "待审",
+        accent: "#6b7fb5",
+        count: row.pendingCount,
+        star: row.avgStarRatingPending,
+        ar: row.avgArPending,
+        cs: row.avgCsPending,
+        od: row.avgOdPending,
+        hp: row.avgHpPending,
+        bpm: row.avgBpmPending,
+        length: row.avgLengthPending,
+        maxCombo: row.avgMaxComboPending,
+      },
+    ];
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="font-bold text-(--pc-ink)">{row.label}</span>
+        <span className="flex gap-2">
+          <Badge variant="primary">{fmtInt(row.count)} 张</Badge>
+          <Badge variant="yellow">T {fmtInt(row.testingCount)}</Badge>
+          <Badge variant="blue">P {fmtInt(row.pendingCount)}</Badge>
+        </span>
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {subs.map((s) => (
+          <StatSubCard key={s.id} {...s} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const STAT_FIELDS: { key: string; label: string }[] = [
   { key: "star", label: "星数 ★" },
@@ -585,8 +803,23 @@ export default function MapSelectionManagement() {
   const [busy, setBusy] = useState("");
   const [batchOpen, setBatchOpen] = useState(false);
   const [commentsByMap, setCommentsByMap] = useState<Record<string, MapComment[]>>({});
+  const [statsOpen, setStatsOpen] = useState(false);
 
   const seasonOptions = buildSeasonOptions(settings);
+
+  // 拉取后台统计（用于阶段统计卡片 / HoverCard）
+  const { data: staffStats, run: loadStats } = useAsync<StaffStats>();
+  useEffect(() => {
+    void loadStats(() => api.get<StaffStats>("/api/staff/stats"));
+  }, [loadStats]);
+
+  // 当前选中赛季 + 阶段对应的统计数据（类别为“全部”时展示该赛季全部阶段）
+  const seasonStatRows = staffStats?.seasonMappoolStats?.[season] ?? [];
+  const statRows = useMemo(() => {
+    if (seasonStatRows.length === 0) return [];
+    if (category === "全部") return seasonStatRows;
+    return seasonStatRows.filter((r) => r.category === category);
+  }, [seasonStatRows, category]);
 
   // 仅在第一次载入时同步赛季到当前赛季（未设置时取最新），并持久化；之后保持用户选择
   useEffect(() => {
@@ -1399,6 +1632,32 @@ export default function MapSelectionManagement() {
             </SelectContent>
           </Select>
         </div>
+        <div className="ml-auto flex items-center gap-2">
+          <HoverCard openDelay={150} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStatsOpen(true)}
+                className="gap-1.5"
+              >
+                <BarChart3 className="h-4 w-4" />
+                统计
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent side="bottom" align="end" className="w-auto p-0">
+              {statRows.length > 0 ? (
+                <div className="flex max-h-[70vh] flex-col gap-2 overflow-y-auto p-3">
+                  {statRows.map((r) => (
+                    <StageStatCard key={r.category} row={r} />
+                  ))}
+                </div>
+              ) : (
+                <p className="p-4 text-xs text-(--pc-faint)">暂无该阶段的统计数据</p>
+              )}
+            </HoverCardContent>
+          </HoverCard>
+        </div>
       </div>
 
       {/* Summary */}
@@ -1577,6 +1836,27 @@ export default function MapSelectionManagement() {
                   {MOD_DISPLAY[g.mod] ?? g.mod}
                 </span>
                 <span className="text-xs text-(--pc-slate)">{g.items.length} 张图</span>
+                {(() => {
+                  const s = groupStats(g.items);
+                  return (
+                    <HoverCard openDelay={150} closeDelay={0}>
+                      <HoverCardTrigger asChild>
+                        <span className="ml-auto flex cursor-help flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--pc-slate)">
+                          <span>
+                            ★ <b className="font-bold text-[#e85d75]">{fmt(s.avgStar)}</b>
+                          </span>
+                          <span>长度 {s.avgLen}s</span>
+                          <span>BPM {fmt(s.avgBpm)}</span>
+                          <span className="text-[#f5c040]">T {s.testing}</span>
+                          <span className="text-[#6b7fb5]">P {s.pending}</span>
+                        </span>
+                      </HoverCardTrigger>
+                      <HoverCardContent side="bottom" align="end" className="w-auto p-3">
+                        <ModStatCard mod={g.mod} items={g.items} />
+                      </HoverCardContent>
+                    </HoverCard>
+                  );
+                })()}
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {g.items.map((m) => {
@@ -1893,6 +2173,27 @@ export default function MapSelectionManagement() {
         map={adjustTarget}
         onSaved={load}
       />
+
+      {/* 阶段统计弹窗（点击统计按钮打开） */}
+      <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {category === "全部" ? "全部阶段" : CATEGORY_LABEL[category] ?? category} 统计
+            </DialogTitle>
+            <DialogDescription>
+              {season ? `赛季 ${seasonLabel(settings, season)}` : "全部赛季"} 图池统计数据
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex max-h-[70vh] flex-col gap-2 overflow-y-auto">
+            {statRows.length > 0 ? (
+              statRows.map((r) => <StageStatCard key={r.category} row={r} />)
+            ) : (
+              <p className="py-4 text-center text-xs text-(--pc-faint)">暂无该阶段的统计数据</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
