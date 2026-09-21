@@ -4,7 +4,8 @@ import {
   CircleArrowRight,
   Clipboard,
   Download,
-  ExternalLink,
+  Gamepad2,
+  Globe,
   LayoutGrid,
   LayoutList,
   MessageSquare,
@@ -74,6 +75,9 @@ const MOD_DISPLAY: Record<string, string> = {
 function modBase(m: MapSelection): string {
   return (m.selectedMods ?? "NM").split("+")[0].toUpperCase() || "NM";
 }
+
+/** 列表视图排序用的 MOD 顺序（未列出的 mod 排在最后） */
+const MOD_LIST_ORDER: readonly string[] = ["NM", "HD", "HR", "DT", "LZ", "TB"];
 
 const STAT_FIELDS: { key: string; label: string }[] = [
   { key: "star", label: "星数 ★" },
@@ -678,7 +682,24 @@ export default function MapSelectionManagement() {
     setVisible(60);
   }, [filtered]);
 
-  const lazyList = useMemo(() => filtered.slice(0, visible), [filtered, visible]);
+  // 排序：先按 MOD 顺序（NM/HD/HR/DT/LZ/TB），再按 MOD 位，最后按添加时间
+  const sorted = useMemo(() => {
+    const maps = filtered.slice();
+    const order = MOD_LIST_ORDER;
+    return maps.sort((a, b) => {
+      const ia = order.indexOf(modBase(a));
+      const ib = order.indexOf(modBase(b));
+      if (ia !== ib) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      const pa = Number(a.modPosition ?? 0);
+      const pb = Number(b.modPosition ?? 0);
+      if (pa !== pb) return pa - pb;
+      return (a.selectedAt ?? a.createdAt ?? "").localeCompare(
+        b.selectedAt ?? b.createdAt ?? "",
+      );
+    });
+  }, [filtered]);
+
+  const lazyList = useMemo(() => sorted.slice(0, visible), [sorted, visible]);
   const groups = useMemo(() => groupMaps(lazyList), [lazyList]);
 
   const modFilterOptions = useMemo(() => {
@@ -1352,7 +1373,7 @@ export default function MapSelectionManagement() {
                       {`${modBase(m)}${m.modPosition ?? ""}`}
                     </span>
                     {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
-                      <span className="ml-1 text-xs font-bold text-[#a78bfa]">
+                      <span className="block text-xs font-bold text-[#a78bfa]">
                         x{Number(m.customDTRate).toFixed(2)}
                       </span>
                     )}
@@ -1362,7 +1383,13 @@ export default function MapSelectionManagement() {
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-[#e85d75]">{m.beatmapId}</td>
+                  <td
+                    onClick={() => copyBid(m)}
+                    title="点击复制 BID"
+                    className="cursor-pointer px-3 py-2.5 font-mono text-xs text-[#e85d75] transition-colors hover:bg-(--pc-paper)"
+                  >
+                    {m.beatmapId}
+                  </td>
                   <td className="px-3 py-2.5">
                     {m.coverUrl ? (
                       <img
@@ -1549,11 +1576,26 @@ export default function MapSelectionManagement() {
                                   rel="noreferrer"
                                   className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                                 >
-                                  <ExternalLink className="h-3.5 w-3.5" />
+                                  <Globe className="h-3.5 w-3.5" />
                                 </a>
                               </HoverCardTrigger>
                               <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
                                 <p className="text-xs font-bold text-(--pc-ink)">打开 osu beatmap web 查看</p>
+                              </HoverCardContent>
+                            </HoverCard>
+                            <HoverCard openDelay={0} closeDelay={0}>
+                              <HoverCardTrigger asChild>
+                                <a
+                                  href={`osu://b/${m.beatmapId}`}
+                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                >
+                                  <Gamepad2 className="h-3.5 w-3.5" />
+                                </a>
+                              </HoverCardTrigger>
+                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                <p className="text-xs font-bold text-(--pc-ink)">
+                                  osu direct 打开（osu://b/{m.beatmapId}）
+                                </p>
                               </HoverCardContent>
                             </HoverCard>
                             <HoverCard openDelay={0} closeDelay={0}>
