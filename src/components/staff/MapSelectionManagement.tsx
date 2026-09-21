@@ -643,18 +643,81 @@ export default function MapSelectionManagement() {
       });
   }, [data]);
 
+  // 搜索支持：普通文字 / BID / SID，以及参数过滤（cs/ar/od/hp/bpm/时长/maxcombo/star，运算符 > < = >= <=）与 bid:/sid: 前缀；用空格或分号分隔多个条件，如 ar>6;cs=5;bid:114514
   const filtered = useMemo(() => {
     const maps = data ?? [];
+    const q = search.trim().toLowerCase();
+    if (!q) {
+      return maps.filter((m) => {
+        if (modFilter !== "全部" && modBase(m) !== modFilter) return false;
+        if (paddingFilter === "测图中" && !m.padding) return false;
+        if (paddingFilter === "非测图" && m.padding) return false;
+        return true;
+      });
+    }
+
+    const paramRe = /^(cs|ar|od|hp|bpm|length|时长|maxcombo|star)\s*([><=]+)\s*([\d.]+)$/;
+    const keyRe = /^(bid|sid)\s*[:：]\s*([\d]+)$/;
+    const paramTokens: { key: string; op: string; val: number }[] = [];
+    const keyTokens: { key: "bid" | "sid"; val: string }[] = [];
+    const textTokens: string[] = [];
+    for (const tok of q.split(/[\s;]+/)) {
+      if (!tok) continue;
+      const pm = tok.match(paramRe);
+      if (pm) {
+        paramTokens.push({ key: pm[1], op: pm[2], val: Number(pm[3]) });
+        continue;
+      }
+      const km = tok.match(keyRe);
+      if (km) {
+        keyTokens.push({ key: km[1] as "bid" | "sid", val: km[2] });
+        continue;
+      }
+      textTokens.push(tok);
+    }
+
+    const fieldOf = (key: string, m: MapSelection): number | null | undefined => {
+      switch (key) {
+        case "cs": return m.cs;
+        case "ar": return m.ar;
+        case "od": return m.od;
+        case "hp": return m.hp;
+        case "bpm": return m.bpm;
+        case "length":
+        case "时长": return m.totalLength;
+        case "maxcombo": return m.maxCombo;
+        case "star": return m.starRating;
+        default: return null;
+      }
+    };
+    const cmp = (v: number, op: string, target: number): boolean => {
+      switch (op) {
+        case ">": return v > target;
+        case "<": return v < target;
+        case ">=": return v >= target;
+        case "<=": return v <= target;
+        case "=":
+        case "==": return v === target;
+        default: return false;
+      }
+    };
+
     return maps.filter((m) => {
       if (modFilter !== "全部" && modBase(m) !== modFilter) return false;
       if (paddingFilter === "测图中" && !m.padding) return false;
       if (paddingFilter === "非测图" && m.padding) return false;
-      if (!search.trim()) return true;
-      const q = search.trim().toLowerCase();
-      const num = Number(q);
-      if (Number.isFinite(num) && q !== "") {
-        if (String(m.beatmapId) === q || String(m.beatmapsetId ?? "") === q) return true;
+      // 参数过滤：任一不满足即排除
+      for (const p of paramTokens) {
+        const v = fieldOf(p.key, m);
+        if (v == null || !cmp(v, p.op, p.val)) return false;
       }
+      // bid:/sid: 过滤：任一不匹配即排除
+      for (const k of keyTokens) {
+        const sv =
+          k.key === "bid" ? String(m.beatmapId) : String(m.beatmapsetId ?? "");
+        if (sv !== k.val) return false;
+      }
+      if (textTokens.length === 0) return true;
       const hay = [
         m.title,
         m.artist,
@@ -672,7 +735,7 @@ export default function MapSelectionManagement() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-      return hay.includes(q);
+      return textTokens.every((t) => hay.includes(t));
     });
   }, [data, modFilter, paddingFilter, search]);
 
@@ -1229,13 +1292,16 @@ export default function MapSelectionManagement() {
               className="flex-1"
             />
           </HoverCardTrigger>
-          <HoverCardContent side="bottom" align="start" className="w-64">
+          <HoverCardContent side="bottom" align="start" className="w-80">
             <p className="mb-1.5 text-xs font-bold text-(--pc-ink)">搜索支持的参数</p>
             <ul className="space-y-1 text-xs leading-relaxed text-(--pc-slate)">
               <li>• 数字：BID / SID（谱面集 ID）</li>
               <li>• 文字：曲名、艺术家、难度、谱师</li>
               <li>• MOD：NM、HD、HR、DT、LZ、TB…</li>
               <li>• 组合：MOD + 位号，如 NM1、HD2</li>
+              <li>• 属性：cs/ar/od/hp/bpm/时长/maxcombo/star + 运算符，如 cs=6、ar&gt;8、bpm&lt;200</li>
+              <li>• 前缀：bid:、sid:，如 bid:114514</li>
+              <li>• 分隔：空格或分号组合多种条件，如 ar&gt;6;cs=5;bid:114514;songtitle</li>
               <li>• 其他：备注、提名者用户名</li>
             </ul>
           </HoverCardContent>
