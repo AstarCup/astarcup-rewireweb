@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Copy, Download } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -141,12 +141,19 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
         : toast({ variant: "destructive", title: "该图不支持下载" }),
     );
   };
+  const copyBid = () => {
+    void navigator.clipboard
+      .writeText(String(map.beatmapId))
+      .then(() => toast({ title: "已复制 BID", description: String(map.beatmapId) }))
+      .catch(() => toast({ variant: "destructive", title: "复制失败" }));
+  };
   return (
-    <a
-      href={osuLink(map)}
-      target="_blank"
-      rel="noreferrer"
-      className="group overflow-hidden rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={copyBid}
+      title="点击复制 BID"
+      className="group cursor-pointer overflow-hidden rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
     >
       <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
         {map.coverUrl ? (
@@ -163,20 +170,16 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
             </span>
           </div>
         )}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            void navigator.clipboard
-              .writeText(String(map.beatmapId))
-              .then(() => toast({ title: "已复制 BID", description: String(map.beatmapId) }))
-              .catch(() => toast({ variant: "destructive", title: "复制失败" }));
-          }}
-          title="复制 BID"
+        <a
+          href={osuLink(map)}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          title="打开 osu web"
           className="absolute right-11 top-2 grid h-8 w-8 place-items-center rounded-lg bg-(--pc-white)/90 text-[#6b7fb5] shadow-[2px_2px_0px_rgba(0,0,0,0.1)] opacity-0 transition hover:text-[#e85d75] group-hover:opacity-100"
         >
-          <Copy className="h-4 w-4" />
-        </button>
+          <ExternalLink className="h-4 w-4" />
+        </a>
         <button
           onClick={(e) => {
             e.preventDefault();
@@ -219,7 +222,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
           {statCell("★", fmt(map.starRating))}
         </div>
       </div>
-    </a>
+    </div>
   );
 }
 
@@ -232,8 +235,8 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
             <th className="px-4 py-3 font-bold text-(--pc-slate)">MOD</th>
             <th className="min-w-25 min-h-9 px-4 py-3 font-bold text-(--pc-slate)">封面</th>
             <th className="w-full px-4 py-3 font-bold text-(--pc-slate)">图名</th>
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">AR</th>
             <th className="px-4 py-3 font-bold text-(--pc-slate)">CS</th>
+            <th className="px-4 py-3 font-bold text-(--pc-slate)">AR</th>
             <th className="px-4 py-3 font-bold text-(--pc-slate)">OD</th>
             <th className="px-4 py-3 font-bold text-(--pc-slate)">BPM</th>
             <th className="px-4 py-3 font-bold text-(--pc-slate)">时长</th>
@@ -298,8 +301,8 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                     <span className="ml-1 text-xs text-(--pc-faint)">[{m.version}]</span>
                   )}
                 </td>
-                <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.bpm)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>

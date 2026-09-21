@@ -216,17 +216,28 @@ function CommentDialog({
           ) : (
             comments.map((c) => (
               <div key={c.id} className="rounded-xl border-2 border-(--pc-border) p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-(--pc-ink)">{c.username}</span>
-                  <button
-                    onClick={() => void remove(c.id)}
-                    disabled={delBusy === c.id}
-                    className="text-xs text-[#e85d75] hover:underline"
-                  >
-                    {delBusy === c.id ? "…" : "删除"}
-                  </button>
+                <div className="flex items-start gap-2.5">
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage
+                      src={c.avatarUrl || `https://a.ppy.sh/${c.userId}`}
+                      alt={c.username}
+                    />
+                    <AvatarFallback>{c.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-(--pc-ink)">{c.username}</span>
+                      <button
+                        onClick={() => void remove(c.id)}
+                        disabled={delBusy === c.id}
+                        className="text-xs text-[#e85d75] hover:underline"
+                      >
+                        {delBusy === c.id ? "…" : "删除"}
+                      </button>
+                    </div>
+                    <p className="mt-1 text-sm text-(--pc-slate)">{c.comment}</p>
+                  </div>
                 </div>
-                <p className="mt-1 text-sm text-(--pc-slate)">{c.comment}</p>
               </div>
             ))
           )}
