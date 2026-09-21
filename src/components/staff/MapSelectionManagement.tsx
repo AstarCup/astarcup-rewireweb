@@ -4,7 +4,6 @@ import {
   CircleArrowRight,
   Clipboard,
   Download,
-  Gamepad2,
   Globe,
   LayoutGrid,
   LayoutList,
@@ -612,10 +611,10 @@ export default function MapSelectionManagement() {
       run(() =>
         api.get<MapSelection[]>(
           "/api/map-selections" +
-            qs({
-              season: season || undefined,
-              category: category === "全部" ? undefined : category,
-            }),
+          qs({
+            season: season || undefined,
+            category: category === "全部" ? undefined : category,
+          }),
         ),
       ),
     [run, season, category],
@@ -637,7 +636,7 @@ export default function MapSelectionManagement() {
     void api
       .get<Record<string, MapComment[]>>(
         "/api/map-selections/comments" +
-          qs({ mapSelectionIds: maps.map((m) => m.id).join(",") }),
+        qs({ mapSelectionIds: maps.map((m) => m.id).join(",") }),
       )
       .then((res) => {
         if (res.ok) setCommentsByMap(res.data);
@@ -1364,87 +1363,116 @@ export default function MapSelectionManagement() {
               {lazyList.map((m) => (
                 <ContextMenu key={m.id}>
                   <ContextMenuTrigger asChild>
-                <tr className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
-                  <td className="px-3 py-2.5">
-                    <span
-                      className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
-                      style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
+                    <tr className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
+                      <td className="px-3 py-2.5">
+                        <span
+                          className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+                          style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
+                        >
+                          {`${modBase(m)}${m.modPosition ?? ""}`}
+                        </span>
+                        {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
+                          <span className="block text-xs font-bold text-[#a78bfa]">
+                            x{Number(m.customDTRate).toFixed(2)}
+                          </span>
+                        )}
+                        {m.customModName && (
+                          <span className="ml-1 text-xs font-bold text-(--pc-slate)">
+                            {m.customModName}
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        onClick={() => copyBid(m)}
+                        title="点击复制 BID"
+                        className="cursor-pointer px-3 py-2.5 font-mono text-xs text-[#e85d75] transition-colors hover:bg-(--pc-paper)"
+                      >
+                        {m.beatmapId}
+                      </td>
+                      <td className="min-w-15 x-3 py-2.5">
+                        {m.coverUrl ? (
+                          <img
+                            src={m.coverUrl}
+                            alt=""
+                            className="h-10 w-16 rounded-md object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="h-10 w-16 rounded-md bg-[#f5c040]/30" />
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 font-bold text-(--pc-ink)">
+                        {[m.artist_unicode || m.artist, m.title_unicode || m.title]
+                          .filter(Boolean)
+                          .join(" - ")}
+                        <span className="text-(--pc-faint)"> [{m.version}]</span>
+                      </td>
+                      <td className="px-3 py-2.5 text-(--pc-slate)">{m.creator ?? "-"}</td>
+                      <td className="px-3 py-2.5 font-sans font-bold" style={{ color: starColor(m.starRating) }}>
+                        {fmt(m.starRating)}
+                      </td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.bpm)}</td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex flex-wrap gap-1">
+                          {m.approved ? (
+                            <Badge variant="teal">已审核</Badge>
+                          ) : (
+                            <Badge variant="yellow">待审核</Badge>
+                          )}
+                          {m.padding && <Badge variant="blue">padding</Badge>}
+                          {m.isOrigin && <Badge variant="blue">原创</Badge>}
+                          {m.isCustome && <Badge variant="yellow">定制</Badge>}
+                        </div>
+                      </td>
+                    </tr>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onSelect={() => setCommentTarget(m)}>
+                      <MessageSquare className="h-4 w-4" />
+                      评论
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onSelect={() => window.open(`osu://b/${m.beatmapId}`, "_blank")}
                     >
-                      {`${modBase(m)}${m.modPosition ?? ""}`}
-                    </span>
-                    {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
-                      <span className="block text-xs font-bold text-[#a78bfa]">
-                        x{Number(m.customDTRate).toFixed(2)}
-                      </span>
-                    )}
-                    {m.customModName && (
-                      <span className="ml-1 text-xs font-bold text-(--pc-slate)">
-                        {m.customModName}
-                      </span>
-                    )}
-                  </td>
-                  <td
-                    onClick={() => copyBid(m)}
-                    title="点击复制 BID"
-                    className="cursor-pointer px-3 py-2.5 font-mono text-xs text-[#e85d75] transition-colors hover:bg-(--pc-paper)"
-                  >
-                    {m.beatmapId}
-                  </td>
-                  <td className="px-3 py-2.5">
-                    {m.coverUrl ? (
-                      <img
-                        src={m.coverUrl}
-                        alt=""
-                        className="h-10 w-16 rounded-md object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="h-10 w-16 rounded-md bg-[#f5c040]/30" />
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 font-bold text-(--pc-ink)">
-                    {[m.artist_unicode || m.artist, m.title_unicode || m.title]
-                      .filter(Boolean)
-                      .join(" - ")}
-                    <span className="text-(--pc-faint)"> [{m.version}]</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-(--pc-slate)">{m.creator ?? "-"}</td>
-                  <td className="px-3 py-2.5 font-sans font-bold" style={{ color: starColor(m.starRating) }}>
-                    {fmt(m.starRating)}
-                  </td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.bpm)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex flex-wrap gap-1">
-                      {m.approved ? (
-                        <Badge variant="teal">已审核</Badge>
-                      ) : (
-                        <Badge variant="yellow">待审核</Badge>
-                      )}
-                      {m.padding && <Badge variant="blue">padding</Badge>}
-                      {m.isOrigin && <Badge variant="blue">原创</Badge>}
-                      {m.isCustome && <Badge variant="yellow">定制</Badge>}
-                    </div>
-                  </td>
-                </tr>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                  <ContextMenuItem onSelect={() => void toggleApproved(m)}>
-                    {m.approved ? "取消审核" : "通过审核"}
-                  </ContextMenuItem>
-                  <ContextMenuItem onSelect={() => void togglePadding(m)}>
-                    {m.padding ? "取消审图" : "标为审图"}
-                  </ContextMenuItem>
-                  <ContextMenuItem onSelect={() => setCommentTarget(m)}>评论</ContextMenuItem>
-                  <ContextMenuItem onSelect={() => setAdjustTarget(m)}>调整参数</ContextMenuItem>
-                  <ContextMenuSeparator />
-                  <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
-                    删除
-                  </ContextMenuItem>
-                </ContextMenuContent>
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path d="M7.698 10.362a1.94 1.94 0 0 0-.7-.516q-.421-.189-.988-.189c-.567 0-.704.063-.982.189s-.51.298-.692.516q-.273.328-.413.777-.139.448-.139.96 0 .511.14.952.139.44.412.767.274.329.692.512t.982.184c.565 0 .707-.062.988-.184q.422-.184.7-.512.279-.327.413-.767.135-.44.135-.952a3.3 3.3 0 0 0-.135-.96 2.1 2.1 0 0 0-.413-.777m-.965 2.81q-.22.372-.723.372-.494 0-.713-.372-.22-.373-.22-1.073c0-.7.073-.824.22-1.073q.22-.372.713-.372.503 0 .723.372.22.373.22 1.073t-.22 1.073m11.89-.83-.09-4.39a4.5 4.5 0 0 1 .69-.054q.351 0 .701.054l-.09 4.39q-.315.053-.601.053a3.5 3.5 0 0 1-.61-.054m1.319 1.4q0 .332-.054.664a4 4 0 0 1-.655.054 4 4 0 0 1-.664-.054 4 4 0 0 1-.054-.655q0-.323.054-.665a4 4 0 0 1 .655-.054q.323 0 .664.054.054.341.054.656m-3.223-4.03q.315 0 .638.053v4.461q-.288.099-.759.193a5.246 5.246 0 0 1-1.863.023 1.7 1.7 0 0 1-.74-.305q-.32-.234-.507-.683-.189-.449-.189-1.193V9.765a4 4 0 0 1 .638-.054q.313 0 .637.054v2.46q0 .367.058.606a.9.9 0 0 0 .18.377.66.66 0 0 0 .3.197q.18.058.422.058.332 0 .557-.062V9.765a4 4 0 0 1 .628-.054m-4.362 2.683q.08.225.08.548a1.4 1.4 0 0 1-.542 1.117q-.265.212-.642.333-.378.12-.853.12a5 5 0 0 1-.395-.013 3 3 0 0 1-.346-.045 4 4 0 0 1-.327-.076 4 4 0 0 1-.35-.116 2.6 2.6 0 0 1 .085-.49 3 3 0 0 1 .175-.48q.296.117.561.175.265.06.552.059.126 0 .274-.023a1 1 0 0 0 .274-.08.65.65 0 0 0 .21-.153.35.35 0 0 0 .086-.247q0-.216-.13-.31a1.3 1.3 0 0 0-.364-.166l-.556-.162q-.503-.143-.786-.426-.282-.283-.283-.848 0-.682.49-1.068.489-.386 1.332-.386.35 0 .692.062.341.063.691.189a2.5 2.5 0 0 1-.09.485 2.3 2.3 0 0 1-.17.44 4 4 0 0 0-.476-.158 2.2 2.2 0 0 0-.548-.067q-.305 0-.476.094a.32.32 0 0 0-.17.301q0 .197.121.278t.346.153l.511.153q.252.072.454.175t.345.255.225.377M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.628 0 12-5.373 12-12S18.628 0 12 0m0 22.8C6.035 22.8 1.2 17.965 1.2 12S6.035 1.2 12 1.2 22.8 6.035 22.8 12 17.965 22.8 12 22.8" />
+                      </svg>
+                      打开 osu direct
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onSelect={() => window.open(sayobotUrl(m), "_blank", "noopener,noreferrer")}
+                    >
+                      <Download className="h-4 w-4" />
+                      Sayobot 下载
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onSelect={() => window.open(osuMapUrl(m), "_blank", "noopener,noreferrer")}
+                    >
+                      <Globe className="h-4 w-4" />
+                      打开 osu beatmap web
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem onSelect={() => void toggleApproved(m)}>
+                      {m.approved ? "取消审核" : "通过审核"}
+                    </ContextMenuItem>
+                    <ContextMenuItem onSelect={() => void togglePadding(m)}>
+                      {m.padding ? "取消审图" : "标为审图"}
+                    </ContextMenuItem>
+                    <ContextMenuItem onSelect={() => setAdjustTarget(m)}>调整参数</ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
+                      删除
+                    </ContextMenuItem>
+                  </ContextMenuContent>
                 </ContextMenu>
               ))}
             </tbody>
@@ -1469,272 +1497,279 @@ export default function MapSelectionManagement() {
                   const comments = commentsByMap[String(m.id)] ?? [];
                   const modColor = MOD_COLORS[modBase(m)] ?? "#666";
                   return (
-                      <ContextMenu key={m.id}>
-                        <ContextMenuTrigger asChild>
-                      <Card
-                        key={m.id}
-                        className={cn(
-                          "group relative overflow-hidden p-0",
-                          m.approved && "border-l-8",
-                        )}
-                        style={m.approved ? { borderLeftColor: "#5cb8a5" } : undefined}
-                      >
-                      {/* Cover strip */}
-                      <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
-                        {m.coverUrl && (
-                          <img src={m.coverUrl} alt="" className="h-full w-full object-cover" />
-                        )}
-                        {m.approved && (
-                          <span className="absolute right-3 top-2 rounded-lg bg-[#5cb8a5]/90 px-2 py-0.5 text-xs font-bold text-[#fdf6ee]">
-                            过审
-                          </span>
-                        )}
-                        {m.padding && (
-                          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-lg bg-[#e0a47e]/90 px-2 py-0.5 text-xs font-bold text-(--pc-ink)">
-                            <CircleArrowRight className="h-3.5 w-3.5" />
-                            测图中
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="p-4">
-                        {/* Header row */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span
-                              className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
-                              style={{ backgroundColor: modColor }}
-                            >
-                              {`${modBase(m)}${m.modPosition ?? ""}`}
-                            </span>
-                            {m.customModName && (
-                              <span className="text-xs font-bold text-(--pc-slate)">
-                                {m.customModName}
-                              </span>
-                            )}
-                            {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
-                              <span className="text-xs font-bold text-[#a78bfa]">
-                                x{Number(m.customDTRate).toFixed(2)}
-                              </span>
-                            )}
-                            {category === "全部" && m.category && (
-                              <Badge variant="outline">
-                                {CATEGORY_LABEL[m.category] ?? m.category}
-                              </Badge>
-                            )}
-                            {season === "" && m.season && (
-                              <Badge variant="outline">{seasonLabel(settings, m.season)}</Badge>
-                            )}
-                            {m.isOrigin && <Badge variant="blue">原创</Badge>}
-                            {m.isCustome && <Badge variant="yellow">定制</Badge>}
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            {!m.approved && (
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => toggleSelect(m.id)}
-                                title="批量选择"
-                                className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                              >
-                                <Checkbox checked={selectedIds.has(m.id)} className="pointer-events-none" />
-                              </span>
-                            )}
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <button
-                                  onClick={() => setCommentTarget(m)}
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <MessageSquare className="h-3.5 w-3.5" />
-                                </button>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">添加评论</p>
-                              </HoverCardContent>
-                            </HoverCard>
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <a
-                                  href={sayobotUrl(m)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <Download className="h-3.5 w-3.5" />
-                                </a>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">Sayobot 下载</p>
-                              </HoverCardContent>
-                            </HoverCard>
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <a
-                                  href={osuMapUrl(m)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <Globe className="h-3.5 w-3.5" />
-                                </a>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">打开 osu beatmap web 查看</p>
-                              </HoverCardContent>
-                            </HoverCard>
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <a
-                                  href={`osu://b/${m.beatmapId}`}
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <Gamepad2 className="h-3.5 w-3.5" />
-                                </a>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">
-                                  osu direct 打开（osu://b/{m.beatmapId}）
-                                </p>
-                              </HoverCardContent>
-                            </HoverCard>
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <button
-                                  onClick={() => copyBid(m)}
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <Clipboard className="h-3.5 w-3.5" />
-                                </button>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">
-                                  BID: <span className="font-mono text-[#e85d75]">{m.beatmapId}</span>
-                                </p>
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </div>
-
-                        {/* Title */}
-                        <p className="mt-2 line-clamp-2 font-bold text-(--pc-ink)">
-                          {[m.artist_unicode || m.artist, m.title_unicode || m.title]
-                            .filter(Boolean)
-                            .join(" - ") || "未知曲目"}
-                        </p>
-                        <p className="text-xs text-(--pc-faint)">
-                          [{m.version}] by {m.creator ?? "-"}
-                        </p>
-
-                        {/* Stats */}
-                        <div className="mt-3 grid grid-cols-4 gap-1.5">
-                          {statCell("CS", fmt(m.cs))}
-                          {statCell("AR", fmt(m.ar))}
-                          {statCell("OD", fmt(m.od))}
-                          {statCell("HP", fmt(m.hp))}
-                          {statCell("时长", fmtLength(m.totalLength))}
-                          {statCell("MaxCombo", m.maxCombo != null ? String(m.maxCombo) : "-")}
-                          {statCell("BPM", fmt(m.bpm))}
-                          {statCell("★", fmt(m.starRating), starColor(m.starRating))}
-                        </div>
-
-                        {/* Nominator */}
-                        <div className="mt-3 flex items-center gap-2">
-                          {m.selectedByAvatar ? (
-                            <img
-                              src={m.selectedByAvatar}
-                              alt=""
-                              className="h-6 w-6 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="grid h-6 w-6 place-items-center rounded-full bg-[#f5c040]/30 text-[10px] font-bold text-(--pc-ink)">
-                              {(m.selectedByUsername || m.selectedBy || "?").slice(0, 1)}
-                            </div>
+                    <ContextMenu key={m.id}>
+                      <ContextMenuTrigger asChild>
+                        <Card
+                          key={m.id}
+                          className={cn(
+                            "group relative overflow-hidden p-0",
+                            m.approved && "border-l-8",
                           )}
-                          <span className="text-xs text-(--pc-slate)">
-                            {m.selectedByUsername || m.selectedBy || "未知提名者"}
-                          </span>
-                        </div>
+                          style={m.approved ? { borderLeftColor: "#5cb8a5" } : undefined}
+                        >
+                          {/* Cover strip */}
+                          <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
+                            {m.coverUrl && (
+                              <img src={m.coverUrl} alt="" className="h-full w-full object-cover" />
+                            )}
+                            {m.approved && (
+                              <span className="absolute right-3 top-2 rounded-lg bg-[#5cb8a5]/90 px-2 py-0.5 text-xs font-bold text-[#fdf6ee]">
+                                过审
+                              </span>
+                            )}
+                            {m.padding && (
+                              <span className="absolute left-2 top-2 flex items-center gap-1 rounded-lg bg-[#e0a47e]/90 px-2 py-0.5 text-xs font-bold text-(--pc-ink)">
+                                <CircleArrowRight className="h-3.5 w-3.5" />
+                                测图中
+                              </span>
+                            )}
+                          </div>
 
-                        {/* Note */}
-                        {m.comment && (
-                          <p className="mt-2 rounded-lg bg-(--pc-paper) px-2 py-1 text-xs text-(--pc-faint)">
-                            备注：{m.comment}
-                          </p>
-                        )}
+                          <div className="p-4">
+                            {/* Header row */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span
+                                  className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+                                  style={{ backgroundColor: modColor }}
+                                >
+                                  {`${modBase(m)}${m.modPosition ?? ""}`}
+                                </span>
+                                {m.customModName && (
+                                  <span className="text-xs font-bold text-(--pc-slate)">
+                                    {m.customModName}
+                                  </span>
+                                )}
+                                {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
+                                  <span className="text-xs font-bold text-[#a78bfa]">
+                                    x{Number(m.customDTRate).toFixed(2)}
+                                  </span>
+                                )}
+                                {category === "全部" && m.category && (
+                                  <Badge variant="outline">
+                                    {CATEGORY_LABEL[m.category] ?? m.category}
+                                  </Badge>
+                                )}
+                                {season === "" && m.season && (
+                                  <Badge variant="outline">{seasonLabel(settings, m.season)}</Badge>
+                                )}
+                                {m.isOrigin && <Badge variant="blue">原创</Badge>}
+                                {m.isCustome && <Badge variant="yellow">定制</Badge>}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                {!m.approved && (
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => toggleSelect(m.id)}
+                                    title="批量选择"
+                                    className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                  >
+                                    <Checkbox checked={selectedIds.has(m.id)} className="pointer-events-none" />
+                                  </span>
+                                )}
+                                <HoverCard openDelay={0} closeDelay={0}>
+                                  <HoverCardTrigger asChild>
+                                    <a
+                                      href={sayobotUrl(m)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                    </a>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                    <p className="text-xs font-bold text-(--pc-ink)">Sayobot 下载</p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                                <HoverCard openDelay={0} closeDelay={0}>
+                                  <HoverCardTrigger asChild>
+                                    <a
+                                      href={osuMapUrl(m)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    >
+                                      <Globe className="h-3.5 w-3.5" />
+                                    </a>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                    <p className="text-xs font-bold text-(--pc-ink)">打开 osu beatmap web 查看</p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                                <HoverCard openDelay={0} closeDelay={0}>
+                                  <HoverCardTrigger asChild>
+                                    <a
+                                      href={`osu://b/${m.beatmapId}`}
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    >
+                                      <svg
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                        className="h-3.5 w-3.5"
+                                        aria-hidden="true"
+                                      >
+                                        <path d="M7.698 10.362a1.94 1.94 0 0 0-.7-.516q-.421-.189-.988-.189c-.567 0-.704.063-.982.189s-.51.298-.692.516q-.273.328-.413.777-.139.448-.139.96 0 .511.14.952.139.44.412.767.274.329.692.512t.982.184c.565 0 .707-.062.988-.184q.422-.184.7-.512.279-.327.413-.767.135-.44.135-.952a3.3 3.3 0 0 0-.135-.96 2.1 2.1 0 0 0-.413-.777m-.965 2.81q-.22.372-.723.372-.494 0-.713-.372-.22-.373-.22-1.073c0-.7.073-.824.22-1.073q.22-.372.713-.372.503 0 .723.372.22.373.22 1.073t-.22 1.073m11.89-.83-.09-4.39a4.5 4.5 0 0 1 .69-.054q.351 0 .701.054l-.09 4.39q-.315.053-.601.053a3.5 3.5 0 0 1-.61-.054m1.319 1.4q0 .332-.054.664a4 4 0 0 1-.655.054 4 4 0 0 1-.664-.054 4 4 0 0 1-.054-.655q0-.323.054-.665a4 4 0 0 1 .655-.054q.323 0 .664.054.054.341.054.656m-3.223-4.03q.315 0 .638.053v4.461q-.288.099-.759.193a5.246 5.246 0 0 1-1.863.023 1.7 1.7 0 0 1-.74-.305q-.32-.234-.507-.683-.189-.449-.189-1.193V9.765a4 4 0 0 1 .638-.054q.313 0 .637.054v2.46q0 .367.058.606a.9.9 0 0 0 .18.377.66.66 0 0 0 .3.197q.18.058.422.058.332 0 .557-.062V9.765a4 4 0 0 1 .628-.054m-4.362 2.683q.08.225.08.548a1.4 1.4 0 0 1-.542 1.117q-.265.212-.642.333-.378.12-.853.12a5 5 0 0 1-.395-.013 3 3 0 0 1-.346-.045 4 4 0 0 1-.327-.076 4 4 0 0 1-.35-.116 2.6 2.6 0 0 1 .085-.49 3 3 0 0 1 .175-.48q.296.117.561.175.265.06.552.059.126 0 .274-.023a1 1 0 0 0 .274-.08.65.65 0 0 0 .21-.153.35.35 0 0 0 .086-.247q0-.216-.13-.31a1.3 1.3 0 0 0-.364-.166l-.556-.162q-.503-.143-.786-.426-.282-.283-.283-.848 0-.682.49-1.068.489-.386 1.332-.386.35 0 .692.062.341.063.691.189a2.5 2.5 0 0 1-.09.485 2.3 2.3 0 0 1-.17.44 4 4 0 0 0-.476-.158 2.2 2.2 0 0 0-.548-.067q-.305 0-.476.094a.32.32 0 0 0-.17.301q0 .197.121.278t.346.153l.511.153q.252.072.454.175t.345.255.225.377M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.628 0 12-5.373 12-12S18.628 0 12 0m0 22.8C6.035 22.8 1.2 17.965 1.2 12S6.035 1.2 12 1.2 22.8 6.035 22.8 12 17.965 22.8 12 22.8" />
+                                      </svg>
+                                    </a>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                    <p className="text-xs font-bold text-(--pc-ink)">
+                                      osu direct 打开（osu://b/{m.beatmapId}）
+                                    </p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                                <HoverCard openDelay={0} closeDelay={0}>
+                                  <HoverCardTrigger asChild>
+                                    <button
+                                      onClick={() => copyBid(m)}
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    >
+                                      <Clipboard className="h-3.5 w-3.5" />
+                                    </button>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                    <p className="text-xs font-bold text-(--pc-ink)">
+                                      BID: <span className="font-mono text-[#e85d75]">{m.beatmapId}</span>
+                                    </p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              </div>
+                            </div>
 
-                        {/* Comments preview */}
-                        {comments.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {comments.slice(0, 3).map((c) => (
-                              <HoverCard key={c.id}>
+                            {/* Title */}
+                            <p className="mt-2 line-clamp-2 font-bold text-(--pc-ink)">
+                              {[m.artist_unicode || m.artist, m.title_unicode || m.title]
+                                .filter(Boolean)
+                                .join(" - ") || "未知曲目"}
+                            </p>
+                            <p className="text-xs text-(--pc-faint)">
+                              [{m.version}] by {m.creator ?? "-"}
+                            </p>
+
+                            {/* Stats */}
+                            <div className="mt-3 grid grid-cols-4 gap-1.5">
+                              {statCell("CS", fmt(m.cs))}
+                              {statCell("AR", fmt(m.ar))}
+                              {statCell("OD", fmt(m.od))}
+                              {statCell("HP", fmt(m.hp))}
+                              {statCell("时长", fmtLength(m.totalLength))}
+                              {statCell("MaxCombo", m.maxCombo != null ? String(m.maxCombo) : "-")}
+                              {statCell("BPM", fmt(m.bpm))}
+                              {statCell("★", fmt(m.starRating), starColor(m.starRating))}
+                            </div>
+
+                            {/* Nominator */}
+                            <div className="mt-3 flex items-center gap-2">
+                              {m.selectedByAvatar ? (
+                                <img
+                                  src={m.selectedByAvatar}
+                                  alt=""
+                                  className="h-6 w-6 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="grid h-6 w-6 place-items-center rounded-full bg-[#f5c040]/30 text-[10px] font-bold text-(--pc-ink)">
+                                  {(m.selectedByUsername || m.selectedBy || "?").slice(0, 1)}
+                                </div>
+                              )}
+                              <span className="text-xs text-(--pc-slate)">
+                                {m.selectedByUsername || m.selectedBy || "未知提名者"}
+                              </span>
+                              <HoverCard openDelay={0} closeDelay={0}>
                                 <HoverCardTrigger asChild>
                                   <button
                                     onClick={() => setCommentTarget(m)}
-                                    className="flex items-center gap-1.5 rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1 text-left transition hover:-translate-y-0.5"
+                                    className="ml-auto grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                                   >
-                                    <Avatar className="h-5 w-5">
-                                      {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
-                                      <AvatarFallback className="bg-[#f5c040]/30 text-[8px] font-bold text-(--pc-ink)">
-                                        {c.username?.slice(0, 1).toUpperCase() || "?"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-[10px] text-(--pc-slate)">
-                                      {c.comment.slice(0, 12)}
-                                      {c.comment.length > 12 ? "…" : ""}
-                                    </span>
+                                    <MessageSquare className="h-3.5 w-3.5" />
                                   </button>
                                 </HoverCardTrigger>
-                                <HoverCardContent className="w-72">
-                                  <div className="flex items-center gap-2.5">
-                                    <Avatar className="h-10 w-10 rounded-xl">
-                                      {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
-                                      <AvatarFallback className="bg-[#f5c040]/30 font-bold text-(--pc-ink)">
-                                        {c.username?.slice(0, 1).toUpperCase() || "?"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="min-w-0">
-                                      <p className="font-bold text-sm text-(--pc-ink)">{c.username}</p>
-                                      <p className="text-xs text-(--pc-faint)">
-                                        osuID: {c.userId}
-                                        {c.createdAt ? ` · ${formatDateTime(c.createdAt)}` : ""}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <p className="mt-3 text-sm leading-relaxed text-(--pc-slate)">
-                                    {c.comment}
-                                  </p>
+                                <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                  <p className="text-xs font-bold text-(--pc-ink)">添加评论</p>
                                 </HoverCardContent>
                               </HoverCard>
-                            ))}
-                            {comments.length > 3 && (
-                              <button
-                                onClick={() => setCommentTarget(m)}
-                                className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-[10px] font-bold text-[#e85d75]"
-                              >
-                                +{comments.length - 3}
-                              </button>
+                            </div>
+
+                            {/* Note */}
+                            {m.comment && (
+                              <p className="mt-2 rounded-lg bg-(--pc-paper) px-2 py-1 text-xs text-(--pc-faint)">
+                                备注：{m.comment}
+                              </p>
+                            )}
+
+                            {/* Comments preview */}
+                            {comments.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {comments.slice(0, 3).map((c) => (
+                                  <HoverCard key={c.id}>
+                                    <HoverCardTrigger asChild>
+                                      <button
+                                        onClick={() => setCommentTarget(m)}
+                                        className="flex items-center gap-1.5 rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1 text-left transition hover:-translate-y-0.5"
+                                      >
+                                        <Avatar className="h-5 w-5">
+                                          {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
+                                          <AvatarFallback className="bg-[#f5c040]/30 text-[8px] font-bold text-(--pc-ink)">
+                                            {c.username?.slice(0, 1).toUpperCase() || "?"}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-[10px] text-(--pc-slate)">
+                                          {c.comment.slice(0, 12)}
+                                          {c.comment.length > 12 ? "…" : ""}
+                                        </span>
+                                      </button>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent className="w-72">
+                                      <div className="flex items-center gap-2.5">
+                                        <Avatar className="h-10 w-10 rounded-xl">
+                                          {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
+                                          <AvatarFallback className="bg-[#f5c040]/30 font-bold text-(--pc-ink)">
+                                            {c.username?.slice(0, 1).toUpperCase() || "?"}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0">
+                                          <p className="font-bold text-sm text-(--pc-ink)">{c.username}</p>
+                                          <p className="text-xs text-(--pc-faint)">
+                                            osuID: {c.userId}
+                                            {c.createdAt ? ` · ${formatDateTime(c.createdAt)}` : ""}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <p className="mt-3 text-sm leading-relaxed text-(--pc-slate)">
+                                        {c.comment}
+                                      </p>
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                ))}
+                                {comments.length > 3 && (
+                                  <button
+                                    onClick={() => setCommentTarget(m)}
+                                    className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-[10px] font-bold text-[#e85d75]"
+                                  >
+                                    +{comments.length - 3}
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    </Card>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuItem onSelect={() => void toggleApproved(m)}>
-                        {m.approved ? "取消审核" : "通过审核"}
-                      </ContextMenuItem>
-                      <ContextMenuItem onSelect={() => void togglePadding(m)}>
-                        {m.padding ? "取消审图" : "标为审图"}
-                      </ContextMenuItem>
-                      <ContextMenuItem onSelect={() => setAdjustTarget(m)}>
-                        调整参数
-                      </ContextMenuItem>
-                      <ContextMenuSeparator />
-                      <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
-                        删除
-                      </ContextMenuItem>
-                    </ContextMenuContent>
+                        </Card>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onSelect={() => void toggleApproved(m)}>
+                          {m.approved ? "取消审核" : "通过审核"}
+                        </ContextMenuItem>
+                        <ContextMenuItem onSelect={() => void togglePadding(m)}>
+                          {m.padding ? "取消审图" : "标为审图"}
+                        </ContextMenuItem>
+                        <ContextMenuItem onSelect={() => setAdjustTarget(m)}>
+                          调整参数
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
+                          删除
+                        </ContextMenuItem>
+                      </ContextMenuContent>
                     </ContextMenu>
                   );
                 })}

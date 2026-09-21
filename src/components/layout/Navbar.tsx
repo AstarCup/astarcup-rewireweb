@@ -45,8 +45,8 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 border-b-2 border-(--pc-border) bg-(--pc-paper)/95 px-4 md:px-8 backdrop-blur-sm relative paper-texture">
-      <div className="flex h-16 items-center justify-between gap-6">
+    <nav className="sticky top-0 z-40 border-b-2 border-(--pc-border) bg-(--pc-paper)/95 px-3 sm:px-4 md:px-6 lg:px-8 backdrop-blur-sm relative paper-texture">
+      <div className="flex h-16 items-center justify-between gap-3 sm:gap-4 md:gap-6">
         <div className="flex items-center gap-2">
           {/* 移动端：图标改为菜单按钮，点击打开 Drawer */}
           <Drawer open={menuOpen} onOpenChange={setMenuOpen}>
@@ -94,14 +94,14 @@ export default function Navbar() {
           </Link>
         </div>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-0.5 md:flex lg:gap-1">
           {LINKS.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
               className={({ isActive }) =>
                 cn(
-                  "rounded-xl px-3 py-2 text-sm font-bold text-(--pc-slate) transition-all duration-200 hover:-translate-y-0.5 hover:text-(--pc-ink)",
+                  "rounded-xl px-2 py-2 text-sm font-bold text-(--pc-slate) transition-all duration-200 hover:-translate-y-0.5 hover:text-(--pc-ink) lg:px-3",
                   isActive && "bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
                 )
               }
@@ -111,17 +111,18 @@ export default function Navbar() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <ThemeToggle />
           {user ? (
             <>
               {permissions?.isadmin && (
                 <Link
                   to="/staff-dashboard"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#5cb8a5] px-4 py-2 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#5cb8a5] px-3 py-2 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 lg:px-4"
+                  aria-label="管理后台"
                 >
                   <ShieldCheck className="h-4 w-4" />
-                  管理后台
+                  <span className="hidden lg:inline">管理后台</span>
                 </Link>
               )}
               <MessageCenter />
@@ -135,7 +136,7 @@ export default function Navbar() {
                       <AvatarImage src={user.avatarUrl || undefined} />
                       <AvatarFallback>{user.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
                     </Avatar>
-                    <span className="hidden text-sm font-bold sm:inline">{user.username}</span>
+                    <span className="hidden text-sm font-bold lg:inline">{user.username}</span>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -152,9 +153,9 @@ export default function Navbar() {
           ) : (
             <Link
               to="/register"
-              className="rounded-xl bg-[#e85d75] px-6 py-2.5 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
+              className="rounded-xl bg-[#e85d75] px-4 py-2.5 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)] sm:px-6"
             >
-              登录 / 报名
+              登录<span className="hidden sm:inline"> / 报名</span>
             </Link>
           )}
         </div>
