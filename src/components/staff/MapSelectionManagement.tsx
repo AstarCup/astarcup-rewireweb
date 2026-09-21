@@ -1292,12 +1292,6 @@ export default function MapSelectionManagement() {
             </SelectContent>
           </Select>
         </div>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="搜索 BID / 曲名 / 谱师…"
-          className="w-56"
-        />
         <Button variant="outline" size="sm" onClick={toggleSelectAll} disabled={unapprovedFiltered.length === 0}>
           <CheckSquare className="h-4 w-4" />
           {allSelected ? "取消全选" : `一键全选 (${unapprovedFiltered.length})`}
@@ -1307,7 +1301,27 @@ export default function MapSelectionManagement() {
             批量过审 ({selectedIds.size})
           </Button>
         )}
-        <div className="ml-auto flex items-center gap-1 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
+        <HoverCard openDelay={150} closeDelay={0}>
+          <HoverCardTrigger asChild>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="搜索 BID / 曲名 / 谱师…"
+              className="ml-auto w-auto min-w-40 max-w-56"
+            />
+          </HoverCardTrigger>
+          <HoverCardContent side="bottom" align="start" className="w-64">
+            <p className="mb-1.5 text-xs font-bold text-(--pc-ink)">搜索支持的参数</p>
+            <ul className="space-y-1 text-xs leading-relaxed text-(--pc-slate)">
+              <li>• 数字：BID / SID（谱面集 ID）</li>
+              <li>• 文字：曲名、艺术家、难度、谱师</li>
+              <li>• MOD：NM、HD、HR、DT、LZ、TB…</li>
+              <li>• 组合：MOD + 位号，如 NM1、HD2</li>
+              <li>• 其他：备注、提名者用户名</li>
+            </ul>
+          </HoverCardContent>
+        </HoverCard>
+        <div className="flex items-center gap-1 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
           {(["card", "table"] as const).map((v) => (
             <button
               key={v}
