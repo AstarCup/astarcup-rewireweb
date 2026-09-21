@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  BarChart3,
   CheckSquare,
   CircleArrowRight,
   Clipboard,
   Download,
-  ExternalLink,
+  Globe,
   LayoutGrid,
   LayoutList,
   MessageSquare,
@@ -47,9 +48,9 @@ import {
 } from "@/components/ui/context-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
-import { cn, fmt, formatDateTime } from "@/lib/utils";
+import { cn, fmt, fmtInt, formatDateTime } from "@/lib/utils";
 import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, seasonLabel } from "@/lib/types";
-import type { MapSelection, BeatmapInfo, MapComment, ModStatsResult } from "@/lib/types";
+import type { MapSelection, BeatmapInfo, MapComment, ModStatsResult, StaffStats, SeasonMappoolStat } from "@/lib/types";
 
 const MOD_COLORS: Record<string, string> = {
   NM: "#6b7fb5",
@@ -73,6 +74,226 @@ const MOD_DISPLAY: Record<string, string> = {
 
 function modBase(m: MapSelection): string {
   return (m.selectedMods ?? "NM").split("+")[0].toUpperCase() || "NM";
+}
+
+/** 列表视图排序用的 MOD 顺序（未列出的 mod 排在最后） */
+const MOD_LIST_ORDER: readonly string[] = ["NM", "HD", "HR", "DT", "LZ", "TB"];
+
+/** 单个 MOD 分组（如 NM）的统计：数量、各属性平均值、测图与待审分解 */
+function groupStats(items: MapSelection[]) {
+  const avgOn = (list: MapSelection[], f: (m: MapSelection) => number | null | undefined): number => {
+    const vals = list.map(f).filter((v): v is number => v != null);
+    if (vals.length === 0) return 0;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  };
+  const avg = (f: (m: MapSelection) => number | null | undefined) => avgOn(items, f);
+  const round = (n: number) => Math.round(n);
+  const testing = items.filter((m) => m.padding);
+  const pending = items.filter((m) => !m.approved && !m.padding);
+  return {
+    count: items.length,
+    testing: testing.length,
+    pending: pending.length,
+    avgStar: avg((m) => m.starRating),
+    avgStarTesting: avgOn(testing, (m) => m.starRating),
+    avgStarPending: avgOn(pending, (m) => m.starRating),
+    avgLen: round(avg((m) => m.totalLength)),
+    avgLenTesting: round(avgOn(testing, (m) => m.totalLength)),
+    avgLenPending: round(avgOn(pending, (m) => m.totalLength)),
+    avgAr: avg((m) => m.ar),
+    avgCs: avg((m) => m.cs),
+    avgOd: avg((m) => m.od),
+    avgHp: avg((m) => m.hp),
+    avgBpm: avg((m) => m.bpm),
+    avgMaxCombo: round(avg((m) => m.maxCombo)),
+  };
+}
+
+/** 单个 MOD 分组（如 NM）的完整统计卡片（HoverCard 用）：按图状态拆成 已审核 / 测图中 / 待审 三张横向排列 */
+function ModStatCard({ mod, items }: { mod: string; items: MapSelection[] }) {
+  const toSub = (
+    list: MapSelection[],
+    title: string,
+    accent: string,
+  ) => {
+    const g = groupStats(list);
+    return {
+      id: title,
+      title,
+      accent,
+      count: list.length,
+      star: g.avgStar,
+      ar: g.avgAr,
+      cs: g.avgCs,
+      od: g.avgOd,
+      hp: g.avgHp,
+      bpm: g.avgBpm,
+      length: g.avgLen,
+      maxCombo: g.avgMaxCombo,
+    };
+  };
+  const subs = [
+    toSub(items.filter((m) => m.approved), "已审核", "#5cb8a5"),
+    toSub(items.filter((m) => m.padding), "测图中", "#f5c040"),
+    toSub(items.filter((m) => !m.approved && !m.padding), "待审", "#6b7fb5"),
+  ];
+  const s = groupStats(items);
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <span
+          className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+          style={{ backgroundColor: MOD_COLORS[mod] ?? "#666" }}
+        >
+          {MOD_DISPLAY[mod] ?? mod}
+        </span>
+        <span className="flex gap-2">
+          <Badge variant="primary">{fmtInt(s.count)} 张</Badge>
+          <Badge variant="yellow">T {fmtInt(s.testing)}</Badge>
+          <Badge variant="blue">P {fmtInt(s.pending)}</Badge>
+        </span>
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {subs.map((sub) => (
+          <StatSubCard key={sub.id} {...sub} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** 单个状态（已审核 / 测图中 / 待审）的统计子卡片 */
+function StatSubCard({
+  title,
+  accent,
+  count,
+  star,
+  ar,
+  cs,
+  od,
+  hp,
+  bpm,
+  length,
+  maxCombo,
+}: {
+  title: string;
+  accent: string;
+  count: number;
+  star: number;
+  ar: number;
+  cs: number;
+  od: number;
+  hp: number;
+  bpm: number;
+  length: number;
+  maxCombo: number;
+}) {
+  const rows: { label: string; value: number }[] = [
+    { label: "平均星数", value: star },
+    { label: "平均 AR", value: ar },
+    { label: "平均 CS", value: cs },
+    { label: "平均 OD", value: od },
+    { label: "平均 HP", value: hp },
+    { label: "平均 BPM", value: bpm },
+    { label: "平均长度", value: length },
+    { label: "平均 MaxCombo", value: maxCombo },
+  ];
+  return (
+    <div className="min-w-48 flex-1 rounded-xl bg-(--pc-paper) p-3">
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="font-bold text-(--pc-ink)" style={{ color: accent }}>
+          {title}
+        </span>
+        <Badge variant="outline">{fmtInt(count)} 张</Badge>
+      </div>
+      <div className="space-y-1 text-xs text-(--pc-slate)">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-center justify-between">
+            <span>{r.label}</span>
+            <span className="font-bold text-(--pc-ink)">{fmt(r.value)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** 单个阶段（如 QUA）的图池统计卡片：按图状态拆成 已审核 / 测图中 / 待审 三张 */
+function StageStatCard({ row }: { row: SeasonMappoolStat }) {
+  const subs: {
+    id: string;
+    title: string;
+    accent: string;
+    count: number;
+    star: number;
+    ar: number;
+    cs: number;
+    od: number;
+    hp: number;
+    bpm: number;
+    length: number;
+    maxCombo: number;
+  }[] = [
+      {
+        id: "approved",
+        title: "已审核",
+        accent: "#5cb8a5",
+        count: row.count,
+        star: row.avgStarRating,
+        ar: row.avgAr,
+        cs: row.avgCs,
+        od: row.avgOd,
+        hp: row.avgHp,
+        bpm: row.avgBpm,
+        length: row.avgLength,
+        maxCombo: row.avgMaxCombo,
+      },
+      {
+        id: "testing",
+        title: "测图中",
+        accent: "#f5c040",
+        count: row.testingCount,
+        star: row.avgStarRatingTesting,
+        ar: row.avgArTesting,
+        cs: row.avgCsTesting,
+        od: row.avgOdTesting,
+        hp: row.avgHpTesting,
+        bpm: row.avgBpmTesting,
+        length: row.avgLengthTesting,
+        maxCombo: row.avgMaxComboTesting,
+      },
+      {
+        id: "pending",
+        title: "待审",
+        accent: "#6b7fb5",
+        count: row.pendingCount,
+        star: row.avgStarRatingPending,
+        ar: row.avgArPending,
+        cs: row.avgCsPending,
+        od: row.avgOdPending,
+        hp: row.avgHpPending,
+        bpm: row.avgBpmPending,
+        length: row.avgLengthPending,
+        maxCombo: row.avgMaxComboPending,
+      },
+    ];
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="font-bold text-(--pc-ink)">{row.label}</span>
+        <span className="flex gap-2">
+          <Badge variant="primary">{fmtInt(row.count)} 张</Badge>
+          <Badge variant="yellow">T {fmtInt(row.testingCount)}</Badge>
+          <Badge variant="blue">P {fmtInt(row.pendingCount)}</Badge>
+        </span>
+      </div>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {subs.map((s) => (
+          <StatSubCard key={s.id} {...s} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 const STAT_FIELDS: { key: string; label: string }[] = [
@@ -582,8 +803,23 @@ export default function MapSelectionManagement() {
   const [busy, setBusy] = useState("");
   const [batchOpen, setBatchOpen] = useState(false);
   const [commentsByMap, setCommentsByMap] = useState<Record<string, MapComment[]>>({});
+  const [statsOpen, setStatsOpen] = useState(false);
 
   const seasonOptions = buildSeasonOptions(settings);
+
+  // 拉取后台统计（用于阶段统计卡片 / HoverCard）
+  const { data: staffStats, run: loadStats } = useAsync<StaffStats>();
+  useEffect(() => {
+    void loadStats(() => api.get<StaffStats>("/api/staff/stats"));
+  }, [loadStats]);
+
+  // 当前选中赛季 + 阶段对应的统计数据（类别为“全部”时展示该赛季全部阶段）
+  const seasonStatRows = staffStats?.seasonMappoolStats?.[season] ?? [];
+  const statRows = useMemo(() => {
+    if (seasonStatRows.length === 0) return [];
+    if (category === "全部") return seasonStatRows;
+    return seasonStatRows.filter((r) => r.category === category);
+  }, [seasonStatRows, category]);
 
   // 仅在第一次载入时同步赛季到当前赛季（未设置时取最新），并持久化；之后保持用户选择
   useEffect(() => {
@@ -608,10 +844,10 @@ export default function MapSelectionManagement() {
       run(() =>
         api.get<MapSelection[]>(
           "/api/map-selections" +
-            qs({
-              season: season || undefined,
-              category: category === "全部" ? undefined : category,
-            }),
+          qs({
+            season: season || undefined,
+            category: category === "全部" ? undefined : category,
+          }),
         ),
       ),
     [run, season, category],
@@ -633,25 +869,88 @@ export default function MapSelectionManagement() {
     void api
       .get<Record<string, MapComment[]>>(
         "/api/map-selections/comments" +
-          qs({ mapSelectionIds: maps.map((m) => m.id).join(",") }),
+        qs({ mapSelectionIds: maps.map((m) => m.id).join(",") }),
       )
       .then((res) => {
         if (res.ok) setCommentsByMap(res.data);
       });
   }, [data]);
 
+  // 搜索支持：普通文字 / BID / SID，以及参数过滤（cs/ar/od/hp/bpm/时长/maxcombo/star，运算符 > < = >= <=）与 bid:/sid: 前缀；用空格或分号分隔多个条件，如 ar>6;cs=5;bid:114514
   const filtered = useMemo(() => {
     const maps = data ?? [];
+    const q = search.trim().toLowerCase();
+    if (!q) {
+      return maps.filter((m) => {
+        if (modFilter !== "全部" && modBase(m) !== modFilter) return false;
+        if (paddingFilter === "测图中" && !m.padding) return false;
+        if (paddingFilter === "非测图" && m.padding) return false;
+        return true;
+      });
+    }
+
+    const paramRe = /^(cs|ar|od|hp|bpm|length|时长|maxcombo|star)\s*([><=]+)\s*([\d.]+)$/;
+    const keyRe = /^(bid|sid)\s*[:：]\s*([\d]+)$/;
+    const paramTokens: { key: string; op: string; val: number }[] = [];
+    const keyTokens: { key: "bid" | "sid"; val: string }[] = [];
+    const textTokens: string[] = [];
+    for (const tok of q.split(/[\s;]+/)) {
+      if (!tok) continue;
+      const pm = tok.match(paramRe);
+      if (pm) {
+        paramTokens.push({ key: pm[1], op: pm[2], val: Number(pm[3]) });
+        continue;
+      }
+      const km = tok.match(keyRe);
+      if (km) {
+        keyTokens.push({ key: km[1] as "bid" | "sid", val: km[2] });
+        continue;
+      }
+      textTokens.push(tok);
+    }
+
+    const fieldOf = (key: string, m: MapSelection): number | null | undefined => {
+      switch (key) {
+        case "cs": return m.cs;
+        case "ar": return m.ar;
+        case "od": return m.od;
+        case "hp": return m.hp;
+        case "bpm": return m.bpm;
+        case "length":
+        case "时长": return m.totalLength;
+        case "maxcombo": return m.maxCombo;
+        case "star": return m.starRating;
+        default: return null;
+      }
+    };
+    const cmp = (v: number, op: string, target: number): boolean => {
+      switch (op) {
+        case ">": return v > target;
+        case "<": return v < target;
+        case ">=": return v >= target;
+        case "<=": return v <= target;
+        case "=":
+        case "==": return v === target;
+        default: return false;
+      }
+    };
+
     return maps.filter((m) => {
       if (modFilter !== "全部" && modBase(m) !== modFilter) return false;
       if (paddingFilter === "测图中" && !m.padding) return false;
       if (paddingFilter === "非测图" && m.padding) return false;
-      if (!search.trim()) return true;
-      const q = search.trim().toLowerCase();
-      const num = Number(q);
-      if (Number.isFinite(num) && q !== "") {
-        if (String(m.beatmapId) === q || String(m.beatmapsetId ?? "") === q) return true;
+      // 参数过滤：任一不满足即排除
+      for (const p of paramTokens) {
+        const v = fieldOf(p.key, m);
+        if (v == null || !cmp(v, p.op, p.val)) return false;
       }
+      // bid:/sid: 过滤：任一不匹配即排除
+      for (const k of keyTokens) {
+        const sv =
+          k.key === "bid" ? String(m.beatmapId) : String(m.beatmapsetId ?? "");
+        if (sv !== k.val) return false;
+      }
+      if (textTokens.length === 0) return true;
       const hay = [
         m.title,
         m.artist,
@@ -669,7 +968,7 @@ export default function MapSelectionManagement() {
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
-      return hay.includes(q);
+      return textTokens.every((t) => hay.includes(t));
     });
   }, [data, modFilter, paddingFilter, search]);
 
@@ -678,7 +977,24 @@ export default function MapSelectionManagement() {
     setVisible(60);
   }, [filtered]);
 
-  const lazyList = useMemo(() => filtered.slice(0, visible), [filtered, visible]);
+  // 排序：先按 MOD 顺序（NM/HD/HR/DT/LZ/TB），再按 MOD 位，最后按添加时间
+  const sorted = useMemo(() => {
+    const maps = filtered.slice();
+    const order = MOD_LIST_ORDER;
+    return maps.sort((a, b) => {
+      const ia = order.indexOf(modBase(a));
+      const ib = order.indexOf(modBase(b));
+      if (ia !== ib) return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+      const pa = Number(a.modPosition ?? 0);
+      const pb = Number(b.modPosition ?? 0);
+      if (pa !== pb) return pa - pb;
+      return (a.selectedAt ?? a.createdAt ?? "").localeCompare(
+        b.selectedAt ?? b.createdAt ?? "",
+      );
+    });
+  }, [filtered]);
+
+  const lazyList = useMemo(() => sorted.slice(0, visible), [sorted, visible]);
   const groups = useMemo(() => groupMaps(lazyList), [lazyList]);
 
   const modFilterOptions = useMemo(() => {
@@ -1198,8 +1514,52 @@ export default function MapSelectionManagement() {
         </Dialog>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* 第一行：搜索与视图切换 */}
+      <div className="flex items-center gap-3">
+        <HoverCard openDelay={150} closeDelay={0}>
+          <HoverCardTrigger asChild>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="搜索 BID / 曲名 / 谱师…"
+              className="flex-1"
+            />
+          </HoverCardTrigger>
+          <HoverCardContent side="bottom" align="start" className="w-80">
+            <p className="mb-1.5 text-xs font-bold text-(--pc-ink)">搜索支持的参数</p>
+            <ul className="space-y-1 text-xs leading-relaxed text-(--pc-slate)">
+              <li>• 数字：BID / SID（谱面集 ID）</li>
+              <li>• 文字：曲名、艺术家、难度、谱师</li>
+              <li>• MOD：NM、HD、HR、DT、LZ、TB…</li>
+              <li>• 组合：MOD + 位号，如 NM1、HD2</li>
+              <li>• 属性：cs/ar/od/hp/bpm/时长/maxcombo/star + 运算符，如 cs=6、ar&gt;8、bpm&lt;200</li>
+              <li>• 前缀：bid:、sid:，如 bid:114514</li>
+              <li>• 分隔：空格或分号组合多种条件，如 ar&gt;6;cs=5;bid:114514;songtitle</li>
+              <li>• 其他：备注、提名者用户名</li>
+            </ul>
+          </HoverCardContent>
+        </HoverCard>
+        <div className="flex items-center gap-1 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
+          {(["card", "table"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={cn(
+                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors",
+                view === v
+                  ? "bg-[#6b7fb5] text-[#fdf6ee]"
+                  : "bg-transparent text-(--pc-slate) hover:text-(--pc-ink)",
+              )}
+            >
+              {v === "card" ? <LayoutGrid className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
+              {v === "card" ? "卡片" : "列表"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 第二行：筛选条件 */}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <Label className="text-xs text-(--pc-faint)">赛季</Label>
           <Select
@@ -1272,47 +1632,52 @@ export default function MapSelectionManagement() {
             </SelectContent>
           </Select>
         </div>
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="搜索 BID / 曲名 / 谱师…"
-          className="w-56"
-        />
-        <Button variant="outline" size="sm" onClick={toggleSelectAll} disabled={unapprovedFiltered.length === 0}>
-          <CheckSquare className="h-4 w-4" />
-          {allSelected ? "取消全选" : `一键全选 (${unapprovedFiltered.length})`}
-        </Button>
-        {selectedIds.size > 0 && (
-          <Button variant="teal" size="sm" onClick={() => setBatchOpen(true)}>
-            批量过审 ({selectedIds.size})
-          </Button>
-        )}
-        <div className="ml-auto flex items-center gap-1 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
-          {(["card", "table"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={cn(
-                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors",
-                view === v
-                  ? "bg-[#6b7fb5] text-[#fdf6ee]"
-                  : "bg-transparent text-(--pc-slate) hover:text-(--pc-ink)",
+        <div className="ml-auto flex items-center gap-2">
+          <HoverCard openDelay={150} closeDelay={0}>
+            <HoverCardTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStatsOpen(true)}
+                className="gap-1.5"
+              >
+                <BarChart3 className="h-4 w-4" />
+                统计
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent side="bottom" align="end" className="w-auto p-0">
+              {statRows.length > 0 ? (
+                <div className="flex max-h-[70vh] flex-col gap-2 overflow-y-auto p-3">
+                  {statRows.map((r) => (
+                    <StageStatCard key={r.category} row={r} />
+                  ))}
+                </div>
+              ) : (
+                <p className="p-4 text-xs text-(--pc-faint)">暂无该阶段的统计数据</p>
               )}
-            >
-              {v === "card" ? <LayoutGrid className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
-              {v === "card" ? "卡片" : "列表"}
-            </button>
-          ))}
+            </HoverCardContent>
+          </HoverCard>
         </div>
       </div>
 
       {/* Summary */}
-      <div className="mt-4 flex items-center gap-2 text-xs text-(--pc-faint)">
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-(--pc-faint)">
         <Badge variant="outline">{selectedIds.size} 已选</Badge>
         <span>
           当前筛选：{season || "全部赛季"} / {category} / {modFilter} / {paddingFilter} · 共{" "}
           {filtered.length} 张{lazyList.length < filtered.length && `（已显示 ${lazyList.length}）`}
         </span>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={toggleSelectAll} disabled={unapprovedFiltered.length === 0}>
+            <CheckSquare className="h-4 w-4" />
+            {allSelected ? "取消全选" : `一键全选 (${unapprovedFiltered.length})`}
+          </Button>
+          {selectedIds.size > 0 && (
+            <Button variant="teal" size="sm" onClick={() => setBatchOpen(true)}>
+              批量过审 ({selectedIds.size})
+            </Button>
+          )}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -1343,81 +1708,116 @@ export default function MapSelectionManagement() {
               {lazyList.map((m) => (
                 <ContextMenu key={m.id}>
                   <ContextMenuTrigger asChild>
-                <tr className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
-                  <td className="px-3 py-2.5">
-                    <span
-                      className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
-                      style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
+                    <tr className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
+                      <td className="px-3 py-2.5">
+                        <span
+                          className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+                          style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
+                        >
+                          {`${modBase(m)}${m.modPosition ?? ""}`}
+                        </span>
+                        {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
+                          <span className="block text-xs font-bold text-[#a78bfa]">
+                            x{Number(m.customDTRate).toFixed(2)}
+                          </span>
+                        )}
+                        {m.customModName && (
+                          <span className="ml-1 text-xs font-bold text-(--pc-slate)">
+                            {m.customModName}
+                          </span>
+                        )}
+                      </td>
+                      <td
+                        onClick={() => copyBid(m)}
+                        title="点击复制 BID"
+                        className="cursor-pointer px-3 py-2.5 font-mono text-xs text-[#e85d75] transition-colors hover:bg-(--pc-paper)"
+                      >
+                        {m.beatmapId}
+                      </td>
+                      <td className="min-w-15 x-3 py-2.5">
+                        {m.coverUrl ? (
+                          <img
+                            src={m.coverUrl}
+                            alt=""
+                            className="h-10 w-16 rounded-md object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="h-10 w-16 rounded-md bg-[#f5c040]/30" />
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5 font-bold text-(--pc-ink)">
+                        {[m.artist_unicode || m.artist, m.title_unicode || m.title]
+                          .filter(Boolean)
+                          .join(" - ")}
+                        <span className="text-(--pc-faint)"> [{m.version}]</span>
+                      </td>
+                      <td className="px-3 py-2.5 text-(--pc-slate)">{m.creator ?? "-"}</td>
+                      <td className="px-3 py-2.5 font-sans font-bold" style={{ color: starColor(m.starRating) }}>
+                        {fmt(m.starRating)}
+                      </td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.bpm)}</td>
+                      <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex flex-wrap gap-1">
+                          {m.approved ? (
+                            <Badge variant="teal">已审核</Badge>
+                          ) : (
+                            <Badge variant="yellow">待审核</Badge>
+                          )}
+                          {m.padding && <Badge variant="blue">padding</Badge>}
+                          {m.isOrigin && <Badge variant="blue">原创</Badge>}
+                          {m.isCustome && <Badge variant="yellow">定制</Badge>}
+                        </div>
+                      </td>
+                    </tr>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent>
+                    <ContextMenuItem onSelect={() => setCommentTarget(m)}>
+                      <MessageSquare className="h-4 w-4" />
+                      评论
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onSelect={() => window.open(`osu://b/${m.beatmapId}`, "_blank")}
                     >
-                      {`${modBase(m)}${m.modPosition ?? ""}`}
-                    </span>
-                    {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
-                      <span className="ml-1 text-xs font-bold text-[#a78bfa]">
-                        x{Number(m.customDTRate).toFixed(2)}
-                      </span>
-                    )}
-                    {m.customModName && (
-                      <span className="ml-1 text-xs font-bold text-(--pc-slate)">
-                        {m.customModName}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 font-mono text-xs text-[#e85d75]">{m.beatmapId}</td>
-                  <td className="px-3 py-2.5">
-                    {m.coverUrl ? (
-                      <img
-                        src={m.coverUrl}
-                        alt=""
-                        className="h-10 w-16 rounded-md object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="h-10 w-16 rounded-md bg-[#f5c040]/30" />
-                    )}
-                  </td>
-                  <td className="px-3 py-2.5 font-bold text-(--pc-ink)">
-                    {[m.artist_unicode || m.artist, m.title_unicode || m.title]
-                      .filter(Boolean)
-                      .join(" - ")}
-                    <span className="text-(--pc-faint)"> [{m.version}]</span>
-                  </td>
-                  <td className="px-3 py-2.5 text-(--pc-slate)">{m.creator ?? "-"}</td>
-                  <td className="px-3 py-2.5 font-sans font-bold" style={{ color: starColor(m.starRating) }}>
-                    {fmt(m.starRating)}
-                  </td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.cs)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmt(m.bpm)}</td>
-                  <td className="px-3 py-2.5 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex flex-wrap gap-1">
-                      {m.approved ? (
-                        <Badge variant="teal">已审核</Badge>
-                      ) : (
-                        <Badge variant="yellow">待审核</Badge>
-                      )}
-                      {m.padding && <Badge variant="blue">padding</Badge>}
-                      {m.isOrigin && <Badge variant="blue">原创</Badge>}
-                      {m.isCustome && <Badge variant="yellow">定制</Badge>}
-                    </div>
-                  </td>
-                </tr>
-                </ContextMenuTrigger>
-                <ContextMenuContent>
-                  <ContextMenuItem onSelect={() => void toggleApproved(m)}>
-                    {m.approved ? "取消审核" : "通过审核"}
-                  </ContextMenuItem>
-                  <ContextMenuItem onSelect={() => void togglePadding(m)}>
-                    {m.padding ? "取消审图" : "标为审图"}
-                  </ContextMenuItem>
-                  <ContextMenuItem onSelect={() => setCommentTarget(m)}>评论</ContextMenuItem>
-                  <ContextMenuItem onSelect={() => setAdjustTarget(m)}>调整参数</ContextMenuItem>
-                  <ContextMenuSeparator />
-                  <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
-                    删除
-                  </ContextMenuItem>
-                </ContextMenuContent>
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      >
+                        <path d="M7.698 10.362a1.94 1.94 0 0 0-.7-.516q-.421-.189-.988-.189c-.567 0-.704.063-.982.189s-.51.298-.692.516q-.273.328-.413.777-.139.448-.139.96 0 .511.14.952.139.44.412.767.274.329.692.512t.982.184c.565 0 .707-.062.988-.184q.422-.184.7-.512.279-.327.413-.767.135-.44.135-.952a3.3 3.3 0 0 0-.135-.96 2.1 2.1 0 0 0-.413-.777m-.965 2.81q-.22.372-.723.372-.494 0-.713-.372-.22-.373-.22-1.073c0-.7.073-.824.22-1.073q.22-.372.713-.372.503 0 .723.372.22.373.22 1.073t-.22 1.073m11.89-.83-.09-4.39a4.5 4.5 0 0 1 .69-.054q.351 0 .701.054l-.09 4.39q-.315.053-.601.053a3.5 3.5 0 0 1-.61-.054m1.319 1.4q0 .332-.054.664a4 4 0 0 1-.655.054 4 4 0 0 1-.664-.054 4 4 0 0 1-.054-.655q0-.323.054-.665a4 4 0 0 1 .655-.054q.323 0 .664.054.054.341.054.656m-3.223-4.03q.315 0 .638.053v4.461q-.288.099-.759.193a5.246 5.246 0 0 1-1.863.023 1.7 1.7 0 0 1-.74-.305q-.32-.234-.507-.683-.189-.449-.189-1.193V9.765a4 4 0 0 1 .638-.054q.313 0 .637.054v2.46q0 .367.058.606a.9.9 0 0 0 .18.377.66.66 0 0 0 .3.197q.18.058.422.058.332 0 .557-.062V9.765a4 4 0 0 1 .628-.054m-4.362 2.683q.08.225.08.548a1.4 1.4 0 0 1-.542 1.117q-.265.212-.642.333-.378.12-.853.12a5 5 0 0 1-.395-.013 3 3 0 0 1-.346-.045 4 4 0 0 1-.327-.076 4 4 0 0 1-.35-.116 2.6 2.6 0 0 1 .085-.49 3 3 0 0 1 .175-.48q.296.117.561.175.265.06.552.059.126 0 .274-.023a1 1 0 0 0 .274-.08.65.65 0 0 0 .21-.153.35.35 0 0 0 .086-.247q0-.216-.13-.31a1.3 1.3 0 0 0-.364-.166l-.556-.162q-.503-.143-.786-.426-.282-.283-.283-.848 0-.682.49-1.068.489-.386 1.332-.386.35 0 .692.062.341.063.691.189a2.5 2.5 0 0 1-.09.485 2.3 2.3 0 0 1-.17.44 4 4 0 0 0-.476-.158 2.2 2.2 0 0 0-.548-.067q-.305 0-.476.094a.32.32 0 0 0-.17.301q0 .197.121.278t.346.153l.511.153q.252.072.454.175t.345.255.225.377M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.628 0 12-5.373 12-12S18.628 0 12 0m0 22.8C6.035 22.8 1.2 17.965 1.2 12S6.035 1.2 12 1.2 22.8 6.035 22.8 12 17.965 22.8 12 22.8" />
+                      </svg>
+                      打开 osu direct
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onSelect={() => window.open(sayobotUrl(m), "_blank", "noopener,noreferrer")}
+                    >
+                      <Download className="h-4 w-4" />
+                      Sayobot 下载
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                      onSelect={() => window.open(osuMapUrl(m), "_blank", "noopener,noreferrer")}
+                    >
+                      <Globe className="h-4 w-4" />
+                      打开 osu beatmap web
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem onSelect={() => void toggleApproved(m)}>
+                      {m.approved ? "取消审核" : "通过审核"}
+                    </ContextMenuItem>
+                    <ContextMenuItem onSelect={() => void togglePadding(m)}>
+                      {m.padding ? "取消审图" : "标为审图"}
+                    </ContextMenuItem>
+                    <ContextMenuItem onSelect={() => setAdjustTarget(m)}>调整参数</ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
+                      删除
+                    </ContextMenuItem>
+                  </ContextMenuContent>
                 </ContextMenu>
               ))}
             </tbody>
@@ -1436,263 +1836,306 @@ export default function MapSelectionManagement() {
                   {MOD_DISPLAY[g.mod] ?? g.mod}
                 </span>
                 <span className="text-xs text-(--pc-slate)">{g.items.length} 张图</span>
+                {(() => {
+                  const s = groupStats(g.items);
+                  return (
+                    <HoverCard openDelay={150} closeDelay={0}>
+                      <HoverCardTrigger asChild>
+                        <span className="ml-auto flex cursor-help flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--pc-slate)">
+                          <span>
+                            ★ <b className="font-bold text-[#e85d75]">{fmt(s.avgStar)}</b>
+                          </span>
+                          <span>长度 {s.avgLen}s</span>
+                          <span>BPM {fmt(s.avgBpm)}</span>
+                          <span className="text-[#f5c040]">T {s.testing}</span>
+                          <span className="text-[#6b7fb5]">P {s.pending}</span>
+                        </span>
+                      </HoverCardTrigger>
+                      <HoverCardContent side="bottom" align="end" className="w-auto p-3">
+                        <ModStatCard mod={g.mod} items={g.items} />
+                      </HoverCardContent>
+                    </HoverCard>
+                  );
+                })()}
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {g.items.map((m) => {
                   const comments = commentsByMap[String(m.id)] ?? [];
                   const modColor = MOD_COLORS[modBase(m)] ?? "#666";
                   return (
-                      <ContextMenu key={m.id}>
-                        <ContextMenuTrigger asChild>
-                      <Card
-                        key={m.id}
-                        className={cn(
-                          "group relative overflow-hidden p-0",
-                          m.approved && "border-l-8",
-                        )}
-                        style={m.approved ? { borderLeftColor: "#5cb8a5" } : undefined}
-                      >
-                      {/* Cover strip */}
-                      <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
-                        {m.coverUrl && (
-                          <img src={m.coverUrl} alt="" className="h-full w-full object-cover" />
-                        )}
-                        {m.approved && (
-                          <span className="absolute right-3 top-2 rounded-lg bg-[#5cb8a5]/90 px-2 py-0.5 text-xs font-bold text-[#fdf6ee]">
-                            过审
-                          </span>
-                        )}
-                        {m.padding && (
-                          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-lg bg-[#e0a47e]/90 px-2 py-0.5 text-xs font-bold text-(--pc-ink)">
-                            <CircleArrowRight className="h-3.5 w-3.5" />
-                            测图中
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="p-4">
-                        {/* Header row */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span
-                              className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
-                              style={{ backgroundColor: modColor }}
-                            >
-                              {`${modBase(m)}${m.modPosition ?? ""}`}
-                            </span>
-                            {m.customModName && (
-                              <span className="text-xs font-bold text-(--pc-slate)">
-                                {m.customModName}
-                              </span>
-                            )}
-                            {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
-                              <span className="text-xs font-bold text-[#a78bfa]">
-                                x{Number(m.customDTRate).toFixed(2)}
-                              </span>
-                            )}
-                            {category === "全部" && m.category && (
-                              <Badge variant="outline">
-                                {CATEGORY_LABEL[m.category] ?? m.category}
-                              </Badge>
-                            )}
-                            {season === "" && m.season && (
-                              <Badge variant="outline">{seasonLabel(settings, m.season)}</Badge>
-                            )}
-                            {m.isOrigin && <Badge variant="blue">原创</Badge>}
-                            {m.isCustome && <Badge variant="yellow">定制</Badge>}
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            {!m.approved && (
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => toggleSelect(m.id)}
-                                title="批量选择"
-                                className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                              >
-                                <Checkbox checked={selectedIds.has(m.id)} className="pointer-events-none" />
-                              </span>
-                            )}
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <button
-                                  onClick={() => setCommentTarget(m)}
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <MessageSquare className="h-3.5 w-3.5" />
-                                </button>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">添加评论</p>
-                              </HoverCardContent>
-                            </HoverCard>
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <a
-                                  href={sayobotUrl(m)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <Download className="h-3.5 w-3.5" />
-                                </a>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">Sayobot 下载</p>
-                              </HoverCardContent>
-                            </HoverCard>
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <a
-                                  href={osuMapUrl(m)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <ExternalLink className="h-3.5 w-3.5" />
-                                </a>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">打开 osu beatmap web 查看</p>
-                              </HoverCardContent>
-                            </HoverCard>
-                            <HoverCard openDelay={0} closeDelay={0}>
-                              <HoverCardTrigger asChild>
-                                <button
-                                  onClick={() => copyBid(m)}
-                                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
-                                >
-                                  <Clipboard className="h-3.5 w-3.5" />
-                                </button>
-                              </HoverCardTrigger>
-                              <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                                <p className="text-xs font-bold text-(--pc-ink)">
-                                  BID: <span className="font-mono text-[#e85d75]">{m.beatmapId}</span>
-                                </p>
-                              </HoverCardContent>
-                            </HoverCard>
-                          </div>
-                        </div>
-
-                        {/* Title */}
-                        <p className="mt-2 line-clamp-2 font-bold text-(--pc-ink)">
-                          {[m.artist_unicode || m.artist, m.title_unicode || m.title]
-                            .filter(Boolean)
-                            .join(" - ") || "未知曲目"}
-                        </p>
-                        <p className="text-xs text-(--pc-faint)">
-                          [{m.version}] by {m.creator ?? "-"}
-                        </p>
-
-                        {/* Stats */}
-                        <div className="mt-3 grid grid-cols-4 gap-1.5">
-                          {statCell("CS", fmt(m.cs))}
-                          {statCell("AR", fmt(m.ar))}
-                          {statCell("OD", fmt(m.od))}
-                          {statCell("HP", fmt(m.hp))}
-                          {statCell("时长", fmtLength(m.totalLength))}
-                          {statCell("MaxCombo", m.maxCombo != null ? String(m.maxCombo) : "-")}
-                          {statCell("BPM", fmt(m.bpm))}
-                          {statCell("★", fmt(m.starRating), starColor(m.starRating))}
-                        </div>
-
-                        {/* Nominator */}
-                        <div className="mt-3 flex items-center gap-2">
-                          {m.selectedByAvatar ? (
-                            <img
-                              src={m.selectedByAvatar}
-                              alt=""
-                              className="h-6 w-6 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="grid h-6 w-6 place-items-center rounded-full bg-[#f5c040]/30 text-[10px] font-bold text-(--pc-ink)">
-                              {(m.selectedByUsername || m.selectedBy || "?").slice(0, 1)}
-                            </div>
+                    <ContextMenu key={m.id}>
+                      <ContextMenuTrigger asChild>
+                        <Card
+                          key={m.id}
+                          className={cn(
+                            "group relative overflow-hidden p-0",
+                            m.approved && "border-l-8",
                           )}
-                          <span className="text-xs text-(--pc-slate)">
-                            {m.selectedByUsername || m.selectedBy || "未知提名者"}
-                          </span>
-                        </div>
+                          style={m.approved ? { borderLeftColor: "#5cb8a5" } : undefined}
+                        >
+                          {/* Cover strip */}
+                          <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
+                            {m.coverUrl && (
+                              <img src={m.coverUrl} alt="" className="h-full w-full object-cover" />
+                            )}
+                            {m.approved && (
+                              <span className="absolute right-3 top-2 rounded-lg bg-[#5cb8a5]/90 px-2 py-0.5 text-xs font-bold text-[#fdf6ee]">
+                                过审
+                              </span>
+                            )}
+                            {m.padding && (
+                              <span className="absolute left-2 top-2 flex items-center gap-1 rounded-lg bg-[#e0a47e]/90 px-2 py-0.5 text-xs font-bold text-(--pc-ink)">
+                                <CircleArrowRight className="h-3.5 w-3.5" />
+                                测图中
+                              </span>
+                            )}
+                          </div>
 
-                        {/* Note */}
-                        {m.comment && (
-                          <p className="mt-2 rounded-lg bg-(--pc-paper) px-2 py-1 text-xs text-(--pc-faint)">
-                            备注：{m.comment}
-                          </p>
-                        )}
+                          <div className="p-4">
+                            {/* Header row */}
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span
+                                  className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
+                                  style={{ backgroundColor: modColor }}
+                                >
+                                  {`${modBase(m)}${m.modPosition ?? ""}`}
+                                </span>
+                                {m.customModName && (
+                                  <span className="text-xs font-bold text-(--pc-slate)">
+                                    {m.customModName}
+                                  </span>
+                                )}
+                                {m.selectedMods?.toUpperCase() === "DT" && m.customDTRate != null && (
+                                  <span className="text-xs font-bold text-[#a78bfa]">
+                                    x{Number(m.customDTRate).toFixed(2)}
+                                  </span>
+                                )}
+                                {category === "全部" && m.category && (
+                                  <Badge variant="outline">
+                                    {CATEGORY_LABEL[m.category] ?? m.category}
+                                  </Badge>
+                                )}
+                                {season === "" && m.season && (
+                                  <Badge variant="outline">{seasonLabel(settings, m.season)}</Badge>
+                                )}
+                                {m.isOrigin && <Badge variant="blue">原创</Badge>}
+                                {m.isCustome && <Badge variant="yellow">定制</Badge>}
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                {!m.approved && (
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => toggleSelect(m.id)}
+                                    title="批量选择"
+                                    className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                  >
+                                    <Checkbox checked={selectedIds.has(m.id)} className="pointer-events-none" />
+                                  </span>
+                                )}
+                                <HoverCard openDelay={0} closeDelay={0}>
+                                  <HoverCardTrigger asChild>
+                                    <a
+                                      href={sayobotUrl(m)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    >
+                                      <Download className="h-3.5 w-3.5" />
+                                    </a>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                    <p className="text-xs font-bold text-(--pc-ink)">Sayobot 下载</p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                                <HoverCard openDelay={0} closeDelay={0}>
+                                  <HoverCardTrigger asChild>
+                                    <a
+                                      href={osuMapUrl(m)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    >
+                                      <Globe className="h-3.5 w-3.5" />
+                                    </a>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                    <p className="text-xs font-bold text-(--pc-ink)">打开 osu beatmap web 查看</p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                                <HoverCard openDelay={0} closeDelay={0}>
+                                  <HoverCardTrigger asChild>
+                                    <a
+                                      href={`osu://b/${m.beatmapId}`}
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    >
+                                      <svg
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                        className="h-3.5 w-3.5"
+                                        aria-hidden="true"
+                                      >
+                                        <path d="M7.698 10.362a1.94 1.94 0 0 0-.7-.516q-.421-.189-.988-.189c-.567 0-.704.063-.982.189s-.51.298-.692.516q-.273.328-.413.777-.139.448-.139.96 0 .511.14.952.139.44.412.767.274.329.692.512t.982.184c.565 0 .707-.062.988-.184q.422-.184.7-.512.279-.327.413-.767.135-.44.135-.952a3.3 3.3 0 0 0-.135-.96 2.1 2.1 0 0 0-.413-.777m-.965 2.81q-.22.372-.723.372-.494 0-.713-.372-.22-.373-.22-1.073c0-.7.073-.824.22-1.073q.22-.372.713-.372.503 0 .723.372.22.373.22 1.073t-.22 1.073m11.89-.83-.09-4.39a4.5 4.5 0 0 1 .69-.054q.351 0 .701.054l-.09 4.39q-.315.053-.601.053a3.5 3.5 0 0 1-.61-.054m1.319 1.4q0 .332-.054.664a4 4 0 0 1-.655.054 4 4 0 0 1-.664-.054 4 4 0 0 1-.054-.655q0-.323.054-.665a4 4 0 0 1 .655-.054q.323 0 .664.054.054.341.054.656m-3.223-4.03q.315 0 .638.053v4.461q-.288.099-.759.193a5.246 5.246 0 0 1-1.863.023 1.7 1.7 0 0 1-.74-.305q-.32-.234-.507-.683-.189-.449-.189-1.193V9.765a4 4 0 0 1 .638-.054q.313 0 .637.054v2.46q0 .367.058.606a.9.9 0 0 0 .18.377.66.66 0 0 0 .3.197q.18.058.422.058.332 0 .557-.062V9.765a4 4 0 0 1 .628-.054m-4.362 2.683q.08.225.08.548a1.4 1.4 0 0 1-.542 1.117q-.265.212-.642.333-.378.12-.853.12a5 5 0 0 1-.395-.013 3 3 0 0 1-.346-.045 4 4 0 0 1-.327-.076 4 4 0 0 1-.35-.116 2.6 2.6 0 0 1 .085-.49 3 3 0 0 1 .175-.48q.296.117.561.175.265.06.552.059.126 0 .274-.023a1 1 0 0 0 .274-.08.65.65 0 0 0 .21-.153.35.35 0 0 0 .086-.247q0-.216-.13-.31a1.3 1.3 0 0 0-.364-.166l-.556-.162q-.503-.143-.786-.426-.282-.283-.283-.848 0-.682.49-1.068.489-.386 1.332-.386.35 0 .692.062.341.063.691.189a2.5 2.5 0 0 1-.09.485 2.3 2.3 0 0 1-.17.44 4 4 0 0 0-.476-.158 2.2 2.2 0 0 0-.548-.067q-.305 0-.476.094a.32.32 0 0 0-.17.301q0 .197.121.278t.346.153l.511.153q.252.072.454.175t.345.255.225.377M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12c6.628 0 12-5.373 12-12S18.628 0 12 0m0 22.8C6.035 22.8 1.2 17.965 1.2 12S6.035 1.2 12 1.2 22.8 6.035 22.8 12 17.965 22.8 12 22.8" />
+                                      </svg>
+                                    </a>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                    <p className="text-xs font-bold text-(--pc-ink)">
+                                      osu direct 打开（osu://b/{m.beatmapId}）
+                                    </p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                                <HoverCard openDelay={0} closeDelay={0}>
+                                  <HoverCardTrigger asChild>
+                                    <button
+                                      onClick={() => copyBid(m)}
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    >
+                                      <Clipboard className="h-3.5 w-3.5" />
+                                    </button>
+                                  </HoverCardTrigger>
+                                  <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                    <p className="text-xs font-bold text-(--pc-ink)">
+                                      BID: <span className="font-mono text-[#e85d75]">{m.beatmapId}</span>
+                                    </p>
+                                  </HoverCardContent>
+                                </HoverCard>
+                              </div>
+                            </div>
 
-                        {/* Comments preview */}
-                        {comments.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {comments.slice(0, 3).map((c) => (
-                              <HoverCard key={c.id}>
+                            {/* Title */}
+                            <p className="mt-2 line-clamp-2 font-bold text-(--pc-ink)">
+                              {[m.artist_unicode || m.artist, m.title_unicode || m.title]
+                                .filter(Boolean)
+                                .join(" - ") || "未知曲目"}
+                            </p>
+                            <p className="text-xs text-(--pc-faint)">
+                              [{m.version}] by {m.creator ?? "-"}
+                            </p>
+
+                            {/* Stats */}
+                            <div className="mt-3 grid grid-cols-4 gap-1.5">
+                              {statCell("CS", fmt(m.cs))}
+                              {statCell("AR", fmt(m.ar))}
+                              {statCell("OD", fmt(m.od))}
+                              {statCell("HP", fmt(m.hp))}
+                              {statCell("时长", fmtLength(m.totalLength))}
+                              {statCell("MaxCombo", m.maxCombo != null ? String(m.maxCombo) : "-")}
+                              {statCell("BPM", fmt(m.bpm))}
+                              {statCell("★", fmt(m.starRating), starColor(m.starRating))}
+                            </div>
+
+                            {/* Nominator */}
+                            <div className="mt-3 flex items-center gap-2">
+                              {m.selectedByAvatar ? (
+                                <img
+                                  src={m.selectedByAvatar}
+                                  alt=""
+                                  className="h-6 w-6 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="grid h-6 w-6 place-items-center rounded-full bg-[#f5c040]/30 text-[10px] font-bold text-(--pc-ink)">
+                                  {(m.selectedByUsername || m.selectedBy || "?").slice(0, 1)}
+                                </div>
+                              )}
+                              <span className="text-xs text-(--pc-slate)">
+                                {m.selectedByUsername || m.selectedBy || "未知提名者"}
+                              </span>
+                              <HoverCard openDelay={0} closeDelay={0}>
                                 <HoverCardTrigger asChild>
                                   <button
                                     onClick={() => setCommentTarget(m)}
-                                    className="flex items-center gap-1.5 rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1 text-left transition hover:-translate-y-0.5"
+                                    className="ml-auto grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
                                   >
-                                    <Avatar className="h-5 w-5">
-                                      {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
-                                      <AvatarFallback className="bg-[#f5c040]/30 text-[8px] font-bold text-(--pc-ink)">
-                                        {c.username?.slice(0, 1).toUpperCase() || "?"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-[10px] text-(--pc-slate)">
-                                      {c.comment.slice(0, 12)}
-                                      {c.comment.length > 12 ? "…" : ""}
-                                    </span>
+                                    <MessageSquare className="h-3.5 w-3.5" />
                                   </button>
                                 </HoverCardTrigger>
-                                <HoverCardContent className="w-72">
-                                  <div className="flex items-center gap-2.5">
-                                    <Avatar className="h-10 w-10 rounded-xl">
-                                      {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
-                                      <AvatarFallback className="bg-[#f5c040]/30 font-bold text-(--pc-ink)">
-                                        {c.username?.slice(0, 1).toUpperCase() || "?"}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                    <div className="min-w-0">
-                                      <p className="font-bold text-sm text-(--pc-ink)">{c.username}</p>
-                                      <p className="text-xs text-(--pc-faint)">
-                                        osuID: {c.userId}
-                                        {c.createdAt ? ` · ${formatDateTime(c.createdAt)}` : ""}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <p className="mt-3 text-sm leading-relaxed text-(--pc-slate)">
-                                    {c.comment}
-                                  </p>
+                                <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
+                                  <p className="text-xs font-bold text-(--pc-ink)">添加评论</p>
                                 </HoverCardContent>
                               </HoverCard>
-                            ))}
-                            {comments.length > 3 && (
-                              <button
-                                onClick={() => setCommentTarget(m)}
-                                className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-[10px] font-bold text-[#e85d75]"
-                              >
-                                +{comments.length - 3}
-                              </button>
+                            </div>
+
+                            {/* Note */}
+                            {m.comment && (
+                              <p className="mt-2 rounded-lg bg-(--pc-paper) px-2 py-1 text-xs text-(--pc-faint)">
+                                备注：{m.comment}
+                              </p>
+                            )}
+
+                            {/* Comments preview */}
+                            {comments.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-1.5">
+                                {comments.slice(0, 3).map((c) => (
+                                  <HoverCard key={c.id}>
+                                    <HoverCardTrigger asChild>
+                                      <button
+                                        onClick={() => setCommentTarget(m)}
+                                        className="flex items-center gap-1.5 rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1 text-left transition hover:-translate-y-0.5"
+                                      >
+                                        <Avatar className="h-5 w-5">
+                                          {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
+                                          <AvatarFallback className="bg-[#f5c040]/30 text-[8px] font-bold text-(--pc-ink)">
+                                            {c.username?.slice(0, 1).toUpperCase() || "?"}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-[10px] text-(--pc-slate)">
+                                          {c.comment.slice(0, 12)}
+                                          {c.comment.length > 12 ? "…" : ""}
+                                        </span>
+                                      </button>
+                                    </HoverCardTrigger>
+                                    <HoverCardContent className="w-72">
+                                      <div className="flex items-center gap-2.5">
+                                        <Avatar className="h-10 w-10 rounded-xl">
+                                          {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
+                                          <AvatarFallback className="bg-[#f5c040]/30 font-bold text-(--pc-ink)">
+                                            {c.username?.slice(0, 1).toUpperCase() || "?"}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0">
+                                          <p className="font-bold text-sm text-(--pc-ink)">{c.username}</p>
+                                          <p className="text-xs text-(--pc-faint)">
+                                            osuID: {c.userId}
+                                            {c.createdAt ? ` · ${formatDateTime(c.createdAt)}` : ""}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <p className="mt-3 text-sm leading-relaxed text-(--pc-slate)">
+                                        {c.comment}
+                                      </p>
+                                    </HoverCardContent>
+                                  </HoverCard>
+                                ))}
+                                {comments.length > 3 && (
+                                  <button
+                                    onClick={() => setCommentTarget(m)}
+                                    className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-[10px] font-bold text-[#e85d75]"
+                                  >
+                                    +{comments.length - 3}
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    </Card>
-                    </ContextMenuTrigger>
-                    <ContextMenuContent>
-                      <ContextMenuItem onSelect={() => void toggleApproved(m)}>
-                        {m.approved ? "取消审核" : "通过审核"}
-                      </ContextMenuItem>
-                      <ContextMenuItem onSelect={() => void togglePadding(m)}>
-                        {m.padding ? "取消审图" : "标为审图"}
-                      </ContextMenuItem>
-                      <ContextMenuItem onSelect={() => setAdjustTarget(m)}>
-                        调整参数
-                      </ContextMenuItem>
-                      <ContextMenuSeparator />
-                      <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
-                        删除
-                      </ContextMenuItem>
-                    </ContextMenuContent>
+                        </Card>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onSelect={() => void toggleApproved(m)}>
+                          {m.approved ? "取消审核" : "通过审核"}
+                        </ContextMenuItem>
+                        <ContextMenuItem onSelect={() => void togglePadding(m)}>
+                          {m.padding ? "取消审图" : "标为审图"}
+                        </ContextMenuItem>
+                        <ContextMenuItem onSelect={() => setAdjustTarget(m)}>
+                          调整参数
+                        </ContextMenuItem>
+                        <ContextMenuSeparator />
+                        <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
+                          删除
+                        </ContextMenuItem>
+                      </ContextMenuContent>
                     </ContextMenu>
                   );
                 })}
@@ -1730,6 +2173,27 @@ export default function MapSelectionManagement() {
         map={adjustTarget}
         onSaved={load}
       />
+
+      {/* 阶段统计弹窗（点击统计按钮打开） */}
+      <Dialog open={statsOpen} onOpenChange={setStatsOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {category === "全部" ? "全部阶段" : CATEGORY_LABEL[category] ?? category} 统计
+            </DialogTitle>
+            <DialogDescription>
+              {season ? `赛季 ${seasonLabel(settings, season)}` : "全部赛季"} 图池统计数据
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex max-h-[70vh] flex-col gap-2 overflow-y-auto">
+            {statRows.length > 0 ? (
+              statRows.map((r) => <StageStatCard key={r.category} row={r} />)
+            ) : (
+              <p className="py-4 text-center text-xs text-(--pc-faint)">暂无该阶段的统计数据</p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -79,7 +79,7 @@ export default function StaffDashboardPage() {
     <div className="min-h-screen bg-(--pc-paper) pb-16">
       <div className="mx-auto max-w-6xl px-4 pt-8">
         {/* Horizontal scrollable tab bar */}
-        <div className="flex gap-2 overflow-x-auto pb-3">
+        <div className="flex gap-2 overflow-x-auto pb-3 pt-1.5">
           {TABS.map((t) => (
             <button
               key={t.key}
