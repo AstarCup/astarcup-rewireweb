@@ -1218,8 +1218,49 @@ export default function MapSelectionManagement() {
         </Dialog>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* 第一行：搜索与视图切换 */}
+      <div className="flex items-center gap-3">
+        <HoverCard openDelay={150} closeDelay={0}>
+          <HoverCardTrigger asChild>
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="搜索 BID / 曲名 / 谱师…"
+              className="flex-1"
+            />
+          </HoverCardTrigger>
+          <HoverCardContent side="bottom" align="start" className="w-64">
+            <p className="mb-1.5 text-xs font-bold text-(--pc-ink)">搜索支持的参数</p>
+            <ul className="space-y-1 text-xs leading-relaxed text-(--pc-slate)">
+              <li>• 数字：BID / SID（谱面集 ID）</li>
+              <li>• 文字：曲名、艺术家、难度、谱师</li>
+              <li>• MOD：NM、HD、HR、DT、LZ、TB…</li>
+              <li>• 组合：MOD + 位号，如 NM1、HD2</li>
+              <li>• 其他：备注、提名者用户名</li>
+            </ul>
+          </HoverCardContent>
+        </HoverCard>
+        <div className="flex items-center gap-1 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
+          {(["card", "table"] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={cn(
+                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors",
+                view === v
+                  ? "bg-[#6b7fb5] text-[#fdf6ee]"
+                  : "bg-transparent text-(--pc-slate) hover:text-(--pc-ink)",
+              )}
+            >
+              {v === "card" ? <LayoutGrid className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
+              {v === "card" ? "卡片" : "列表"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 第二行：筛选条件 */}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
           <Label className="text-xs text-(--pc-faint)">赛季</Label>
           <Select
@@ -1292,61 +1333,26 @@ export default function MapSelectionManagement() {
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" size="sm" onClick={toggleSelectAll} disabled={unapprovedFiltered.length === 0}>
-          <CheckSquare className="h-4 w-4" />
-          {allSelected ? "取消全选" : `一键全选 (${unapprovedFiltered.length})`}
-        </Button>
-        {selectedIds.size > 0 && (
-          <Button variant="teal" size="sm" onClick={() => setBatchOpen(true)}>
-            批量过审 ({selectedIds.size})
-          </Button>
-        )}
-        <HoverCard openDelay={150} closeDelay={0}>
-          <HoverCardTrigger asChild>
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="搜索 BID / 曲名 / 谱师…"
-              className="ml-auto w-auto min-w-40 max-w-56"
-            />
-          </HoverCardTrigger>
-          <HoverCardContent side="bottom" align="start" className="w-64">
-            <p className="mb-1.5 text-xs font-bold text-(--pc-ink)">搜索支持的参数</p>
-            <ul className="space-y-1 text-xs leading-relaxed text-(--pc-slate)">
-              <li>• 数字：BID / SID（谱面集 ID）</li>
-              <li>• 文字：曲名、艺术家、难度、谱师</li>
-              <li>• MOD：NM、HD、HR、DT、LZ、TB…</li>
-              <li>• 组合：MOD + 位号，如 NM1、HD2</li>
-              <li>• 其他：备注、提名者用户名</li>
-            </ul>
-          </HoverCardContent>
-        </HoverCard>
-        <div className="flex items-center gap-1 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-1 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
-          {(["card", "table"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={cn(
-                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors",
-                view === v
-                  ? "bg-[#6b7fb5] text-[#fdf6ee]"
-                  : "bg-transparent text-(--pc-slate) hover:text-(--pc-ink)",
-              )}
-            >
-              {v === "card" ? <LayoutGrid className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
-              {v === "card" ? "卡片" : "列表"}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Summary */}
-      <div className="mt-4 flex items-center gap-2 text-xs text-(--pc-faint)">
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-(--pc-faint)">
         <Badge variant="outline">{selectedIds.size} 已选</Badge>
         <span>
           当前筛选：{season || "全部赛季"} / {category} / {modFilter} / {paddingFilter} · 共{" "}
           {filtered.length} 张{lazyList.length < filtered.length && `（已显示 ${lazyList.length}）`}
         </span>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={toggleSelectAll} disabled={unapprovedFiltered.length === 0}>
+            <CheckSquare className="h-4 w-4" />
+            {allSelected ? "取消全选" : `一键全选 (${unapprovedFiltered.length})`}
+          </Button>
+          {selectedIds.size > 0 && (
+            <Button variant="teal" size="sm" onClick={() => setBatchOpen(true)}>
+              批量过审 ({selectedIds.size})
+            </Button>
+          )}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
