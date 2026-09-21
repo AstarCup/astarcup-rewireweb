@@ -130,7 +130,17 @@ export default function ReplayCollectionManagement() {
         const ib = order.indexOf(b);
         return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
       })
-      .map((mod) => ({ mod, items: map.get(mod)! }));
+      .map((mod) => ({
+        mod,
+        items: map
+          .get(mod)!
+          .slice()
+          .sort((a, b) => {
+            const pa = Number(a.modPosition ?? 999);
+            const pb = Number(b.modPosition ?? 999);
+            return (Number.isNaN(pa) ? 999 : pa) - (Number.isNaN(pb) ? 999 : pb);
+          }),
+      }));
   }, [filtered]);
 
   const modOptions = useMemo(() => {

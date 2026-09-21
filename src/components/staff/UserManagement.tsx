@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, BadgeCheck, Check, Users, Trash2 } from "lucide-react";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -9,6 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  ContextMenu,
+  ContextMenuTrigger,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuGroup,
+} from "@/components/ui/context-menu";
+import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -17,7 +25,6 @@ import {
 } from "@/components/ui/select";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -90,6 +97,25 @@ export default function UserManagement() {
     }
   };
 
+  const batchResetStatus = async () => {
+    const list = filtered;
+    if (list.length === 0) return;
+    setBusy("batch-reset");
+    const results = await Promise.all(
+      list.map((u) =>
+        api.patch(`/api/admin/users/${u.osuId}`, { registrationStatus: "not_registered" }),
+      ),
+    );
+    setBusy(null);
+    const ok = results.every((r) => r.ok);
+    toast(
+      ok
+        ? { title: `已将 ${list.length} 人改为未报名` }
+        : { variant: "destructive", title: "部分操作失败" },
+    );
+    void load();
+  };
+
   const filtered = useMemo(() => {
     const list = data ?? [];
     const q = search.trim().toLowerCase();
@@ -139,6 +165,14 @@ export default function UserManagement() {
         <span className="text-xs text-(--pc-faint)">
           共 {data.length} 人 · 筛选出 {filtered.length} 人
         </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void batchResetStatus()}
+          disabled={busy !== null || filtered.length === 0}
+        >
+          {busy === "batch-reset" ? "处理中…" : "一键全部改成未报名"}
+        </Button>
       </div>
 
       <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
@@ -150,7 +184,6 @@ export default function UserManagement() {
               <th className="px-4 py-3 font-bold">分组</th>
               <th className="px-4 py-3 font-bold">报名状态</th>
               <th className="px-4 py-3 font-bold">注册时间</th>
-              <th className="px-4 py-3 font-bold">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -164,93 +197,93 @@ export default function UserManagement() {
             {filtered.map((u) => {
               const regStatus = u.registrationStatus ?? "not_registered";
               return (
-                <tr key={u.osuId} className="border-b border-(--pc-border) last:border-0">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-8 w-8">
-                        {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.username} />}
-                        <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-bold text-(--pc-ink)">{u.username}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-(--pc-slate)">{u.osuId}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant={groupVariant(u.userGroup)}>{u.userGroup}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={REG_STATUS_VARIANT[regStatus] ?? "outline"}>
-                      {REG_STATUS_LABEL[regStatus] ?? regStatus}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-(--pc-slate)">{formatDate(u.createdAt)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {regStatus !== "approved" && (
-                        <Button
-                          variant="teal"
-                          size="sm"
-                          onClick={() => approve(u)}
+                <ContextMenu key={u.osuId}>
+                  <ContextMenuTrigger asChild>
+                    <tr className="cursor-context-menu border-b border-(--pc-border) last:border-0">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-8 w-8">
+                            {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.username} />}
+                            <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-bold text-(--pc-ink)">{u.username}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-(--pc-slate)">{u.osuId}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={groupVariant(u.userGroup)}>{u.userGroup}</Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant={REG_STATUS_VARIANT[regStatus] ?? "outline"}>
+                          {REG_STATUS_LABEL[regStatus] ?? regStatus}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-(--pc-slate)">{formatDate(u.createdAt)}</td>
+                    </tr>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent className="w-52">
+                    {regStatus !== "approved" && (
+                      <ContextMenuItem onSelect={() => approve(u)} disabled={busy !== null}>
+                        <BadgeCheck className="mr-2 h-4 w-4 text-[#5cb8a5]" />
+                        通过审核
+                      </ContextMenuItem>
+                    )}
+                    <ContextMenuSeparator />
+                    <ContextMenuGroup>
+                      {REG_STATUS_OPTIONS.map((o) => (
+                        <ContextMenuItem
+                          key={o.value}
+                          onSelect={() => setStatus(u, o.value)}
                           disabled={busy !== null}
                         >
-                          {busy === `approve-${u.osuId}` ? "…" : "通过审核"}
+                          {regStatus === o.value ? (
+                            <Check className="mr-2 h-4 w-4 text-[#e85d75]" />
+                          ) : (
+                            <span className="mr-2 w-4" />
+                          )}
+                          {o.label}
+                        </ContextMenuItem>
+                      ))}
+                    </ContextMenuGroup>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem
+                      onSelect={() => setGroup(u, u.userGroup === "admin" ? "player" : "admin")}
+                      disabled={busy !== null}
+                    >
+                      <Users className="mr-2 h-4 w-4 text-[#6b7fb5]" />
+                      设为{u.userGroup === "admin" ? "玩家" : "管理员"}
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem
+                      className="text-[#e85d75] focus:text-[#e85d75]"
+                      onSelect={() => setDeleteTarget(u)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      删除
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                  <Dialog
+                    open={deleteTarget?.osuId === u.osuId}
+                    onOpenChange={(o) => !o && setDeleteTarget(null)}
+                  >
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>删除用户</DialogTitle>
+                        <DialogDescription>
+                          确定删除用户「{u.username}」吗？此操作不可撤销。
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DialogFooter>
+                        <DialogClose asChild>
+                          <Button variant="outline">取消</Button>
+                        </DialogClose>
+                        <Button variant="destructive" onClick={confirmDelete} disabled={delBusy}>
+                          {delBusy ? "删除中…" : "确认删除"}
                         </Button>
-                      )}
-                      <Select
-                        value={regStatus}
-                        onValueChange={(v) => setStatus(u, v)}
-                        disabled={busy !== null}
-                      >
-                        <SelectTrigger className="h-8 w-28">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {REG_STATUS_OPTIONS.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>
-                              {o.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setGroup(u, u.userGroup === "admin" ? "player" : "admin")}
-                        disabled={busy !== null}
-                      >
-                        {busy === `group-${u.osuId}`
-                          ? "…"
-                          : `设为${u.userGroup === "admin" ? "玩家" : "管理员"}`}
-                      </Button>
-                      <Dialog
-                        open={deleteTarget?.osuId === u.osuId}
-                        onOpenChange={(o) => !o && setDeleteTarget(null)}
-                      >
-                        <DialogTrigger asChild>
-                          <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(u)}>
-                            删除
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>删除用户</DialogTitle>
-                            <DialogDescription>
-                              确定删除用户「{u.username}」吗？此操作不可撤销。
-                            </DialogDescription>
-                          </DialogHeader>
-                          <DialogFooter>
-                            <DialogClose asChild>
-                              <Button variant="outline">取消</Button>
-                            </DialogClose>
-                            <Button variant="destructive" onClick={confirmDelete} disabled={delBusy}>
-                              {delBusy ? "删除中…" : "确认删除"}
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </td>
-                </tr>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </ContextMenu>
               );
             })}
           </tbody>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, Trash2, UsersRound } from "lucide-react";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import {
   Command,
@@ -27,7 +37,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { Settings } from "@/lib/types";
+import { REG_STATUS_LABEL, REG_STATUS_VARIANT } from "@/lib/types";
+import type { Settings, AdminUserStub } from "@/lib/types";
 
 interface FormState {
   tournament_name: string;
@@ -126,6 +137,9 @@ export default function SettingsManagement() {
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
   const [mappoolVisible, setMappoolVisible] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [seasonPlayers, setSeasonPlayers] = useState<AdminUserStub[] | null>(null);
+  const [seasonPlayersFor, setSeasonPlayersFor] = useState<string | null>(null);
+  const [seasonPlayersBusy, setSeasonPlayersBusy] = useState(false);
 
   useEffect(() => {
     if (!data) return;
@@ -175,6 +189,25 @@ export default function SettingsManagement() {
     const id = seasons[index].id;
     setSeasons((list) => list.filter((_, i) => i !== index));
     if (currentSeason === id) setCurrentSeason(seasons.find((s) => s.id !== id)?.id ?? "");
+  };
+
+  // 已结束赛季：拉取参加过该赛季但未审核的玩家
+  const loadSeasonPlayers = async (seasonId: string) => {
+    setSeasonPlayersBusy(true);
+    setSeasonPlayersFor(seasonId);
+    const res = await api.get<AdminUserStub[]>("/api/admin/users");
+    setSeasonPlayersBusy(false);
+    if (res.ok) {
+      const list = (res.data ?? []).filter(
+        (u) =>
+          u.season?.includes(seasonId) &&
+          (u.registrationStatus ?? "not_registered") !== "approved",
+      );
+      setSeasonPlayers(list);
+    } else {
+      setSeasonPlayers(null);
+      toast({ variant: "destructive", title: "获取用户失败" });
+    }
   };
 
   const save = async () => {
@@ -327,6 +360,16 @@ export default function SettingsManagement() {
                     <Badge variant="primary">当前赛季</Badge>
                   )}
                   <div className="ml-auto flex items-center gap-2">
+                    {s.status === "finished" && (
+                      <Button
+                        variant="teal"
+                        size="sm"
+                        onClick={() => void loadSeasonPlayers(s.id)}
+                      >
+                        <UsersRound className="h-4 w-4" />
+                        未审核玩家
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -385,6 +428,51 @@ export default function SettingsManagement() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={seasonPlayersFor !== null} onOpenChange={(o) => !o && setSeasonPlayersFor(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>该赛季未审核玩家</DialogTitle>
+            <DialogDescription>
+              参加过赛季「{seasonPlayersFor ?? ""}」但报名状态不是“已通过”的玩家（共{" "}
+              {seasonPlayers?.length ?? 0} 人）
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-(--pc-border)">
+            {seasonPlayersBusy ? (
+              <p className="p-6 text-center text-sm text-(--pc-faint)">加载中…</p>
+            ) : !seasonPlayers || seasonPlayers.length === 0 ? (
+              <p className="p-6 text-center text-sm text-(--pc-faint)">没有符合条件的玩家</p>
+            ) : (
+              <ul className="divide-y divide-(--pc-border)">
+                {seasonPlayers.map((u) => (
+                  <li key={u.osuId} className="flex items-center gap-3 px-4 py-2.5">
+                    <Avatar className="h-8 w-8">
+                      {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.username} />}
+                      <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-bold text-(--pc-ink)">{u.username}</span>
+                    <span className="font-mono text-xs text-(--pc-slate)">{u.osuId}</span>
+                    <Badge
+                      className="ml-auto"
+                      variant={
+                        REG_STATUS_VARIANT[u.registrationStatus ?? "not_registered"] ?? "outline"
+                      }
+                    >
+                      {REG_STATUS_LABEL[u.registrationStatus ?? "not_registered"]}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">关闭</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

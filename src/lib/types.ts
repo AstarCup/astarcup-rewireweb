@@ -360,6 +360,7 @@ export interface AdminUserStub {
   avatarUrl?: string | null;
   userGroup: string;
   registrationStatus?: string;
+  season?: string[] | null;
   createdAt?: string;
 }
 

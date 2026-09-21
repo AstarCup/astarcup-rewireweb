@@ -43,6 +43,7 @@ const TABS: { key: FilterKey; label: string }[] = [
 ];
 
 function statusBadge(status?: string) {
+  if (!status || status === "not_registered") return null;
   switch (status) {
     case "approved":
       return (
@@ -114,7 +115,11 @@ function PlayerCard({
             {cover && (
               <img src={cover} alt="" className="h-full w-full object-cover" />
             )}
-            <span className="absolute right-2 top-2">{statusBadge(player.registrationStatus)}</span>
+            {player.registrationStatus && player.registrationStatus !== "not_registered" && (
+              <span className="absolute right-2 top-2">
+                {statusBadge(player.registrationStatus)}
+              </span>
+            )}
           </div>
           <div className="-mt-9 flex flex-col items-center gap-2 px-4 pb-4">
             <Avatar className="h-16 w-16 rounded-2xl border-4 border-white bg-(--pc-paper)">
@@ -197,13 +202,19 @@ export default function RegistrationsPage() {
     setSeason((s) => (s === undefined ? currentSeason ?? "" : s));
   }, [settings, currentSeason]);
 
-  const loadedRef = useRef(false);
+  // 已结束赛季：隐藏状态筛选，展示所有参加过该赛季的玩家（不检查报名状态）
+  const isFinished = !!season && settings?.seasons?.[season]?.status === "finished";
+
+  const loadedRef = useRef<boolean | null>(null);
   useEffect(() => {
     if (season === undefined) return;
-    if (loadedRef.current) return;
-    loadedRef.current = true;
-    void run(() => api.get<SessionUser[]>("/api/users"));
-  }, [season, run]);
+    const needsAll = isFinished;
+    if (loadedRef.current === needsAll) return;
+    loadedRef.current = needsAll;
+    void run(() =>
+      api.get<SessionUser[]>(needsAll ? "/api/users?status=all" : "/api/users"),
+    );
+  }, [season, isFinished, run]);
 
   const players = data ?? [];
   const loadingPlayers = season === undefined || loading;
@@ -214,9 +225,9 @@ export default function RegistrationsPage() {
   }, [players, season]);
 
   const visible = useMemo(() => {
-    if (filter === "all") return bySeason;
+    if (isFinished || filter === "all") return bySeason;
     return bySeason.filter((p) => p.registrationStatus === filter);
-  }, [bySeason, filter]);
+  }, [bySeason, filter, isFinished]);
 
   const counts = useMemo(() => {
     let approved = 0;
