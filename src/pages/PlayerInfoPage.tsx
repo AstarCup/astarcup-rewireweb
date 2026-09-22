@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import RegisterDialog from "@/components/RegisterDialog";
+import SeasonBadge from "@/components/SeasonBadge";
 import {
   Dialog,
   DialogContent,
@@ -202,7 +203,7 @@ export default function PlayerInfoPage() {
                 报名参赛
               </CardTitle>
               <CardDescription className="mt-1">
-                你尚未报名本赛季，点击下方按钮完成报名，等待管理员审核。
+                你尚未报名本赛季，点击报名按钮完成报名，等待管理员审核。
               </CardDescription>
             </div>
             <Button variant="primary" size="lg" onClick={() => setRegisterOpen(true)}>
@@ -292,10 +293,7 @@ export default function PlayerInfoPage() {
                 <p className="text-xs font-bold text-(--pc-faint)">已报名参赛过的赛季</p>
                 <div className="flex flex-wrap items-center gap-2">
                   {user.season.map((s) => (
-                    <Badge key={s} variant="yellow">
-                      <Trophy className="h-3.5 w-3.5" />
-                      {seasonLabel(settings as Settings | null, s) || s}
-                    </Badge>
+                    <SeasonBadge key={s} season={s} label={seasonLabel(settings as Settings | null, s) || s} />
                   ))}
                 </div>
               </div>

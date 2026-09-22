@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Copy, ExternalLink, Trophy } from "lucide-react";
+import { Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import RadarChart from "@/components/ui/RadarChart";
+import SeasonBadge from "@/components/SeasonBadge";
 import { PageHeader } from "@/components/paper/paper";
 import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
@@ -174,10 +175,7 @@ function PlayerCard({
           <p className="text-xs font-bold text-(--pc-faint)">已报名参赛过的赛季</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {player.season.map((s) => (
-              <Badge key={s} variant="yellow">
-                <Trophy className="h-3.5 w-3.5" />
-                {seasonLabel(settings, s) || s}
-              </Badge>
+              <SeasonBadge key={s} season={s} label={seasonLabel(settings, s) || s} />
             ))}
           </div>
         </HoverCardContent>
