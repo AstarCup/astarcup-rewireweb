@@ -389,6 +389,7 @@ export interface AdminUserStub {
   userGroup: string;
   registrationStatus?: string;
   season?: string[] | null;
+  qq?: string | null;
   createdAt?: string;
 }
 

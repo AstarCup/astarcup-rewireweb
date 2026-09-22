@@ -55,8 +55,15 @@ export default function UserManagement() {
   const [delBusy, setDelBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState("all");
+  const [seasonFilter, setSeasonFilter] = useState("all");
 
   const groupVariant = (g: string) => (g === "admin" ? "primary" : "teal");
+
+  const allSeasons = useMemo(() => {
+    const set = new Set<string>();
+    for (const u of data ?? []) for (const s of u.season ?? []) set.add(s);
+    return Array.from(set).sort();
+  }, [data]);
 
   const run = async (action: string, fn: () => Promise<{ ok: boolean }>) => {
     setBusy(action);
@@ -97,6 +104,15 @@ export default function UserManagement() {
     }
   };
 
+  const copyText = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({ title: `已复制 ${label}` });
+    } catch {
+      toast({ variant: "destructive", title: "复制失败" });
+    }
+  };
+
   const batchResetStatus = async () => {
     const list = filtered;
     if (list.length === 0) return;
@@ -121,14 +137,16 @@ export default function UserManagement() {
     const q = search.trim().toLowerCase();
     return list.filter((u) => {
       if (groupFilter !== "all" && u.userGroup !== groupFilter) return false;
+      if (seasonFilter !== "all" && !(u.season ?? []).includes(seasonFilter)) return false;
       if (!q) return true;
       return (
         u.username?.toLowerCase().includes(q) ||
         u.osuId?.toLowerCase().includes(q) ||
+        u.qq?.toLowerCase().includes(q) ||
         u.userGroup?.toLowerCase().includes(q)
       );
     });
-  }, [data, search, groupFilter]);
+  }, [data, search, groupFilter, seasonFilter]);
 
   if (loading) return <LoadingBlock label="加载用户中…" />;
   if (error || !data) return <ErrorBlock message={error || "没有数据"} onRetry={load} />;
@@ -146,10 +164,23 @@ export default function UserManagement() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜索用户名 / osuId / 分组…"
+            placeholder="搜索用户名 / osuId / QQ / 分组…"
             className="w-72 pl-9"
           />
         </div>
+        <Select value={seasonFilter} onValueChange={setSeasonFilter}>
+          <SelectTrigger className="w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">全部赛季</SelectItem>
+            {allSeasons.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={groupFilter} onValueChange={setGroupFilter}>
           <SelectTrigger className="w-36">
             <SelectValue />
@@ -181,6 +212,7 @@ export default function UserManagement() {
             <tr className="border-b-2 border-(--pc-border) text-left text-xs text-(--pc-faint)">
               <th className="px-4 py-3 font-bold">用户</th>
               <th className="px-4 py-3 font-bold">osuId</th>
+              <th className="px-4 py-3 font-bold">QQ</th>
               <th className="px-4 py-3 font-bold">分组</th>
               <th className="px-4 py-3 font-bold">报名状态</th>
               <th className="px-4 py-3 font-bold">注册时间</th>
@@ -189,7 +221,7 @@ export default function UserManagement() {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-(--pc-faint)">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-(--pc-faint)">
                   没有匹配的用户
                 </td>
               </tr>
@@ -209,7 +241,20 @@ export default function UserManagement() {
                           <span className="font-bold text-(--pc-ink)">{u.username}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-(--pc-slate)">{u.osuId}</td>
+                      <td
+                        className="cursor-pointer px-4 py-3 font-mono text-xs text-(--pc-slate) transition-colors hover:text-[#e85d75]"
+                        title="点击复制 osuId"
+                        onClick={() => void copyText(u.osuId, "osuId")}
+                      >
+                        {u.osuId}
+                      </td>
+                      <td
+                        className="cursor-pointer px-4 py-3 font-mono text-xs text-(--pc-slate) transition-colors hover:text-[#e85d75]"
+                        title={u.qq ? "点击复制 QQ" : undefined}
+                        onClick={() => u.qq && void copyText(u.qq, "QQ")}
+                      >
+                        {u.qq || "—"}
+                      </td>
                       <td className="px-4 py-3">
                         <Badge variant={groupVariant(u.userGroup)}>{u.userGroup}</Badge>
                       </td>
