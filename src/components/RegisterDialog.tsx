@@ -270,13 +270,12 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                     value={customKey}
                     onChange={(e) => handleCustomKey(e.target.value)}
                     placeholder="随便输点什么"
-                    className={`h-9 w-full rounded-lg border-2 bg-(--pc-white) px-3 pr-8 text-sm text-(--pc-ink) outline-none ${
-                      customKeyState === "invalid"
+                    className={`h-9 w-full rounded-lg border-2 bg-(--pc-white) px-3 pr-8 text-sm text-(--pc-ink) outline-none ${customKeyState === "invalid"
                         ? "border-[#e85d75]"
                         : customKeyState === "valid"
                           ? "border-[#5cb8a5]"
                           : "border-(--pc-border)"
-                    }`}
+                      }`}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs">
                     {customKeyState === "checking" && (
@@ -312,7 +311,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
             <p className="text-sm font-bold text-(--pc-ink)">QQ 号（必填）</p>
             <p className="mt-0.5 text-xs text-(--pc-faint)">
-              方便赛事组织方与你联系（如赛事通知 / QQ 群）。
+              方便staff与你联系（还请记得加QQ群:<a href="https://qm.qq.com/q/sFydxoQtaw" target="_blank" rel="noopener noreferrer">1072271422</a>）。
             </p>
             <input
               type="text"
