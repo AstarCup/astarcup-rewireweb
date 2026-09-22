@@ -271,7 +271,7 @@ export default function PlayerInfoPage() {
 
             <div className="flex flex-wrap items-center gap-2">
               {user.country && <Badge variant="outline">{user.country}</Badge>}
-              {user.registrationStatus && (
+              {user.registrationStatus && user.registrationStatus !== "not_registered" && (
                 <Badge
                   variant={
                     user.registrationStatus === "approved" ? "teal" : "yellow"

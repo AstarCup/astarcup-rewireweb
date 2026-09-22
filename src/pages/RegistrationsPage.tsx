@@ -149,18 +149,20 @@ function PlayerCard({
             </div>
             {/* g0v0：头像 + 玩家名，置于最底部 */}
             <div className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1">
-              {player.guServerUsername ? (
+              {player.guServerUserId || player.guServerUsername ? (
                 <>
-                  <img
-                    src={`https://a.g0v0.top/${player.guServerUserId}`}
-                    alt=""
-                    className="h-5 w-5 rounded-full border border-(--pc-border) object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
+                  {player.guServerUserId && (
+                    <img
+                      src={`https://a.g0v0.top/${player.guServerUserId}`}
+                      alt=""
+                      className="h-5 w-5 rounded-full border border-(--pc-border) object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  )}
                   <span className="truncate text-xs font-bold text-[#5cb8a5]">
-                    {player.guServerUsername}
+                    {player.guServerUsername || `#${player.guServerUserId}`}
                   </span>
                 </>
               ) : (
