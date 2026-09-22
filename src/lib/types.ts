@@ -35,6 +35,8 @@ export interface SessionUser {
   guServerUsername?: string | null;
   guServerBindAt?: string | null;
   g0v0Bound?: boolean;
+  /** QQ 联系方式（报名可选填写） */
+  qq?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -353,6 +355,13 @@ export interface SeasonMappoolStat {
   pendingCount: number;
 }
 
+export interface SeasonPlayerStat {
+  totalRegistrations: number;
+  approvedPlayers: number;
+  unapprovedPlayers: number;
+  replayCount: number;
+}
+
 export interface StaffStats {
   approvedPlayers: number;
   matchRooms: number;
@@ -361,6 +370,7 @@ export interface StaffStats {
   totalRegistrations: number;
   totalSchedules: number;
   seasonMappoolStats: Record<string, SeasonMappoolStat[]>;
+  seasonStats: Record<string, SeasonPlayerStat>;
   tournamentSettings: {
     currentSeason: string;
     currentSeasonStage: string;

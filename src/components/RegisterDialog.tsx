@@ -50,6 +50,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
   >(null);
   const [customKeyError, setCustomKeyError] = useState("");
   const [bindBusy, setBindBusy] = useState(false);
+  const [qq, setQq] = useState("");
 
   const g0v0Bound = !!user?.g0v0Bound;
   const handleBind = async () => {
@@ -112,6 +113,10 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
       setRegMsg("请先阅读并同意报名须知");
       return;
     }
+    if (!qq.trim()) {
+      setRegMsg("请填写 QQ 号");
+      return;
+    }
     // 技能评分与自定义键值均为选填；填了自定义键才做违规词校验
     if (customKey.trim() && customKeyState === "invalid") {
       setRegMsg("自定义键包含违规词，请修改");
@@ -139,6 +144,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
       experience: toNum(skills.experience),
       customKey: customKey.trim() || null,
       customValue: customValue.trim() === "" ? null : Number(customValue),
+      qq: qq.trim() || null,
     });
     setRegBusy(false);
     if (res.ok) {
@@ -149,6 +155,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
       setCustomValue("");
       setCustomKeyState(null);
       setCustomKeyError("");
+      setQq("");
       setRegMsg(null);
       await refresh();
     } else {
@@ -168,6 +175,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           setCustomValue("");
           setCustomKeyState(null);
           setCustomKeyError("");
+          setQq("");
         }
         onOpenChange(o);
       }}
@@ -300,6 +308,24 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
             </div>
           </div>
 
+          {/* QQ 联系方式（必填） */}
+          <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
+            <p className="text-sm font-bold text-(--pc-ink)">QQ 号（必填）</p>
+            <p className="mt-0.5 text-xs text-(--pc-faint)">
+              方便赛事组织方与你联系（如赛事通知 / QQ 群）。
+            </p>
+            <input
+              type="text"
+              value={qq}
+              onChange={(e) => setQq(e.target.value)}
+              placeholder="请输入 QQ 号"
+              className="mt-3 h-9 w-full rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-[#e85d75]"
+            />
+            {!qq.trim() && (
+              <p className="mt-1 text-xs text-[#e85d75]">报名需填写 QQ 号</p>
+            )}
+          </div>
+
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
             <input
               type="checkbox"
@@ -330,7 +356,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           <Button
             variant="primary"
             onClick={() => void submitRegistration()}
-            disabled={regBusy || !regEnabled || (maxPp > 0 && !ppOk) || !g0v0Bound}
+            disabled={regBusy || !regEnabled || (maxPp > 0 && !ppOk) || !g0v0Bound || !qq.trim()}
           >
             {regBusy ? "提交中…" : "确认报名"}
           </Button>

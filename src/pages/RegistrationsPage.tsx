@@ -310,7 +310,7 @@ export default function RegistrationsPage() {
 
         <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
           {selected && (
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg overflow-y-auto max-h-[85vh]">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   {selected.username}

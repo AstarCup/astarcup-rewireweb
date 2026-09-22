@@ -891,8 +891,10 @@ export default function MapSelectionManagement() {
 
     const paramRe = /^(cs|ar|od|hp|bpm|length|时长|maxcombo|star)\s*([><=]+)\s*([\d.]+)$/;
     const keyRe = /^(bid|sid)\s*[:：]\s*([\d]+)$/;
+    const seasonRe = /^season\s*[:：]\s*([\w]+)$/;
     const paramTokens: { key: string; op: string; val: number }[] = [];
     const keyTokens: { key: "bid" | "sid"; val: string }[] = [];
+    const seasonTokens: string[] = [];
     const textTokens: string[] = [];
     for (const tok of q.split(/[\s;]+/)) {
       if (!tok) continue;
@@ -904,6 +906,11 @@ export default function MapSelectionManagement() {
       const km = tok.match(keyRe);
       if (km) {
         keyTokens.push({ key: km[1] as "bid" | "sid", val: km[2] });
+        continue;
+      }
+      const sm = tok.match(seasonRe);
+      if (sm) {
+        seasonTokens.push(sm[1].toLowerCase());
         continue;
       }
       textTokens.push(tok);
@@ -949,6 +956,10 @@ export default function MapSelectionManagement() {
         const sv =
           k.key === "bid" ? String(m.beatmapId) : String(m.beatmapsetId ?? "");
         if (sv !== k.val) return false;
+      }
+      // season: 过滤：任一不匹配即排除
+      for (const s of seasonTokens) {
+        if ((m.season ?? "").toLowerCase() !== s) return false;
       }
       if (textTokens.length === 0) return true;
       const hay = [
@@ -1533,8 +1544,8 @@ export default function MapSelectionManagement() {
               <li>• MOD：NM、HD、HR、DT、LZ、TB…</li>
               <li>• 组合：MOD + 位号，如 NM1、HD2</li>
               <li>• 属性：cs/ar/od/hp/bpm/时长/maxcombo/star + 运算符，如 cs=6、ar&gt;8、bpm&lt;200</li>
-              <li>• 前缀：bid:、sid:，如 bid:114514</li>
-              <li>• 分隔：空格或分号组合多种条件，如 ar&gt;6;cs=5;bid:114514;songtitle</li>
+              <li>• 前缀：bid:、sid:、season:，如 bid:114514、season:s2</li>
+              <li>• 分隔：空格或分号组合多种条件，如 ar&gt;6;cs=5;season:s2;songtitle</li>
               <li>• 其他：备注、提名者用户名</li>
             </ul>
           </HoverCardContent>

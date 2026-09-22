@@ -228,8 +228,8 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
 
 function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean }) {
   return (
-    <div className="overflow-hidden rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-      <table className="w-full text-left text-sm">
+    <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+      <table className="w-full min-w-[760px] text-left text-sm">
         <thead>
           <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
             <th className="px-4 py-3 font-bold text-(--pc-slate)">MOD</th>

@@ -1,5 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  CalendarClock,
+  DoorOpen,
+  History,
+  LayoutDashboard,
+  Map,
+  Radio,
+  Settings,
+  Swords,
+  Users,
+} from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { PageHeader } from "@/components/paper/paper";
 import { LoadingBlock } from "@/hooks/useFetch";
@@ -15,15 +26,15 @@ import UserManagement from "@/components/staff/UserManagement";
 import SettingsManagement from "@/components/staff/SettingsManagement";
 
 const TABS = [
-  { key: "overview", label: "概览", Comp: OverviewManagement },
-  { key: "mappool", label: "选图管理", Comp: MapSelectionManagement },
-  { key: "replays", label: "回放收集", Comp: ReplayCollectionManagement },
-  { key: "users", label: "用户管理", Comp: UserManagement },
-  { key: "matchups", label: "对战列表", Comp: MatchupManagement },
-  { key: "rooms", label: "房间管理", Comp: RoomManagement },
-  { key: "schedules", label: "比赛预约管理", Comp: MatchScheduleManagement },
-  { key: "streaming", label: "房间加入", Comp: StreamingManagement },
-  { key: "settings", label: "系统设置", Comp: SettingsManagement },
+  { key: "overview", label: "概览", Icon: LayoutDashboard, Comp: OverviewManagement },
+  { key: "mappool", label: "选图管理", Icon: Map, Comp: MapSelectionManagement },
+  { key: "replays", label: "回放收集", Icon: History, Comp: ReplayCollectionManagement },
+  { key: "users", label: "用户管理", Icon: Users, Comp: UserManagement },
+  { key: "matchups", label: "对战列表", Icon: Swords, Comp: MatchupManagement },
+  { key: "rooms", label: "房间管理", Icon: DoorOpen, Comp: RoomManagement },
+  { key: "schedules", label: "比赛预约管理", Icon: CalendarClock, Comp: MatchScheduleManagement },
+  { key: "streaming", label: "房间加入", Icon: Radio, Comp: StreamingManagement },
+  { key: "settings", label: "系统设置", Icon: Settings, Comp: SettingsManagement },
 ] as const;
 
 const STORAGE_KEY = "staff-dashboard-active-tab";
@@ -85,13 +96,14 @@ export default function StaffDashboardPage() {
               key={t.key}
               onClick={() => selectTab(t.key)}
               className={cn(
-                "whitespace-nowrap rounded-xl border-2 px-4 py-2.5 text-sm font-bold transition-all duration-200",
+                "flex items-center gap-1.5 whitespace-nowrap rounded-xl border-2 px-4 py-2.5 text-sm font-bold transition-all duration-200",
                 "hover:-translate-y-0.5 active:translate-y-0.5",
                 activeTab === t.key
                   ? "border-[#e85d75] bg-[#e85d75] text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
                   : "border-(--pc-border) bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]",
               )}
             >
+              <t.Icon className="h-4 w-4" />
               {t.label}
             </button>
           ))}
