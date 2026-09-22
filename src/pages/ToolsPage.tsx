@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Check, ExternalLink, Gamepad2, Github, Home, Server, Wrench } from "lucide-react";
+import { Check, ExternalLink, Gamepad2, Github, Home, Wrench } from "lucide-react";
 import { PageHeader, PaperStack } from "@/components/paper/paper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

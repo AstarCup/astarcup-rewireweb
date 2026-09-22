@@ -1,6 +1,6 @@
 import { useState } from "react";
 import JSZip from "jszip";
-import { Copy, Download, ExternalLink, Loader2 } from "lucide-react";
+import { Copy, Download, ExternalLink, Loader2, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
@@ -89,6 +89,38 @@ export function BulkDownload({ maps, className }: { maps: MapSelection[]; classN
         <span className="text-xs text-(--pc-faint)">{skipped} 张原创图不支持打包</span>
       )}
     </div>
+  );
+}
+
+/** OPP 深链中的赛事标识（对应站点域名前缀） */
+const OPP_TOURNAMENT = "rino";
+
+/** 生成 OPP 深链：opp://mappool/{tournament}?season=..&category=.. */
+export function oppPoolLink(season: string, category: string): string {
+  const params = new URLSearchParams();
+  params.set("season", season);
+  if (category && category !== "全部") params.set("category", category);
+  const qs = params.toString();
+  return `opp://mappool/${OPP_TOURNAMENT}${qs ? `?${qs}` : ""}`;
+}
+
+/** OPP 工具联动按钮：唤起 OPP 打开当前赛季/轮次图池 */
+export function OppPoolButton({
+  season,
+  category,
+  className,
+}: {
+  season: string;
+  category: string;
+  className?: string;
+}) {
+  return (
+    <Button asChild variant="primary" size="sm" className={className}>
+      <a href={oppPoolLink(season, category)}>
+        <Wrench className="h-4 w-4" />
+        从OPP中打开图池
+      </a>
+    </Button>
   );
 }
 

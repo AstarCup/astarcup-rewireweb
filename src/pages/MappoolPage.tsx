@@ -21,7 +21,7 @@ import { cn, fmt } from "@/lib/utils";
 import { getDifficultyColor } from "@/lib/difficultyColor";
 import { useApp } from "@/lib/app-context";
 import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, type MapSelection } from "@/lib/types";
-import { BulkDownload } from "@/components/mappool/MapPoolTools";
+import { BulkDownload, OppPoolButton } from "@/components/mappool/MapPoolTools";
 
 type ViewMode = "card" | "table";
 
@@ -593,6 +593,7 @@ export default function MappoolPage() {
               原曲名
             </button>
             <BulkDownload maps={data ?? []} />
+            <OppPoolButton season={season} category={category} />
           </div>
         </div>
 
