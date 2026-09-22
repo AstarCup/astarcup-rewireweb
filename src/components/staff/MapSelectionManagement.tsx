@@ -49,6 +49,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { cn, fmt, fmtInt, formatDateTime } from "@/lib/utils";
+import { getDifficultyColor } from "@/lib/difficultyColor";
 import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, seasonLabel } from "@/lib/types";
 import type { MapSelection, BeatmapInfo, MapComment, ModStatsResult, StaffStats, SeasonMappoolStat } from "@/lib/types";
 
@@ -308,13 +309,7 @@ const STAT_FIELDS: { key: string; label: string }[] = [
 ];
 
 function starColor(s: number | null): string {
-  const v = s ?? 0;
-  if (v < 2) return "#4a90d9";
-  if (v < 3.5) return "#5cb8a5";
-  if (v < 5) return "#f5c040";
-  if (v < 6.5) return "#e85d75";
-  if (v < 8) return "#a78bfa";
-  return "#7c3aed";
+  return getDifficultyColor(s ?? 0);
 }
 
 function fmtLength(seconds: number | null): string {
