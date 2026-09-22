@@ -29,6 +29,7 @@ const LINKS = [
   { to: "/guide", label: "手册" },
   { to: "/schedule", label: "赛程" },
   { to: "/mappool", label: "图池" },
+  { to: "/tools", label: "工具" },
   { to: "/registrations", label: "选手" },
   { to: "/photos", label: "历届" },
   { to: "/contact", label: "联系我们" },

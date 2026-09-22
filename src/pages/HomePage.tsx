@@ -43,17 +43,17 @@ const projectLinks = [
   {
     label: "osu! Plus Plus",
     desc: "OPP工具箱",
-    href: "https://github.com/osuplusplus/OPP",
+    to: "/tools",
   },
   {
     label: "Ez2Lazer",
     desc: "支持asio、强化mania的第三方客户端",
-    href: "https://github.com/SK-la/Ez2Lazer",
+    to: "/tools",
   },
   {
     label: "g0v0 lazer",
     desc: "咕服专用客户端，支持asio",
-    href: "https://github.com/GooGuTeam/g0v0/",
+    to: "/tools",
   },
 ];
 
@@ -143,16 +143,14 @@ export default function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-6 md:px-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {projectLinks.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              key={l.label}
+              to={l.to}
               className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
             >
               <p className="font-bold text-xl text-(--pc-ink)">{l.label}</p>
               <p className="mt-1 text-xs text-(--pc-faint)">{l.desc}</p>
-            </a>
+            </Link>
           ))}
         </div>
       </section>

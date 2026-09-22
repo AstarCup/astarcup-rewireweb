@@ -1,5 +1,8 @@
 import Logo from "./Logo";
+import { Link } from "react-router-dom";
 import { useApp } from "@/lib/app-context";
+
+const INTERNAL_LINKS = [{ to: "/tools", label: "比赛工具" }];
 
 const EXTERNAL_LINKS = [
   { label: "osu! 官网", href: "https://osu.ppy.sh" },
@@ -24,6 +27,13 @@ export default function Footer() {
         <div>
           <h4 className="text-xl font-bold text-(--pc-ink)">相关链接</h4>
           <ul className="mt-2 space-y-1.5 text-xs text-(--pc-slate)">
+            {INTERNAL_LINKS.map((l) => (
+              <li key={l.to}>
+                <Link className="transition-colors hover:text-[#e85d75]" to={l.to}>
+                  {l.label}
+                </Link>
+              </li>
+            ))}
             {EXTERNAL_LINKS.map((l) => (
               <li key={l.href}>
                 <a

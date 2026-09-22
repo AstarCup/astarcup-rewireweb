@@ -230,8 +230,10 @@ export default function PlayerInfoPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* 左列：基本信息 + g0v0 绑定纵向堆叠 */}
+        <div className="flex flex-col gap-6 lg:col-span-1">
         {/* Profile */}
-        <Card className="lg:col-span-1">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5 text-[#6b7fb5]" />
@@ -302,7 +304,7 @@ export default function PlayerInfoPage() {
         </Card>
 
         {/* g0v0 服务器绑定 */}
-        <Card className="lg:col-span-1">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Gamepad2 className="h-5 w-5 text-[#5cb8a5]" />
@@ -351,6 +353,7 @@ export default function PlayerInfoPage() {
             )}
           </CardContent>
         </Card>
+        </div>
 
         {/* Next match */}
         <Card className="lg:col-span-2">
