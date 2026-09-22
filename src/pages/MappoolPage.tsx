@@ -380,7 +380,12 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                 {objs != null && (
                   <td className="px-4 py-3 font-sans text-(--pc-slate)">{objs}</td>
                 )}
-                <td className="px-4 py-3 font-sans text-[#e85d75]">{fmt(m.starRating)}★</td>
+                <td
+                  className="px-4 py-3 font-sans font-bold"
+                  style={{ color: getDifficultyColor(m.starRating ?? 0) }}
+                >
+                  {fmt(m.starRating)}★
+                </td>
               </tr>
             );
           })}
