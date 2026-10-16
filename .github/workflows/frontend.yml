@@ -41,9 +41,21 @@ jobs:
           path: dist
           if-no-files-found: error
 
-      # 仅当配置了 FTP secrets 时部署，避免未配置密钥的仓库构建失败
+      # 检测是否配置了 FTP secrets（secrets 不能在 step 的 if 中直接引用）
+      - name: Detect FTP secrets
+        id: ftp
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+        run: |
+          if [ -n "$FTP_SERVER" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 仅在 main / 手动触发且已配置 FTP secrets 时部署，避免未配置密钥的仓库构建失败
       - name: Deploy to FTP
-        if: ${{ (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && secrets.FTP_SERVER != '' }}
+        if: ${{ (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && steps.ftp.outputs.enabled == 'true' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
