@@ -1599,7 +1599,7 @@ export default function MapSelectionManagement() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="全部">全部</SelectItem>
+              <SelectItem value="全部">All</SelectItem>
               {CATEGORY_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -2218,7 +2218,7 @@ export default function MapSelectionManagement() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {category === "全部" ? "全部阶段" : CATEGORY_LABEL[category] ?? category} 统计
+              {category === "全部" ? "All Stages" : CATEGORY_LABEL[category] ?? category} Stats
             </DialogTitle>
             <DialogDescription>
               {season ? `赛季 ${seasonLabel(settings, season)}` : "全部赛季"} 图池统计数据

@@ -539,7 +539,7 @@ export default function MappoolPage() {
                   <SelectValue placeholder="选择轮次" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="全部">全部</SelectItem>
+                  <SelectItem value="全部">All</SelectItem>
                   {CATEGORY_OPTIONS.map((o) => (
                     <SelectItem key={o.value} value={o.value}>
                       {o.label}

@@ -217,7 +217,7 @@ export default function StreamingManagement() {
                   <Badge variant={room.status === "full" ? "primary" : "teal"}>{room.status}</Badge>
                 </div>
                 <p className="mt-1 text-xs text-(--pc-faint)">
-                  {room.roundNumber} 轮 · {roomSchedule(room)}
+                  R{room.roundNumber} · {roomSchedule(room)}
                 </p>
                 <div className="mt-3 flex gap-2">
                   <Badge variant="teal">裁判 {referee}</Badge>

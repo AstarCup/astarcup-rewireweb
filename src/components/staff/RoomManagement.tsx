@@ -53,21 +53,21 @@ const AFTERNOON_TIMES = Array.from({ length: (22 - 13) * 2 + 1 }, (_, i) => {
 });
 
 const ROUND_OPTIONS: { value: string; label: string }[] = [
-  { value: "1", label: "资格赛 (QUA)" },
-  { value: "2", label: "16强 (RO16)" },
-  { value: "3", label: "8强 (QF)" },
-  { value: "4", label: "半决赛 (SF)" },
-  { value: "5", label: "决赛 (F)" },
-  { value: "6", label: "总决赛 (GF)" },
+  { value: "1", label: "QUA" },
+  { value: "2", label: "RO16" },
+  { value: "3", label: "QF" },
+  { value: "4", label: "SF" },
+  { value: "5", label: "F" },
+  { value: "6", label: "GF" },
 ];
 
-const STAGE_CN: Record<string, string> = {
-  "1": "资格赛",
-  "2": "16强",
-  "3": "8强",
-  "4": "半决赛",
-  "5": "决赛",
-  "6": "总决赛",
+const STAGE_LABEL: Record<string, string> = {
+  "1": "QUA",
+  "2": "RO16",
+  "3": "QF",
+  "4": "SF",
+  "5": "F",
+  "6": "GF",
 };
 
 const ALL_TIMES = [...MORNING_TIMES, ...AFTERNOON_TIMES];
@@ -225,7 +225,7 @@ export default function RoomManagement() {
     for (let i = 0; i < ALL_TIMES.length; i++) {
       const dateStr = format(batchDateObj, "yyyy-MM-dd");
       const res = await api.post("/api/rooms", {
-        room_name: `${STAGE_CN[batchStage] ?? batchStage} ${batchStart + i}`,
+        room_name: `${STAGE_LABEL[batchStage] ?? batchStage} ${batchStart + i}`,
         round_number: Number(batchStage),
         match_date: `${dateStr}T00:00:00`,
         match_time: `${dateStr}T${ALL_TIMES[i]}:00`,
@@ -277,7 +277,7 @@ export default function RoomManagement() {
                 <Input
                   value={form.room_name}
                   onChange={setField("room_name")}
-                  placeholder="如：32强 · 1 号房"
+                  placeholder="e.g. RO16 · Room 1"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -467,7 +467,7 @@ export default function RoomManagement() {
               </div>
               <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-3 text-xs text-(--pc-slate)">
                 将创建 {ALL_TIMES.length} 个房间（{ALL_TIMES[0]} ~ {ALL_TIMES[ALL_TIMES.length - 1]}），房间名「
-                {STAGE_CN[batchStage] ?? "阶段"} 1」至「{STAGE_CN[batchStage] ?? "阶段"} {ALL_TIMES.length}」。
+                {STAGE_LABEL[batchStage] ?? "Stage"} 1」至「{STAGE_LABEL[batchStage] ?? "Stage"} {ALL_TIMES.length}」。
               </div>
               {batchBusy && (
                 <div className="h-2 overflow-hidden rounded-full bg-(--pc-paper)">

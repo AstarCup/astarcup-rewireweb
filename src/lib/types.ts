@@ -454,24 +454,24 @@ export type StaffRole = "referee" | "commentator" | "streamer";
 export const MODS_ORDER: readonly string[] = ["NM", "HD", "HR", "DT", "FM", "LZ", "TB"];
 
 export const CATEGORIES = [
-  "全部",
-  "资格赛",
-  "32强",
-  "16强",
-  "8强",
-  "半决赛",
-  "决赛",
-  "总决赛",
+  "All",
+  "QUA",
+  "RO32",
+  "RO16",
+  "QF",
+  "SF",
+  "F",
+  "GF",
 ] as const;
 
-/** 图池阶段选项（value 为后端存储值，label 为中文显示） */
+/** 图池阶段选项（value 为后端存储值，label 为英文简写） */
 export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: "qualification", label: "资格赛" },
-  { value: "ro16", label: "16强" },
-  { value: "quarterfinals", label: "8强" },
-  { value: "semifinals", label: "半决赛" },
-  { value: "finals", label: "决赛" },
-  { value: "grandfinals", label: "总决赛" },
+  { value: "qualification", label: "QUA" },
+  { value: "ro16", label: "RO16" },
+  { value: "quarterfinals", label: "QF" },
+  { value: "semifinals", label: "SF" },
+  { value: "finals", label: "F" },
+  { value: "grandfinals", label: "GF" },
 ];
 
 export const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(

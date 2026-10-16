@@ -60,12 +60,12 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const STAGE_OPTIONS: { value: string; label: string }[] = [
-  { value: "qua", label: "资格赛" },
-  { value: "ro16", label: "16强" },
-  { value: "qf", label: "四分之一决赛" },
-  { value: "sf", label: "半决赛" },
-  { value: "f", label: "决赛" },
-  { value: "gf", label: "总决赛" },
+  { value: "qua", label: "QUA" },
+  { value: "ro16", label: "RO16" },
+  { value: "qf", label: "QF" },
+  { value: "sf", label: "SF" },
+  { value: "f", label: "F" },
+  { value: "gf", label: "GF" },
 ];
 
 function StageCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -84,7 +84,7 @@ function StageCombobox({ value, onChange }: { value: string; onChange: (v: strin
           aria-expanded={open}
           className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary"
         >
-          {current ? `${current.label} (${current.value})` : value || "选择阶段"}
+          {current ? current.label : value || "选择阶段"}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
         </button>
       </PopoverTrigger>
