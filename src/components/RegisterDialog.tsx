@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
 import { fmtInt } from "@/lib/utils";
+import { site } from "@/lib/site";
 import { REG_STATUS_LABEL } from "@/lib/types";
 import type { ContentCheck } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -187,22 +188,22 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
         </DialogHeader>
         <div className="grid max-h-[65vh] gap-4 overflow-y-auto pr-1">
           {alreadyRegistered && (
-            <p className="rounded-xl bg-[#5cb8a5]/10 p-3 text-sm font-bold text-(--pc-ink)">
+            <p className="rounded-xl bg-pc-teal/10 p-3 text-sm font-bold text-(--pc-ink)">
               当前报名状态：{REG_STATUS_LABEL[regStatus] ?? regStatus}，无需重复报名。
             </p>
           )}
           {!regEnabled && (
-            <p className="rounded-xl bg-[#e85d75]/10 p-3 text-sm font-bold text-[#e85d75]">
+            <p className="rounded-xl bg-pc-primary/10 p-3 text-sm font-bold text-pc-primary">
               报名暂未开放，请关注官方公告。
             </p>
           )}
           {maxPp > 0 && !ppOk && (
-            <p className="rounded-xl bg-[#e85d75]/10 p-3 text-sm font-bold text-[#e85d75]">
+            <p className="rounded-xl bg-pc-primary/10 p-3 text-sm font-bold text-pc-primary">
               你的 PP（{fmtInt(userPp)}）不在报名区间 {fmtInt(minPp)} ~ {fmtInt(maxPp)} 内，无法报名。
             </p>
           )}
           {!g0v0Bound && (
-            <div className="rounded-xl border-2 border-[#f5c040] bg-[#f5c040]/10 p-4">
+            <div className="rounded-xl border-2 border-pc-yellow bg-pc-yellow/10 p-4">
               <p className="text-sm font-bold text-(--pc-ink)">
                 尚未绑定 g0v0 服务器账号
               </p>
@@ -248,7 +249,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                       setSkills((prev) => ({ ...prev, [f.key]: e.target.value }))
                     }
                     placeholder="0-10"
-                    className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-[#e85d75]"
+                    className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-pc-primary"
                   />
                 </label>
               ))}
@@ -271,9 +272,9 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                     onChange={(e) => handleCustomKey(e.target.value)}
                     placeholder="随便输点什么"
                     className={`h-9 w-full rounded-lg border-2 bg-(--pc-white) px-3 pr-8 text-sm text-(--pc-ink) outline-none ${customKeyState === "invalid"
-                        ? "border-[#e85d75]"
+                        ? "border-pc-primary"
                         : customKeyState === "valid"
-                          ? "border-[#5cb8a5]"
+                          ? "border-pc-teal"
                           : "border-(--pc-border)"
                       }`}
                   />
@@ -282,15 +283,15 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                       <span className="animate-pulse text-(--pc-faint)">检</span>
                     )}
                     {customKeyState === "valid" && (
-                      <span className="font-bold text-[#5cb8a5]">✓</span>
+                      <span className="font-bold text-pc-teal">✓</span>
                     )}
                     {customKeyState === "invalid" && (
-                      <span className="font-bold text-[#e85d75]">✗</span>
+                      <span className="font-bold text-pc-primary">✗</span>
                     )}
                   </span>
                 </div>
                 {customKeyError && (
-                  <span className="text-xs text-[#e85d75]">{customKeyError}</span>
+                  <span className="text-xs text-pc-primary">{customKeyError}</span>
                 )}
               </label>
               <label className="grid gap-1">
@@ -301,7 +302,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                   value={customValue}
                   onChange={(e) => setCustomValue(e.target.value)}
                   placeholder="输入数值"
-                  className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-[#e85d75]"
+                  className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-pc-primary"
                 />
               </label>
             </div>
@@ -311,17 +312,17 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
             <p className="text-sm font-bold text-(--pc-ink)">QQ 号（必填）</p>
             <p className="mt-0.5 text-xs text-(--pc-faint)">
-              方便staff与你联系（还请记得加QQ群:<a href="https://qm.qq.com/q/sFydxoQtaw" target="_blank" rel="noopener noreferrer">1072271422</a>）。
+              方便staff与你联系（还请记得加QQ群:<a href={site.contact.qqGroup} target="_blank" rel="noopener noreferrer">{site.contact.qqGroupNumber}</a>）。
             </p>
             <input
               type="text"
               value={qq}
               onChange={(e) => setQq(e.target.value)}
               placeholder="请输入 QQ 号"
-              className="mt-3 h-9 w-full rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-[#e85d75]"
+              className="mt-3 h-9 w-full rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-pc-primary"
             />
             {!qq.trim() && (
-              <p className="mt-1 text-xs text-[#e85d75]">报名需填写 QQ 号</p>
+              <p className="mt-1 text-xs text-pc-primary">报名需填写 QQ 号</p>
             )}
           </div>
 
@@ -330,18 +331,18 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
               type="checkbox"
               checked={regAgreed}
               onChange={(e) => setRegAgreed(e.target.checked)}
-              className="mt-0.5 h-4 w-4 accent-[#e85d75]"
+              className="mt-0.5 h-4 w-4 accent-pc-primary"
             />
             <span className="text-xs leading-relaxed text-(--pc-slate)">
               我已阅读并了解{" "}
-              <Link to="/guide" className="font-bold text-[#6b7fb5] underline">
+              <Link to="/guide" className="font-bold text-pc-blue underline">
                 比赛手册
               </Link>
               ，同意遵守比赛规则并确认报名信息无误。
             </span>
           </label>
           {regMsg && (
-            <p className="rounded-xl bg-[#e85d75]/10 p-3 text-sm font-bold text-[#e85d75]">{regMsg}</p>
+            <p className="rounded-xl bg-pc-primary/10 p-3 text-sm font-bold text-pc-primary">{regMsg}</p>
           )}
         </div>
         <DialogFooter>

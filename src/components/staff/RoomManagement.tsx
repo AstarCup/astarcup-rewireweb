@@ -119,12 +119,22 @@ export default function RoomManagement() {
     s === "full" ? "primary" : s === "closed" ? "outline" : "teal";
 
   const createRoom = async () => {
+    // 后端 CreateRoomBody 的 match_date/match_time 为非可选字符串，且 parse_dt
+    // 只接受 "%Y-%m-%dT%H:%M:%S" 或纯日期，因此这里发完整 ISO 时间（date 取当天 00:00）。
+    if (!form.room_name.trim()) {
+      toast({ variant: "destructive", title: "请填写房间名称" });
+      return;
+    }
+    if (!form.match_date || !form.match_time) {
+      toast({ variant: "destructive", title: "请选择日期与时间" });
+      return;
+    }
     setBusy(true);
     const res = await api.post("/api/rooms", {
       room_name: form.room_name,
       round_number: form.round_number ? Number(form.round_number) : 1,
-      match_date: form.match_date || null,
-      match_time: form.match_time || null,
+      match_date: `${form.match_date}T00:00:00`,
+      match_time: `${form.match_date}T${form.match_time}:00`,
       match_number: form.match_number ? Number(form.match_number) : 1,
       max_participants: form.max_participants ? Number(form.max_participants) : 0,
       description: form.description || null,
@@ -239,7 +249,7 @@ export default function RoomManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle tag="房间管理" accent="#5cb8a5" className="mb-0">
+        <SectionTitle tag="房间管理" accent="var(--pc-teal)" className="mb-0">
           比赛房间
         </SectionTitle>
         <div className="flex items-center gap-2">
@@ -303,7 +313,7 @@ export default function RoomManagement() {
                         type="button"
                         role="combobox"
                         aria-expanded={dateOpen}
-                        className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-[#e85d75] focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
+                        className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
                         onClick={() => {
                           if (!dateObj && form.match_date) setDateObj(new Date(form.match_date));
                         }}
@@ -408,7 +418,7 @@ export default function RoomManagement() {
                       type="button"
                       role="combobox"
                       aria-expanded={batchDateOpen}
-                      className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-[#e85d75] focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
+                      className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
                     >
                       {batchDateObj ? format(batchDateObj, "yyyy年M月d日") : "选择日期"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
@@ -462,7 +472,7 @@ export default function RoomManagement() {
               {batchBusy && (
                 <div className="h-2 overflow-hidden rounded-full bg-(--pc-paper)">
                   <div
-                    className="h-full rounded-full bg-[#5cb8a5] transition-all duration-200"
+                    className="h-full rounded-full bg-pc-teal transition-all duration-200"
                     style={{ width: `${(batchProgress / ALL_TIMES.length) * 100}%` }}
                   />
                 </div>
@@ -489,7 +499,7 @@ export default function RoomManagement() {
           }}
         >
           <DialogTrigger asChild>
-            <Button variant="outline" className="border-[#e85d75]/60 text-[#e85d75] hover:bg-[#e85d75]/5">
+            <Button variant="outline" className="border-pc-primary/60 text-pc-primary hover:bg-pc-primary/5">
               批量删除
             </Button>
           </DialogTrigger>
@@ -518,7 +528,7 @@ export default function RoomManagement() {
                       type="checkbox"
                       checked={deleteIds.has(room.id)}
                       onChange={() => toggleDeleteId(room.id)}
-                      className="h-4 w-4 accent-[#e85d75]"
+                      className="h-4 w-4 accent-pc-primary"
                     />
                     <span className="font-bold text-(--pc-ink)">{room.roomName}</span>
                     <span className="text-xs text-(--pc-faint)">

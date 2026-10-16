@@ -10,16 +10,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
-          "bg-primary text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
         primary:
-          "bg-primary text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
+          "bg-primary text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
         secondary:
-          "bg-(--pc-white) text-foreground border-2 border-[#2d2d2d] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
+          "bg-(--pc-white) text-foreground border-2 border-pc-ink shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
         teal:
-          "bg-[#5cb8a5] text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
+          "bg-pc-teal text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
         yellow:
-          "bg-[#f5c040] text-(--pc-ink) shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
+          "bg-pc-yellow text-(--pc-ink) shadow-[3px_3px_0px_rgba(0,0,0,0.1)] hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]",
         outline:
           "border-2 border-(--pc-border) bg-(--pc-white) text-foreground shadow-[2px_2px_0px_rgba(0,0,0,0.06)] hover:shadow-[4px_4px_0px_rgba(0,0,0,0.1)]",
         ghost:
@@ -36,7 +34,7 @@ const buttonVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "default",
+      variant: "primary",
       size: "default",
     },
   },

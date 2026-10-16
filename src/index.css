@@ -58,6 +58,12 @@
   --pc-slate: #666666;
   --pc-faint: #b0a898;
   --pc-border: #e0d8cc;
+
+  /* 强调色上的固定“纸色”文字（明/暗均保持） */
+  --pc-cream: #fdf6ee;
+
+  /* 动画速度倍率（AnimatedLogo 等使用 calc(time * var(--anim-scale))） */
+  --anim-scale: 1;
 }
 
 .dark {
@@ -103,6 +109,8 @@
   --pc-slate: #b6aa95;
   --pc-faint: #857961;
   --pc-border: #3a332a;
+
+  --pc-cream: #fdf6ee;
 }
 
 @theme inline {
@@ -140,6 +148,19 @@
   --font-sans: "Varela Round", ui-rounded, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
     system-ui, sans-serif;
   --font-display: "Varela Round", ui-rounded, "PingFang SC", system-ui, sans-serif;
+
+  /* Paper Craft 调色板 → Tailwind 颜色工具类（bg-pc-primary / text-pc-teal / border-pc-blue/40 …） */
+  --color-pc-primary: var(--pc-primary);
+  --color-pc-teal: var(--pc-teal);
+  --color-pc-yellow: var(--pc-yellow);
+  --color-pc-blue: var(--pc-blue);
+  --color-pc-paper: var(--pc-paper);
+  --color-pc-white: var(--pc-white);
+  --color-pc-ink: var(--pc-ink);
+  --color-pc-slate: var(--pc-slate);
+  --color-pc-faint: var(--pc-faint);
+  --color-pc-border: var(--pc-border);
+  --color-pc-cream: var(--pc-cream);
 }
 
 @layer base {

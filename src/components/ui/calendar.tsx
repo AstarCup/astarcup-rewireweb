@@ -17,10 +17,10 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
       )}
       style={
         {
-          "--rdp-accent-color": "#e85d75",
-          "--rdp-accent-background-color": "#fdf6ee",
+          "--rdp-accent-color": "var(--pc-primary)",
+          "--rdp-accent-background-color": "var(--pc-cream)",
           "--rdp-day_button-border-radius": "0.5rem",
-          "--rdp-today-color": "#e85d75",
+          "--rdp-today-color": "var(--pc-primary)",
           "--rdp-day-height": "48px",
           "--rdp-day-width": "48px",
           "--rdp-day_button-height": "46px",
@@ -31,8 +31,8 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         caption_label: "font-bold text-(--pc-ink)",
         weekday: "text-(--pc-faint)",
         day_button:
-          "rounded-lg text-(--pc-ink) hover:bg-[#6b7fb5]/10 hover:text-(--pc-ink) p-3",
-        day_selected: "bg-[#e85d75] text-[#fdf6ee] hover:bg-[#e85d75] hover:text-[#fdf6ee]",
+          "rounded-lg text-(--pc-ink) hover:bg-pc-blue/10 hover:text-(--pc-ink) p-3",
+        day_selected: "bg-pc-primary text-pc-cream hover:bg-pc-primary hover:text-pc-cream",
         ...classNames,
       }}
       {...props}

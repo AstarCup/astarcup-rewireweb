@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,8 +29,9 @@ import { PageHeader } from "@/components/paper/paper";
 import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { cn, fmtInt } from "@/lib/utils";
+import { cn, fmtInt, osuAvatarUrl } from "@/lib/utils";
 import { useApp } from "@/lib/app-context";
+import { site } from "@/lib/site";
 import { seasonOptions as buildSeasonOptions } from "@/lib/types";
 import { seasonLabel } from "@/lib/types";
 import type { SessionUser, Settings } from "@/lib/types";
@@ -48,13 +49,13 @@ function statusBadge(status?: string) {
   switch (status) {
     case "approved":
       return (
-        <Badge variant="teal" className="border-[#5cb8a5] bg-[#5cb8a5] text-[#fdf6ee]">
+        <Badge variant="teal" className="border-pc-teal bg-pc-teal text-pc-cream">
           已审核
         </Badge>
       );
     case "registered":
       return (
-        <Badge variant="yellow" className="border-[#f5c040] bg-[#f5c040] text-(--pc-ink)">
+        <Badge variant="yellow" className="border-pc-yellow bg-pc-yellow text-(--pc-ink)">
           待审核
         </Badge>
       );
@@ -66,6 +67,9 @@ function statusBadge(status?: string) {
 function coverUrl(p: SessionUser): string | null {
   return p.cover?.customUrl || p.cover?.url || null;
 }
+
+/** 已结束赛季需拉全量用户（不限报名状态） */
+const usersUrl = (all: boolean) => (all ? "/api/users?status=all" : "/api/users");
 
 function radarSkills(p: SessionUser) {
   const skills = [
@@ -110,7 +114,7 @@ function PlayerCard({
           <div
             className={cn(
               "relative h-20 w-full overflow-hidden",
-              cover && "bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40",
+              cover && "bg-gradient-to-br from-pc-teal/40 to-pc-blue/40",
             )}
           >
             {cover && (
@@ -124,8 +128,8 @@ function PlayerCard({
           </div>
           <div className="-mt-9 flex flex-col items-center gap-2 px-4 pb-4">
             <Avatar className="h-16 w-16 rounded-2xl border-4 border-white bg-(--pc-paper)">
-              <AvatarImage src={player.avatarUrl ?? undefined} alt={player.username} />
-              <AvatarFallback className="bg-[#f5c040]/30 text-lg font-bold text-(--pc-ink)">
+              <AvatarImage src={player.avatarUrl || osuAvatarUrl(player.osuId)} alt={player.username} />
+              <AvatarFallback className="bg-pc-yellow/30 text-lg font-bold text-(--pc-ink)">
                 {player.username?.slice(0, 1).toUpperCase() ?? "?"}
               </AvatarFallback>
             </Avatar>
@@ -137,7 +141,7 @@ function PlayerCard({
             <div className="flex w-full items-center justify-around">
               <div className="flex-1">
                 <p className="text-xs text-(--pc-faint)">PP</p>
-                <p className="font-sans text-sm font-bold text-[#6b7fb5]">{fmtInt(player.pp)}</p>
+                <p className="font-sans text-sm font-bold text-pc-blue">{fmtInt(player.pp)}</p>
               </div>
               <div className="w-px self-stretch bg-(--pc-border)" />
               <div className="flex-1">
@@ -153,7 +157,7 @@ function PlayerCard({
                 <>
                   {player.guServerUserId && (
                     <img
-                      src={`https://a.g0v0.top/${player.guServerUserId}`}
+                      src={site.urls.g0v0Avatar(player.guServerUserId)}
                       alt=""
                       className="h-5 w-5 rounded-full border border-(--pc-border) object-cover"
                       onError={(e) => {
@@ -161,7 +165,7 @@ function PlayerCard({
                       }}
                     />
                   )}
-                  <span className="truncate text-xs font-bold text-[#5cb8a5]">
+                  <span className="truncate text-xs font-bold text-pc-teal">
                     {player.guServerUsername || `#${player.guServerUserId}`}
                   </span>
                 </>
@@ -206,15 +210,20 @@ export default function RegistrationsPage() {
   const isFinished = !!season && settings?.seasons?.[season]?.status === "finished";
 
   const loadedRef = useRef<boolean | null>(null);
+  // 仅在成功后置位缓存标记，保证失败/重试后不会跳过拉取
+  const loadUsers = useCallback(
+    (all: boolean) =>
+      run(() => api.get<SessionUser[]>(usersUrl(all))).then((res) => {
+        if (res.ok) loadedRef.current = all;
+        return res;
+      }),
+    [run],
+  );
   useEffect(() => {
     if (season === undefined) return;
-    const needsAll = isFinished;
-    if (loadedRef.current === needsAll) return;
-    loadedRef.current = needsAll;
-    void run(() =>
-      api.get<SessionUser[]>(needsAll ? "/api/users?status=all" : "/api/users"),
-    );
-  }, [season, isFinished, run]);
+    if (loadedRef.current === isFinished) return;
+    void loadUsers(isFinished);
+  }, [season, isFinished, loadUsers]);
 
   const players = data ?? [];
   const loadingPlayers = season === undefined || loading;
@@ -288,10 +297,7 @@ export default function RegistrationsPage() {
 
         {loadingPlayers && <LoadingBlock label="正在加载参赛选手…" />}
         {error && (
-          <ErrorBlock
-            message={error}
-            onRetry={() => void run(() => api.get<SessionUser[]>("/api/users"))}
-          />
+          <ErrorBlock message={error} onRetry={() => void loadUsers(isFinished)} />
         )}
 
         {!loadingPlayers && !error && visible.length === 0 && (
@@ -320,15 +326,15 @@ export default function RegistrationsPage() {
               </DialogHeader>
               <div className="flex flex-col items-center gap-4 py-2 text-center">
                 <Avatar className="h-24 w-24 rounded-2xl border-2 border-(--pc-border)">
-                  <AvatarImage src={selected.avatarUrl ?? undefined} alt={selected.username} />
-                  <AvatarFallback className="bg-[#f5c040]/30 text-2xl font-bold text-(--pc-ink)">
+                  <AvatarImage src={selected.avatarUrl || osuAvatarUrl(selected.osuId)} alt={selected.username} />
+                  <AvatarFallback className="bg-pc-yellow/30 text-2xl font-bold text-(--pc-ink)">
                     {selected.username?.slice(0, 1).toUpperCase() ?? "?"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid w-full grid-cols-2 gap-3">
                   <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
                     <p className="text-xs text-(--pc-faint)">PP</p>
-                    <p className="mt-1 font-sans font-bold text-[#6b7fb5]">
+                    <p className="mt-1 font-sans font-bold text-pc-blue">
                       {fmtInt(selected.pp)}
                     </p>
                   </div>
@@ -354,18 +360,20 @@ export default function RegistrationsPage() {
 
                 <div className="w-full rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3 text-center">
                   <p className="text-xs text-(--pc-faint)">g0v0 服务器玩家</p>
-                  {selected.guServerUsername ? (
+                  {selected.guServerUserId || selected.guServerUsername ? (
                     <div className="mt-1 flex items-center justify-center gap-2">
-                      <img
-                        src={`https://a.g0v0.top/${selected.guServerUserId}`}
-                        alt=""
-                        className="h-8 w-8 rounded-full border-2 border-(--pc-border) object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                      <span className="font-bold text-[#5cb8a5]">
-                        {selected.guServerUsername}
+                      {selected.guServerUserId && (
+                        <img
+                          src={site.urls.g0v0Avatar(selected.guServerUserId)}
+                          alt=""
+                          className="h-8 w-8 rounded-full border-2 border-(--pc-border) object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      )}
+                      <span className="font-bold text-pc-teal">
+                        {selected.guServerUsername || `#${selected.guServerUserId}`}
                       </span>
                     </div>
                   ) : (

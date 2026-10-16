@@ -5,7 +5,7 @@ import { api, qs } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
 import { useFetch, useAsync, LoadingBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
-import { fmtInt, formatDateTime } from "@/lib/utils";
+import { fmtInt, formatDateTime, osuAvatarUrl } from "@/lib/utils";
 import type { MatchRoom, NextMatch, Settings } from "@/lib/types";
 import { seasonLabel } from "@/lib/types";
 import {
@@ -77,7 +77,9 @@ export default function PlayerInfoPage() {
   const bookableRooms = (rooms.data ?? []).filter((r) => {
     if (r.claimed) return false;
     if (!r.matchTime) return true;
-    return new Date(r.matchTime).getTime() - Date.now() > BOOK_WINDOW_MS;
+    const t = new Date(r.matchTime).getTime();
+    if (Number.isNaN(t)) return true;
+    return t - Date.now() > BOOK_WINDOW_MS;
   });
 
   // Redirect unauthenticated users to register.
@@ -117,7 +119,17 @@ export default function PlayerInfoPage() {
         description: text[reason] ?? reason,
       });
     }
-    if (b) window.history.replaceState(null, "", "/player-info");
+    if (b) {
+      const params = new URLSearchParams(window.location.search);
+      params.delete("bound");
+      params.delete("reason");
+      const qs = params.toString();
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`,
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -199,7 +211,7 @@ export default function PlayerInfoPage() {
           <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-[#e85d75]" />
+                <Trophy className="h-5 w-5 text-pc-primary" />
                 报名参赛
               </CardTitle>
               <CardDescription className="mt-1">
@@ -236,14 +248,14 @@ export default function PlayerInfoPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-[#6b7fb5]" />
+              <User className="h-5 w-5 text-pc-blue" />
               基本信息
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={user.avatarUrl ?? undefined} alt={user.username} />
+                <AvatarImage src={user.avatarUrl || osuAvatarUrl(user.osuId)} alt={user.username} />
                 <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="min-w-0">
@@ -307,7 +319,7 @@ export default function PlayerInfoPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Gamepad2 className="h-5 w-5 text-[#5cb8a5]" />
+              <Gamepad2 className="h-5 w-5 text-pc-teal" />
               g0v0 服务器绑定
             </CardTitle>
             <CardDescription>报名比赛前需先绑定 g0v0 私服账号</CardDescription>
@@ -365,7 +377,7 @@ export default function PlayerInfoPage() {
             {nextLoading ? (
               <LoadingBlock label="加载对阵信息…" />
             ) : nextError ? (
-              <p className="rounded-xl bg-[#e85d75]/10 p-4 text-sm font-bold text-[#e85d75]">
+              <p className="rounded-xl bg-pc-primary/10 p-4 text-sm font-bold text-pc-primary">
                 {nextError}
               </p>
             ) : nextMatch ? (
@@ -374,7 +386,7 @@ export default function PlayerInfoPage() {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
                       <AvatarImage
-                        src={nextMatch.opponent.avatarUrl ?? undefined}
+                        src={nextMatch.opponent.avatarUrl || osuAvatarUrl(nextMatch.opponent.osuId)}
                         alt={nextMatch.opponent.username}
                       />
                       <AvatarFallback>
@@ -441,7 +453,7 @@ export default function PlayerInfoPage() {
           </DialogHeader>
 
           {rooms.error && (
-            <p className="rounded-xl bg-[#e85d75]/10 p-3 text-sm font-bold text-[#e85d75]">
+            <p className="rounded-xl bg-pc-primary/10 p-3 text-sm font-bold text-pc-primary">
               {rooms.error}
             </p>
           )}
@@ -451,7 +463,11 @@ export default function PlayerInfoPage() {
               <SelectValue placeholder="选择比赛房间" />
             </SelectTrigger>
             <SelectContent>
-              {rooms.loading && <SelectItem value="-1">加载中…</SelectItem>}
+              {rooms.loading && (
+                <SelectItem value="-1" disabled>
+                  加载中…
+                </SelectItem>
+              )}
               {rooms.data && bookableRooms.length === 0 && (
                 <SelectItem value="none" disabled>
                   暂无空闲房间
@@ -469,7 +485,7 @@ export default function PlayerInfoPage() {
           </Select>
 
           {booking.error && (
-            <p className="rounded-xl bg-[#e85d75]/10 p-3 text-sm font-bold text-[#e85d75]">
+            <p className="rounded-xl bg-pc-primary/10 p-3 text-sm font-bold text-pc-primary">
               {booking.error}
             </p>
           )}
@@ -477,7 +493,7 @@ export default function PlayerInfoPage() {
           <DialogFooter>
             <Button
               variant="primary"
-              disabled={!selectedRoomId || booking.loading}
+              disabled={!selectedRoomId || selectedRoomId === "-1" || booking.loading}
               onClick={() => void confirmBooking()}
             >
               {booking.loading ? "预约中…" : "确认预约"}

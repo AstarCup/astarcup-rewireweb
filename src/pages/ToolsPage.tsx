@@ -3,6 +3,7 @@ import { Check, ExternalLink, Gamepad2, Github, Home, Wrench } from "lucide-reac
 import { PageHeader, PaperStack } from "@/components/paper/paper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { site } from "@/lib/site";
 
 interface ToolEntry {
   name: string;
@@ -33,8 +34,8 @@ const TOOLS: ToolEntry[] = [
       "镜像批量下载、筛选队列与多镜像自动回退；管理 Stable 收藏夹、导入分享码并自动补齐缺失谱面；浏览、预览和导出本地谱面与 Skin（.osz / .osk）；Skin Workshop 可组合 Stable Skin 组件并安全保存为副本",
       "o!rdr 在线渲染与 Danser 本地回放渲染队列、tosu / tosu-lyrics 与 OBS 直播工作流，以及 Trainer 练习谱面生成、网易云音乐搜索、空间去重与占用统计等实用工具",
     ],
-    href: "https://github.com/osuplusplus/OPP",
-    color: "#6b7fb5",
+    href: site.urls.oppRepo,
+    color: "var(--pc-blue)",
     icon: Wrench,
   },
   {
@@ -47,9 +48,9 @@ const TOOLS: ToolEntry[] = [
     ],
     usage: "原生g0v0体验。",
     features: ["咕服专用客户端", "支持 ASIO 低延迟音频"],
-    href: "https://github.com/GooGuTeam/g0v0/",
-    site: { label: "g0v0 官网", href: "https://lazer.g0v0.top/" },
-    color: "#5cb8a5",
+    href: site.urls.g0v0Repo,
+    site: { label: "g0v0 官网", href: site.urls.g0v0 },
+    color: "var(--pc-teal)",
     icon: Gamepad2,
   },
   {
@@ -62,7 +63,7 @@ const TOOLS: ToolEntry[] = [
     ],
     usage: "选手可选择 Ez2Lazer 参赛，获得更低的音频延迟表现。",
     features: ["ezSkin自定功能", "支持 ASIO 低延迟音频", "8000帧update draw游戏表现"],
-    href: "https://github.com/SK-la/Ez2Lazer",
+    href: site.urls.ez2lazerRepo,
     color: "#a78bfa",
     icon: Gamepad2,
   },
@@ -73,7 +74,7 @@ export default function ToolsPage() {
     <div>
       <PageHeader
         title="比赛工具"
-        accent="#6b7fb5"
+        accent="var(--pc-blue)"
         subtitle={
           <>
             本站比赛用到的三个开源项目：OPP 负责图池与赛程组织，Ez2Lazer 与 g0v0 lazer
@@ -90,7 +91,7 @@ export default function ToolsPage() {
               <div className="p-6 md:p-8">
                 <div className="flex flex-col gap-6 md:flex-row md:items-start">
                   <span
-                    className="grid h-14 w-14 shrink-0 rotate-[-2deg] place-items-center rounded-2xl text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.12)]"
+                    className="grid h-14 w-14 shrink-0 rotate-[-2deg] place-items-center rounded-2xl text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.12)]"
                     style={{ backgroundColor: t.color }}
                   >
                     <Icon className="h-7 w-7" />
@@ -101,7 +102,7 @@ export default function ToolsPage() {
                         href={t.href}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-bold text-2xl text-(--pc-ink) transition-colors hover:text-[#e85d75]"
+                        className="font-bold text-2xl text-(--pc-ink) transition-colors hover:text-pc-primary"
                       >
                         {t.name}
                       </a>

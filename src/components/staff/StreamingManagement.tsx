@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/app-context";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
@@ -66,20 +66,36 @@ export default function StreamingManagement() {
   const [revoking, setRevoking] = useState<number | null>(null);
 
   const list = assignments.data ?? [];
+  // 用户信息晚于挂载到达时补全默认值（不覆盖用户已填写的内容）
+  useEffect(() => {
+    if (!user) return;
+    setStaffOsuId((v) => v || user.osuId);
+    setStaffUsername((v) => v || user.username);
+  }, [user]);
+
   const refetch = () => {
     void rooms.load();
     void assignments.load();
   };
 
-  const counts = rooms.data?.map((room) => {
-    const inRoom = list.filter((a) => a.roomId === room.id);
-    return {
-      room,
-      referee: inRoom.filter((a) => a.role === "referee").length,
-      commentator: inRoom.filter((a) => a.role === "commentator").length,
-      streamer: inRoom.filter((a) => a.role === "streamer").length,
-    };
-  });
+  // 按房间聚合安排，避免每渲染一次就全量过滤
+  const counts = useMemo(() => {
+    const byRoom = new Map<number, StaffRoomAssignment[]>();
+    for (const a of assignments.data ?? []) {
+      const arr = byRoom.get(a.roomId) ?? [];
+      arr.push(a);
+      byRoom.set(a.roomId, arr);
+    }
+    return (rooms.data ?? []).map((room) => {
+      const inRoom = byRoom.get(room.id) ?? [];
+      return {
+        room,
+        referee: inRoom.filter((a) => a.role === "referee").length,
+        commentator: inRoom.filter((a) => a.role === "commentator").length,
+        streamer: inRoom.filter((a) => a.role === "streamer").length,
+      };
+    });
+  }, [rooms.data, assignments.data]);
 
   const apply = async () => {
     if (!roomId || !staffOsuId || !staffUsername) {
@@ -120,7 +136,7 @@ export default function StreamingManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle tag="房间加入" accent="#e85d75" className="mb-0">
+        <SectionTitle tag="房间加入" accent="var(--pc-primary)" className="mb-0">
           主播 / 解说 / 裁判安排
         </SectionTitle>
         <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
@@ -212,7 +228,7 @@ export default function StreamingManagement() {
             ))}
           </div>
 
-          <SectionTitle tag="当前安排" accent="#5cb8a5" className="mt-8 mb-0">
+          <SectionTitle tag="当前安排" accent="var(--pc-teal)" className="mt-8 mb-0">
             人员安排列表
           </SectionTitle>
           {list.length === 0 ? (

@@ -14,10 +14,10 @@ export function PaperStack({
   return (
     <div className={cn("paper-stack", className)}>
       {layers >= 2 && (
-        <span aria-hidden className="paper-stack__under paper-stack__under--1 rounded-2xl bg-[#f5c040]/70" />
+        <span aria-hidden className="paper-stack__under paper-stack__under--1 rounded-2xl bg-pc-yellow/70" />
       )}
       {layers >= 3 && (
-        <span aria-hidden className="paper-stack__under paper-stack__under--2 rounded-2xl bg-[#5cb8a5]/70" />
+        <span aria-hidden className="paper-stack__under paper-stack__under--2 rounded-2xl bg-pc-teal/70" />
       )}
       <div className="relative rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
         {children}
@@ -30,7 +30,7 @@ export function PaperStack({
 export function SectionTitle({
   children,
   tag,
-  accent = "#e85d75",
+  accent = "var(--pc-primary)",
   className,
 }: {
   children: ReactNode;
@@ -42,7 +42,7 @@ export function SectionTitle({
     <div className={cn("mb-6", className)}>
       {tag && (
         <span
-          className="mb-2 inline-block rounded-lg px-2 py-0.5 text-xs font-bold text-[#fdf6ee] shadow-[2px_2px_0px_rgba(0,0,0,0.1)]"
+          className="mb-2 inline-block rounded-lg px-2 py-0.5 text-xs font-bold text-pc-cream shadow-[2px_2px_0px_rgba(0,0,0,0.1)]"
           style={{ backgroundColor: accent }}
         >
           {tag}
@@ -57,7 +57,7 @@ export function SectionTitle({
 export function PageHeader({
   title,
   subtitle,
-  accent = "#e85d75",
+  accent = "var(--pc-primary)",
 }: {
   title: string;
   subtitle?: ReactNode;
@@ -72,7 +72,7 @@ export function PageHeader({
       />
       <span
         aria-hidden
-        className="absolute right-10 top-8 h-14 w-14 rotate-12 rounded-xl bg-[#f5c040] opacity-50"
+        className="absolute right-10 top-8 h-14 w-14 rotate-12 rounded-xl bg-pc-yellow opacity-50"
       />
       <div className="relative mx-auto max-w-6xl">
         <h1 className="font-bold text-4xl md:text-6xl text-(--pc-ink)">{title}</h1>

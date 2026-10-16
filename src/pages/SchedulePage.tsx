@@ -16,25 +16,25 @@ function statusBadge(status: string) {
   switch (status) {
     case "pending":
       return (
-        <Badge variant="primary" className="border-[#e85d75] bg-[#e85d75]">
+        <Badge variant="primary" className="border-pc-primary bg-pc-primary">
           待定
         </Badge>
       );
     case "confirmed":
       return (
-        <Badge variant="teal" className="border-[#5cb8a5] bg-[#5cb8a5]">
+        <Badge variant="teal" className="border-pc-teal bg-pc-teal">
           已确认
         </Badge>
       );
     case "completed":
       return (
-        <Badge variant="yellow" className="border-[#f5c040] bg-[#f5c040] text-(--pc-ink)">
+        <Badge variant="yellow" className="border-pc-yellow bg-pc-yellow text-(--pc-ink)">
           已完成
         </Badge>
       );
     case "cancelled":
       return (
-        <Badge variant="outline" className="border-[#e85d75]/40 bg-(--pc-white) text-[#e85d75]">
+        <Badge variant="outline" className="border-pc-primary/40 bg-(--pc-white) text-pc-primary">
           已取消
         </Badge>
       );
@@ -107,12 +107,12 @@ function ScheduleItem({ item }: { item: MatchSchedule }) {
 
       <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-(--pc-slate)">
         {room?.roundNumber != null && room.roundNumber > 0 && (
-          <span className="rounded-lg bg-[#6b7fb5]/10 px-2 py-0.5 font-bold text-[#6b7fb5]">
+          <span className="rounded-lg bg-pc-blue/10 px-2 py-0.5 font-bold text-pc-blue">
             R{room.roundNumber}
           </span>
         )}
         {room?.matchNumber != null && room.matchNumber > 0 && (
-          <span className="rounded-lg bg-[#f5c040]/15 px-2 py-0.5 font-bold text-(--pc-ink)">
+          <span className="rounded-lg bg-pc-yellow/15 px-2 py-0.5 font-bold text-(--pc-ink)">
             第 {room.matchNumber} 场
           </span>
         )}
@@ -129,7 +129,7 @@ function ScheduleItem({ item }: { item: MatchSchedule }) {
                 href={l.href as string}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 py-1.5 text-xs font-bold text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:text-[#e85d75]"
+                className="inline-flex items-center rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 py-1.5 text-xs font-bold text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:text-pc-primary"
               >
                 {l.label}
               </a>
@@ -168,7 +168,7 @@ export default function SchedulePage() {
             {groups.map((g) => (
               <section key={g.key}>
                 <div className="mb-4 flex items-center gap-3">
-                  <span className="inline-block rounded-xl bg-[#5cb8a5] px-3 py-1 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)]">
+                  <span className="inline-block rounded-xl bg-pc-teal px-3 py-1 text-sm font-bold text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]">
                     {g.label}
                   </span>
                   {g.matchDate && (

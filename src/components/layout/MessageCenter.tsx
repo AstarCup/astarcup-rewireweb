@@ -49,7 +49,7 @@ export default function MessageCenter() {
         >
           <Bell className="h-5 w-5 text-(--pc-ink)" />
           {unread > 0 && (
-            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#e85d75] px-1 text-[10px] font-bold text-[#fdf6ee]">
+            <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-pc-primary px-1 text-[10px] font-bold text-pc-cream">
               {unread > 99 ? "99+" : unread}
             </span>
           )}

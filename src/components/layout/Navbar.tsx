@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { cn, osuAvatarUrl } from "@/lib/utils";
 
 const LINKS = [
   { to: "/", label: "首页" },
@@ -53,7 +53,7 @@ export default function Navbar() {
           <Drawer open={menuOpen} onOpenChange={setMenuOpen}>
             <DrawerTrigger asChild>
               <button
-                className="grid h-9 w-9 place-items-center rounded-xl bg-[#e85d75] text-[#fdf6ee] shadow-[2px_2px_0px_rgba(0,0,0,0.12)] rotate-[-2deg] transition-all duration-200 hover:-translate-y-0.5 md:hidden"
+                className="grid h-9 w-9 place-items-center rounded-xl bg-pc-primary text-pc-cream shadow-[2px_2px_0px_rgba(0,0,0,0.12)] rotate-[-2deg] transition-all duration-200 hover:-translate-y-0.5 md:hidden"
                 aria-label="打开菜单"
               >
                 <Menu className="h-5 w-5" />
@@ -119,7 +119,7 @@ export default function Navbar() {
               {permissions?.isadmin && (
                 <Link
                   to="/staff-dashboard"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#5cb8a5] px-3 py-2 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 lg:px-4"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-pc-teal px-3 py-2 text-sm font-bold text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 lg:px-4"
                   aria-label="管理后台"
                 >
                   <ShieldCheck className="h-4 w-4" />
@@ -134,7 +134,7 @@ export default function Navbar() {
                     aria-label="用户菜单"
                   >
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatarUrl || undefined} />
+                      <AvatarImage src={user.avatarUrl || osuAvatarUrl(user.osuId)} />
                       <AvatarFallback>{user.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
                     </Avatar>
                     <span className="hidden text-sm font-bold lg:inline">{user.username}</span>
@@ -154,7 +154,7 @@ export default function Navbar() {
           ) : (
             <Link
               to="/register"
-              className="rounded-xl bg-[#e85d75] px-4 py-2.5 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)] sm:px-6"
+              className="rounded-xl bg-pc-primary px-4 py-2.5 text-sm font-bold text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)] sm:px-6"
             >
               登录<span className="hidden sm:inline"> / 报名</span>
             </Link>

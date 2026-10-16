@@ -17,10 +17,12 @@ import {
 import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { cn, fmt } from "@/lib/utils";
+import { cn, fmt, osuAvatarUrl } from "@/lib/utils";
 import { getDifficultyColor } from "@/lib/difficultyColor";
 import { useApp } from "@/lib/app-context";
 import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, type MapSelection } from "@/lib/types";
+import { MOD_COLORS, MOD_DISPLAY, modBase } from "@/lib/mods";
+import { site } from "@/lib/site";
 import { BulkDownload, OppPoolButton } from "@/components/mappool/MapPoolTools";
 
 type ViewMode = "card" | "table";
@@ -54,16 +56,10 @@ function fmtLength(seconds: number | null): string {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
-/** First mod segment (e.g. "HD+HR" -> "HD"), defaulting to "NM". */
-function modKey(m: MapSelection): string {
-  if (!m.selectedMods) return "NM";
-  return m.selectedMods.split("+")[0].toUpperCase() || "NM";
-}
-
 function groupMaps(list: MapSelection[]): ModGroup[] {
   const map = new Map<string, MapSelection[]>();
   for (const m of list) {
-    const key = modKey(m);
+    const key = modBase(m);
     if (!map.has(key)) map.set(key, []);
     map.get(key)!.push(m);
   }
@@ -88,32 +84,12 @@ function groupMaps(list: MapSelection[]): ModGroup[] {
 }
 
 function osuLink(m: MapSelection): string {
-  return m.url ?? `https://osu.ppy.sh/beatmaps/${m.beatmapId}`;
+  return m.url ?? site.urls.osuBeatmap(m.beatmapId);
 }
 
 function sayobotUrl(s: MapSelection): string {
-  return `https://dl.sayobot.cn/beatmaps/download/full/${s.beatmapsetId ?? s.beatmapId}`;
+  return site.urls.sayobot(s.beatmapsetId ?? s.beatmapId);
 }
-
-const MOD_COLORS: Record<string, string> = {
-  NM: "#6b7fb5",
-  HD: "#f5c040",
-  HR: "#e85d75",
-  DT: "#a78bfa",
-  FM: "#5cb8a5",
-  LZ: "#ec6ba8",
-  TB: "#2d2d2d",
-};
-
-const MOD_DISPLAY: Record<string, string> = {
-  NM: "No Mod",
-  HD: "Hidden",
-  HR: "Hard Rock",
-  DT: "Double Time",
-  FM: "Free Mod",
-  LZ: "Lazer Mod",
-  TB: "Tiebreaker",
-};
 
 function ModHeader({ group }: { group: ModGroup }) {
   return (
@@ -154,7 +130,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
   };
   return (
     <div className="group overflow-hidden rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]">
-      <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
+      <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-pc-teal/40 to-pc-blue/40">
         {map.coverUrl ? (
           <img
             src={map.coverUrl}
@@ -163,7 +139,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
             loading="lazy"
           />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-[#f5c040]/30 px-4">
+          <div className="grid h-full w-full place-items-center bg-pc-yellow/30 px-4">
             <span className="line-clamp-2 text-center text-sm font-bold text-(--pc-ink)">
               {map.title || "未命名图"}
             </span>
@@ -175,7 +151,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
           <div className="flex flex-wrap items-center gap-1.5">
             <span
               className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
-              style={{ backgroundColor: MOD_COLORS[modKey(map)] ?? "#666" }}
+              style={{ backgroundColor: MOD_COLORS[modBase(map)] ?? "#666" }}
             >
               {map.selectedMods ?? "NM"}
               {map.modPosition ?? ""}
@@ -193,7 +169,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
                   href={sayobotUrl(map)}
                   target="_blank"
                   rel="noreferrer"
-                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                 >
                   <Download className="h-3.5 w-3.5" />
                 </a>
@@ -208,7 +184,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
                   href={osuLink(map)}
                   target="_blank"
                   rel="noreferrer"
-                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                 >
                   <Globe className="h-3.5 w-3.5" />
                 </a>
@@ -221,7 +197,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
               <HoverCardTrigger asChild>
                 <a
                   href={`osu://b/${map.beatmapId}`}
-                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -243,14 +219,14 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
               <HoverCardTrigger asChild>
                 <button
                   onClick={copyBid}
-                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                  className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                 >
                   <Clipboard className="h-3.5 w-3.5" />
                 </button>
               </HoverCardTrigger>
               <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
                 <p className="text-xs font-bold text-(--pc-ink)">
-                  BID: <span className="font-mono text-[#e85d75]">{map.beatmapId}</span>
+                  BID: <span className="font-mono text-pc-primary">{map.beatmapId}</span>
                 </p>
               </HoverCardContent>
             </HoverCard>
@@ -272,10 +248,14 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
         </div>
         {(map.selectedByUsername || map.selectedBy) && (
           <div className="mt-3 flex items-center gap-2">
-            {map.selectedByAvatar ? (
-              <img src={map.selectedByAvatar} alt="" className="h-6 w-6 rounded-full object-cover" />
+            {map.selectedByAvatar || osuAvatarUrl(map.selectedBy) ? (
+              <img
+                src={map.selectedByAvatar || osuAvatarUrl(map.selectedBy)}
+                alt=""
+                className="h-6 w-6 rounded-full object-cover"
+              />
             ) : (
-              <div className="grid h-6 w-6 place-items-center rounded-full bg-[#f5c040]/30 text-[10px] font-bold text-(--pc-ink)">
+              <div className="grid h-6 w-6 place-items-center rounded-full bg-pc-yellow/30 text-[10px] font-bold text-(--pc-ink)">
                 {(map.selectedByUsername || map.selectedBy || "?").slice(0, 1)}
               </div>
             )}
@@ -295,6 +275,8 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
 }
 
 function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean }) {
+  // 列是否展示“物件数”由整组决定，保证 th 与 td 数量一致
+  const showObjs = group.items.some((m) => m.moddedStats?.totalHitObjects != null);
   return (
     <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
       <table className="w-full min-w-[760px] text-left text-sm">
@@ -309,7 +291,7 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
             <th className="px-4 py-3 font-bold text-(--pc-slate)">BPM</th>
             <th className="px-4 py-3 font-bold text-(--pc-slate)">时长</th>
             <th className="px-4 py-3 font-bold text-(--pc-slate)">Max</th>
-            {group.items.some((m) => m.moddedStats?.totalHitObjects != null) && (
+            {showObjs && (
               <th className="px-4 py-3 font-bold text-(--pc-slate)">物件数</th>
             )}
             <th className="px-4 py-3 font-bold text-(--pc-slate)">星级</th>
@@ -336,7 +318,7 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                 <td className="px-4 py-3">
                   <span
                     className="rounded-lg px-2 py-0.5 text-xs font-bold text-white"
-                    style={{ backgroundColor: MOD_COLORS[modKey(m)] ?? "#666" }}
+                    style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
                   >
                     {m.selectedMods ?? "NM"}
                     {m.modPosition ?? ""}
@@ -351,7 +333,7 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                       loading="lazy"
                     />
                   ) : (
-                    <div className="h-10 w-16 rounded-md bg-[#f5c040]/30" />
+                    <div className="h-10 w-16 rounded-md bg-pc-yellow/30" />
                   )}
                 </td>
                 <td className="px-4 py-3">
@@ -361,7 +343,7 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                     href={osuLink(m)}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-bold text-(--pc-ink) transition-colors hover:text-[#e85d75]"
+                    className="font-bold text-(--pc-ink) transition-colors hover:text-pc-primary"
                   >
                     {title}
                   </a>
@@ -377,8 +359,8 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">
                   {m.maxCombo != null ? m.maxCombo : "-"}
                 </td>
-                {objs != null && (
-                  <td className="px-4 py-3 font-sans text-(--pc-slate)">{objs}</td>
+                {showObjs && (
+                  <td className="px-4 py-3 font-sans text-(--pc-slate)">{objs ?? "-"}</td>
                 )}
                 <td
                   className="px-4 py-3 font-sans font-bold"
@@ -396,22 +378,22 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
 }
 
 export default function MappoolPage() {
-  const { settings } = useApp();
+  const { settings, settingsLoaded } = useApp();
   // 首次载入(init=false)允许自动同步到最新赛季/当前阶段并持久化；之后(init=true)保持用户选择
-  // 用 useState 初始化器在渲染期同步写入，确保一打开页面就落盘
-  const [init] = useState(() => {
-    const done = localStorage.getItem("mappool_init") === "true";
+  const [init] = useState(() => localStorage.getItem("mappool_init") === "true");
+  // 首次挂载后落盘（不在 useState 初始化器里写副作用，否则 StrictMode 双调用会让 init 误为 true）
+  useEffect(() => {
     try {
       localStorage.setItem("mappool_init", "true");
     } catch {
       /* ignore */
     }
-    return done;
-  });
+  }, []);
 
-  const [category, setCategory] = useState<string>(
-    () => localStorage.getItem("mappool_category") ?? "全部",
-  );
+  const [category, setCategory] = useState<string>(() => {
+    const fromUrl = new URLSearchParams(window.location.search).get("category");
+    return fromUrl ?? localStorage.getItem("mappool_category") ?? "全部";
+  });
   const [view, setView] = useState<ViewMode>(() => {
     const v = localStorage.getItem("mappool_view");
     return v === "table" ? "table" : "card";
@@ -430,14 +412,13 @@ export default function MappoolPage() {
   const [season, setSeason] = useState<string>(() => {
     const saved = localStorage.getItem("mappool_season");
     if (saved) return saved;
-    return settings?.current_season || "s1";
+    return settings?.current_season || "";
   });
 
   const seasonSelectOptions = (() => {
     const pool = buildSeasonOptions(settings);
-    return pool.length
-      ? pool
-      : [{ value: settings?.current_season || "s1", label: settings?.current_season || "S1" }];
+    if (pool.length) return pool;
+    return season ? [{ value: season, label: season.toUpperCase() }] : [];
   })();
 
   // 仅在第一次载入时同步赛季到设置中的当前赛季，并持久化；之后保持用户选择
@@ -463,14 +444,22 @@ export default function MappoolPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.current_season_stage, category]);
 
-  // Reflect category in the URL.
+  // Reflect category in the URL（保留 path/hash 与其他 query 参数，便于分享深链）
   useEffect(() => {
-    const suffix = category === "全部" ? "" : `?category=${encodeURIComponent(category)}`;
-    window.history.replaceState(null, "", `/mappool${suffix}`);
+    const params = new URLSearchParams(window.location.search);
+    if (category === "全部") params.delete("category");
+    else params.set("category", category);
+    const suffix = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${suffix ? `?${suffix}` : ""}${window.location.hash}`,
+    );
   }, [category]);
 
-  // 赛季/轮次同步完成前不拉取图池：等两个 Select 稳定到最终值再加载
-  const settingsReady = !!settings?.seasons || !!settings?.current_season;
+  // settings 请求结束后即可按当前赛季/轮次拉取图池：
+  // 即使 /api/settings 失败，也用 localStorage/默认赛季继续，避免永久停留在 loading。
+  const settingsReady = settingsLoaded;
   const seasonSettled =
     init || !settings?.current_season || season === settings?.current_season;
   const stageMapped = settings?.current_season_stage
@@ -573,7 +562,7 @@ export default function MappoolPage() {
                   className={cn(
                     "rounded-lg px-4 py-1.5 text-sm font-bold transition-colors",
                     view === v
-                      ? "bg-[#6b7fb5] text-[#fdf6ee]"
+                      ? "bg-pc-blue text-pc-cream"
                       : "bg-transparent text-(--pc-slate) hover:text-(--pc-ink)",
                   )}
                 >
@@ -586,13 +575,13 @@ export default function MappoolPage() {
               className={cn(
                 "rounded-xl border-2 px-4 py-2 text-sm font-bold transition-all duration-200",
                 useUnicode
-                  ? "border-[#f5c040] bg-[#f5c040] text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.1)]"
+                  ? "border-pc-yellow bg-pc-yellow text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.1)]"
                   : "border-(--pc-border) bg-(--pc-white) text-(--pc-slate) hover:text-(--pc-ink)",
               )}
             >
               原曲名
             </button>
-            <BulkDownload maps={data ?? []} />
+            <BulkDownload maps={loading ? [] : (data ?? [])} />
             <OppPoolButton season={season} category={category} />
           </div>
         </div>

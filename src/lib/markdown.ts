@@ -38,17 +38,25 @@ const escapeHtml = (s: string): string =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+/** 仅放行安全 scheme，阻断 javascript:/data: 等链接注入。 */
+function safeUrl(url: string): string {
+  const trimmed = url.trim();
+  if (/^(https?:|mailto:|\/|\.\/|\.\.\/|#)/i.test(trimmed)) return trimmed;
+  return "#";
+}
+
 function inline(src: string): string {
   let s = escapeHtml(src);
   // images ![alt](url title)
   s = s.replace(
     /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
-    (_m, alt, url) => `<img src="${url}" alt="${alt || "image"}" loading="lazy" />`,
+    (_m, alt, url) => `<img src="${safeUrl(url)}" alt="${alt || "image"}" loading="lazy" />`,
   );
   // links [text](url)
   s = s.replace(
     /\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
-    (_m, text, url) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`,
+    (_m, text, url) =>
+      `<a href="${safeUrl(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`,
   );
   // bold
   s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
@@ -163,5 +171,3 @@ export function renderMarkdown(src: string): string {
   if (inCode) out.push("</code></pre>");
   return out.join("\n");
 }
-
-/** Merge contiguous paragraphs into <p> blocks (currently each line -> <p>). */

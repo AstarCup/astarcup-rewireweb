@@ -1,8 +1,15 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { site } from "@/lib/site";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/** osu! 头像：统一用 osuId 生成（username 版 URL 遇空格会失效），avatarUrl 缺失时兜底 */
+export function osuAvatarUrl(osuId?: string | number | null): string | undefined {
+  if (osuId === null || osuId === undefined || osuId === "") return undefined;
+  return site.urls.osuAvatar(osuId);
 }
 
 /** Format a number to 2 decimals, trimming trailing zeros. */
