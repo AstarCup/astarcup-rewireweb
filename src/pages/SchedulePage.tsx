@@ -106,6 +106,11 @@ function ScheduleItem({ item }: { item: MatchSchedule }) {
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2 text-xs text-(--pc-slate)">
+        {item.season && (
+          <span className="rounded-lg bg-pc-teal/10 px-2 py-0.5 font-bold text-pc-teal">
+            {item.season.toUpperCase()}
+          </span>
+        )}
         {room?.roundNumber != null && room.roundNumber > 0 && (
           <span className="rounded-lg bg-pc-blue/10 px-2 py-0.5 font-bold text-pc-blue">
             R{room.roundNumber}

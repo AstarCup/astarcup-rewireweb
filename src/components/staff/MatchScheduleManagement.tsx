@@ -44,6 +44,7 @@ function statusLabel(s: string): string {
 }
 
 interface RowForm {
+  season: string;
   red: string;
   blue: string;
   link: string;
@@ -76,6 +77,9 @@ function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: Schedu
         <Badge variant={statusVariant(s.status)}>{statusLabel(s.status)}</Badge>
       </div>
       {roomName && <p className="mt-1 text-xs text-(--pc-faint)">房间：{roomName}</p>}
+      <p className="mt-1 text-xs text-(--pc-faint)">
+        赛季：{s.season ? s.season.toUpperCase() : "未标注"}
+      </p>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="grid gap-1.5">
@@ -96,6 +100,15 @@ function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: Schedu
             placeholder={s.blueScore != null ? String(s.blueScore) : "0"}
           />
         </div>
+      </div>
+
+      <div className="mt-3 grid gap-1.5">
+        <Label className="text-xs text-(--pc-slate)">赛季</Label>
+        <Input
+          value={form.season}
+          onChange={setField("season")}
+          placeholder={s.season || "如 s2"}
+        />
       </div>
 
       <div className="mt-3 space-y-2">
@@ -166,6 +179,7 @@ export default function MatchScheduleManagement() {
 
   const rowForm = (s: MatchSchedule): RowForm =>
     forms[s.id] ?? {
+      season: "",
       red: "",
       blue: "",
       link: "",
@@ -208,6 +222,7 @@ export default function MatchScheduleManagement() {
   const saveDetails = async (s: MatchSchedule) => {
     const f = rowForm(s);
     const body: Record<string, string | number | null> = {
+      season: f.season === "" ? (s.season ?? null) : f.season,
       red_score: f.red === "" ? null : Number(f.red),
       blue_score: f.blue === "" ? null : Number(f.blue),
       match_link: f.link === "" ? (s.matchLink ?? null) : f.link,
@@ -218,7 +233,10 @@ export default function MatchScheduleManagement() {
     const res = await api.patch(`/api/schedules/${s.id}/details`, body);
     markBusy(`details-${s.id}`, false);
     if (res.ok) {
-      setForms((m) => ({ ...m, [s.id]: { red: "", blue: "", link: "", stream: "", replay: "" } }));
+      setForms((m) => ({
+        ...m,
+        [s.id]: { season: "", red: "", blue: "", link: "", stream: "", replay: "" },
+      }));
       toast({ title: "保存成功" });
       void load();
     } else {

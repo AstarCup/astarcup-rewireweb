@@ -118,6 +118,8 @@ export interface MatchSchedule {
   player1Username: string | null;
   player2OsuId: string | null;
   player2Username: string | null;
+  /** 该场比赛所属赛季，例如 s1 / s2 */
+  season?: string | null;
   redScore: number | null;
   blueScore: number | null;
   status: string; // pending | confirmed | completed | cancelled
