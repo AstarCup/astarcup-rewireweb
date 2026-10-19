@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Gamepad2, Home, LogOut, ShieldCheck, Trophy, User } from "lucide-react";
+import { Gamepad2, Bot, Home, LogOut, RefreshCw, ShieldCheck, Trophy, User } from "lucide-react";
 import { api, qs } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
 import { useFetch, useAsync, LoadingBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
-import { fmtInt, formatDateTime, osuAvatarUrl } from "@/lib/utils";
-import type { MatchRoom, NextMatch, Settings } from "@/lib/types";
+import { fmtInt, formatDateTime, osuAvatarUrl, platformLabel } from "@/lib/utils";
+import type { BotBindCode, BotBinding, MatchRoom, NextMatch, Settings } from "@/lib/types";
 import { seasonLabel } from "@/lib/types";
 import {
   Card,
@@ -94,6 +94,12 @@ export default function PlayerInfoPage() {
   const [searchParams] = useSearchParams();
   const [bindBusy, setBindBusy] = useState(false);
 
+  // ---- 机器人身份绑定 ----
+  const botBindings = useFetch<BotBinding[]>(() => api.get<BotBinding[]>("/api/me/bot-bindings"));
+  const [botBindCode, setBotBindCode] = useState<BotBindCode | null>(null);
+  const [botBindBusy, setBotBindBusy] = useState(false);
+  const [unbindingBotId, setUnbindingBotId] = useState<number | null>(null);
+
   // OAuth 回调后跳转提示 + 清理地址栏参数
   useEffect(() => {
     const b = searchParams.get("bound");
@@ -176,6 +182,52 @@ export default function PlayerInfoPage() {
         title: "解绑失败",
         description: res.error?.message,
       });
+    }
+  };
+
+  const handleGenerateBotBindCode = async () => {
+    setBotBindBusy(true);
+    const res = await api.post<BotBindCode>("/api/me/bot-bind-code");
+    setBotBindBusy(false);
+    if (res.ok) {
+      setBotBindCode(res.data);
+      toast({
+        title: "绑定码已生成",
+        description: `请在 ${res.data.ttlMinutes} 分钟内私聊机器人发送该指令`,
+      });
+    } else {
+      toast({
+        variant: "destructive",
+        title: "生成失败",
+        description: res.error.message,
+      });
+    }
+  };
+
+  const handleUnbindBot = async (id: number) => {
+    setUnbindingBotId(id);
+    const res = await api.delete(`/api/me/bot-bindings/${id}`);
+    setUnbindingBotId(null);
+    if (res.ok) {
+      toast({ title: "已解除机器人绑定" });
+      if (botBindCode) setBotBindCode(null);
+      await botBindings.refetch();
+    } else {
+      toast({
+        variant: "destructive",
+        title: "解绑失败",
+        description: res.error.message,
+      });
+    }
+  };
+
+  const copyBotBindCode = async () => {
+    if (!botBindCode) return;
+    try {
+      await navigator.clipboard.writeText(botBindCode.code);
+      toast({ title: "绑定码已复制" });
+    } catch {
+      toast({ variant: "destructive", title: "复制失败", description: "请手动选择复制" });
     }
   };
 
@@ -363,6 +415,104 @@ export default function PlayerInfoPage() {
                 </Button>
               </>
             )}
+          </CardContent>
+        </Card>
+
+        {/* 机器人身份绑定 */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bot className="h-5 w-5 text-pc-blue" />
+              机器人绑定
+            </CardTitle>
+            <CardDescription>
+              绑定后可在 QQ 群或私聊中使用 /rules、/book 等指令查询和预约比赛
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-(--pc-faint)">
+              绑定码等同于登录凭证，请勿发给他人；绑定请私聊机器人，不要发到群里。
+              也可以私聊机器人发送 <span className="font-mono">/bind</span> 获取一键绑定链接。
+            </p>
+            <Button
+              variant="primary"
+              onClick={() => void handleGenerateBotBindCode()}
+              disabled={botBindBusy}
+            >
+              {botBindBusy ? "生成中…" : "生成绑定码"}
+            </Button>
+
+            {botBindCode && (
+              <div className="space-y-2 rounded-xl bg-(--pc-paper) px-4 py-3">
+                <p className="text-xs text-(--pc-faint)">
+                  绑定码（{botBindCode.ttlMinutes} 分钟内有效，仅可使用一次）
+                </p>
+                <p className="break-all font-mono text-lg font-bold tracking-wider text-(--pc-ink)">
+                  {botBindCode.code}
+                </p>
+                <p className="text-xs text-(--pc-faint)">
+                  私聊机器人发送：
+                  <span className="font-mono text-(--pc-ink)">{botBindCode.command}</span>
+                </p>
+                <p className="text-xs text-(--pc-faint)">
+                  过期时间：{formatDateTime(botBindCode.expiresAt)}
+                </p>
+                <Button variant="outline" size="sm" onClick={() => void copyBotBindCode()}>
+                  复制绑定码
+                </Button>
+              </div>
+            )}
+
+            <Separator />
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-bold text-(--pc-faint)">已绑定账号</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void botBindings.refetch()}
+                  disabled={botBindings.loading}
+                >
+                  <RefreshCw className={botBindings.loading ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"} />
+                  刷新
+                </Button>
+              </div>
+              {botBindings.loading ? (
+                <p className="text-sm text-(--pc-faint)">加载中…</p>
+              ) : botBindings.error ? (
+                <p className="text-sm text-pc-primary">{botBindings.error}</p>
+              ) : (botBindings.data ?? []).length === 0 ? (
+                <p className="text-sm text-(--pc-faint)">尚未绑定任何机器人账号。</p>
+              ) : (
+                <div className="space-y-2">
+                  {(botBindings.data ?? []).map((binding) => (
+                    <div
+                      key={binding.id}
+                      className="flex items-center justify-between gap-2 rounded-xl bg-(--pc-paper) px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-(--pc-ink)">
+                          {platformLabel(binding.platform)}
+                          {binding.displayName ? ` · ${binding.displayName}` : ""}
+                        </p>
+                        <p className="truncate text-xs text-(--pc-faint)">
+                          {binding.platformUserId} · 绑定于 {formatDateTime(binding.createdAt)}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void handleUnbindBot(binding.id)}
+                        disabled={unbindingBotId === binding.id}
+                      >
+                        {unbindingBotId === binding.id ? "解绑中…" : "解绑"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
         </div>

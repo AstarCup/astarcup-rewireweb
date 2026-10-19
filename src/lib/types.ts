@@ -35,7 +35,7 @@ export interface SessionUser {
   guServerUsername?: string | null;
   guServerBindAt?: string | null;
   g0v0Bound?: boolean;
-  /** QQ 联系方式（报名可选填写） */
+  /** QQ 联系方式（报名可选填写；仅用于联系，不作为机器人鉴权依据） */
   qq?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -44,6 +44,35 @@ export interface SessionUser {
 export interface Permissions {
   isplayer: boolean;
   isadmin: boolean;
+}
+
+/** 机器人平台身份绑定（QQ / openid 等 -> osu 账号） */
+export interface BotBinding {
+  id: number;
+  platform: string;
+  platformUserId: string;
+  osuId: string;
+  displayName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BotBindCode {
+  code: string;
+  expiresAt: string;
+  ttlMinutes: number;
+  command: string;
+}
+
+/** 私聊一键绑定链接对应的平台身份 */
+export interface BotBindLinkInfo {
+  platform: string;
+  platformUserId: string;
+  displayName?: string | null;
+  expiresAt: string;
+  osuId: string;
+  username: string;
+  alreadyBound: boolean;
 }
 
 export interface AuthMe {

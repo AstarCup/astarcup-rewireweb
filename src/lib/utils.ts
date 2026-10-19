@@ -74,3 +74,26 @@ export function formatWallClock(iso?: string | null): string {
 /** Standard Paper Craft button shadow tokens. */
 export const hoverLift =
   "transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5";
+
+const PLATFORM_LABELS: Record<string, string> = {
+  aiocqhttp: "QQ",
+  qq_official: "QQ 官方",
+  telegram: "Telegram",
+};
+
+/** `platform` 可能形如 `qq_official:123456`，这里只取适配器名做展示。 */
+export function platformLabel(platform: string): string {
+  const base = platform.split(":")[0];
+  return PLATFORM_LABELS[base] ?? platform;
+}
+
+/** 平台账号展示：QQ 号直接显示，openid 只显示前后几位。 */
+export function platformUserLabel(platform: string, userId: string): string {
+  const base = platform.split(":")[0];
+  if (base === "aiocqhttp") return `QQ ${userId}`;
+  if (base === "qq_official") {
+    const short = userId.length > 16 ? `${userId.slice(0, 8)}…${userId.slice(-6)}` : userId;
+    return `QQ 官方账号（openid: ${short}）`;
+  }
+  return userId;
+}
