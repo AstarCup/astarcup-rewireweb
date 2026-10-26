@@ -53,9 +53,10 @@ jobs:
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # 仅在 main / 手动触发且已配置 FTP secrets 时部署，避免未配置密钥的仓库构建失败
+      # 仅在 main 上推送/手动触发且已配置 FTP secrets 时部署，避免未配置密钥的仓库构建失败，
+      # 也避免在 feature 分支手动触发时把该分支产物发布到生产
       - name: Deploy to FTP
-        if: ${{ (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && steps.ftp.outputs.enabled == 'true' }}
+        if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && steps.ftp.outputs.enabled == 'true' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
