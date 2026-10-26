@@ -396,7 +396,7 @@ export default function RegistrationsPage() {
                     size="sm"
                   >
                     <a
-                      href={`https://osu.ppy.sh/users/${selected.osuId}`}
+                      href={site.urls.osuUser(selected.osuId)}
                       target="_blank"
                       rel="noreferrer"
                     >
