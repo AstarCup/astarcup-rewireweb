@@ -1,4 +1,6 @@
+import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/paper/paper";
 import { LoadingBlock, ErrorBlock, useFetch } from "@/hooks/useFetch";
 import { api } from "@/lib/api";
@@ -151,8 +153,16 @@ export default function SchedulePage() {
   const { data, loading, error, load } = useFetch<MatchSchedule[]>(() =>
     api.get<MatchSchedule[]>("/api/schedules"),
   );
+  const [season, setSeason] = useState("all");
 
-  const groups = groupSchedules(data ?? []);
+  const all = data ?? [];
+  const seasons = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of all) if (s.season) set.add(s.season);
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [all]);
+  const visible = season === "all" ? all : all.filter((s) => s.season === season);
+  const groups = groupSchedules(visible);
 
   return (
     <div className="bg-(--pc-paper)">
@@ -161,6 +171,28 @@ export default function SchedulePage() {
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         {loading && <LoadingBlock label="正在加载赛程…" />}
         {error && <ErrorBlock message={error} onRetry={() => void load()} />}
+
+        {!loading && !error && seasons.length > 1 && (
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant={season === "all" ? "primary" : "outline"}
+              onClick={() => setSeason("all")}
+            >
+              全部
+            </Button>
+            {seasons.map((s) => (
+              <Button
+                key={s}
+                size="sm"
+                variant={season === s ? "primary" : "outline"}
+                onClick={() => setSeason(s)}
+              >
+                {s.toUpperCase()}
+              </Button>
+            ))}
+          </div>
+        )}
 
         {!loading && !error && groups.length === 0 && (
           <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">

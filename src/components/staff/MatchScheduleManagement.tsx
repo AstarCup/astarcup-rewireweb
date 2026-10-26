@@ -52,6 +52,15 @@ interface RowForm {
   replay: string;
 }
 
+const EMPTY_ROW_FORM: RowForm = {
+  season: "",
+  red: "",
+  blue: "",
+  link: "",
+  stream: "",
+  replay: "",
+};
+
 interface ScheduleCardProps {
   s: MatchSchedule;
   form: RowForm;
@@ -59,9 +68,18 @@ interface ScheduleCardProps {
   onForm: (f: RowForm) => void;
   onSaveDetails: () => void;
   onStatus: (status: string) => void;
+  onClearSeason: () => void;
 }
 
-function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: ScheduleCardProps) {
+function ScheduleCard({
+  s,
+  form,
+  busy,
+  onForm,
+  onSaveDetails,
+  onStatus,
+  onClearSeason,
+}: ScheduleCardProps) {
   const setField = (k: keyof RowForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
     onForm({ ...form, [k]: e.target.value });
 
@@ -103,7 +121,19 @@ function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: Schedu
       </div>
 
       <div className="mt-3 grid gap-1.5">
-        <Label className="text-xs text-(--pc-slate)">赛季</Label>
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-(--pc-slate)">赛季</Label>
+          {s.season && (
+            <button
+              type="button"
+              className="text-xs text-(--pc-faint) underline-offset-2 hover:text-pc-primary hover:underline disabled:opacity-50"
+              onClick={onClearSeason}
+              disabled={busy}
+            >
+              清除
+            </button>
+          )}
+        </div>
         <Input
           value={form.season}
           onChange={setField("season")}
@@ -177,15 +207,7 @@ export default function MatchScheduleManagement() {
 
   const playerList = players.data ?? [];
 
-  const rowForm = (s: MatchSchedule): RowForm =>
-    forms[s.id] ?? {
-      season: "",
-      red: "",
-      blue: "",
-      link: "",
-      stream: "",
-      replay: "",
-    };
+  const rowForm = (s: MatchSchedule): RowForm => forms[s.id] ?? EMPTY_ROW_FORM;
 
   const setRowForm = (s: MatchSchedule, f: RowForm) =>
     setForms((m) => ({ ...m, [s.id]: f }));
@@ -235,12 +257,28 @@ export default function MatchScheduleManagement() {
     if (res.ok) {
       setForms((m) => ({
         ...m,
-        [s.id]: { season: "", red: "", blue: "", link: "", stream: "", replay: "" },
+        [s.id]: { ...EMPTY_ROW_FORM },
       }));
       toast({ title: "保存成功" });
       void load();
     } else {
       toast({ variant: "destructive", title: "保存失败" });
+    }
+  };
+
+  const clearSeason = async (s: MatchSchedule) => {
+    markBusy(`season-${s.id}`, true);
+    const res = await api.patch(`/api/schedules/${s.id}/details`, { clearSeason: true });
+    markBusy(`season-${s.id}`, false);
+    if (res.ok) {
+      setForms((m) => ({
+        ...m,
+        [s.id]: { ...(m[s.id] ?? EMPTY_ROW_FORM), season: "" },
+      }));
+      toast({ title: "赛季已清除" });
+      void load();
+    } else {
+      toast({ variant: "destructive", title: "清除赛季失败" });
     }
   };
 
@@ -356,10 +394,11 @@ export default function MatchScheduleManagement() {
                     key={s.id}
                     s={s}
                     form={rowForm(s)}
-                    busy={busyKeys.has(`details-${s.id}`)}
+                    busy={busyKeys.has(`details-${s.id}`) || busyKeys.has(`season-${s.id}`)}
                     onForm={(f) => setRowForm(s, f)}
                     onSaveDetails={() => void saveDetails(s)}
                     onStatus={(st) => void updateStatus(s, st)}
+                    onClearSeason={() => void clearSeason(s)}
                   />
                 ))}
               </div>
