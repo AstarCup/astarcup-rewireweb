@@ -484,3 +484,40 @@ export function modCountByOrder(list: string[]): string[] {
   const seen = Array.from(new Set(list.filter((m) => !!m)));
   return seen.sort((a, b) => order.indexOf(a.split("+")[0]) - order.indexOf(b.split("+")[0]));
 }
+
+// ============ 资讯 / 赛季规则（后端 news、season_rules 表）============
+
+/** 资讯列表项（不含正文） */
+export interface NewsItem {
+  id: number;
+  slug: string;
+  title: string;
+  description: string;
+  /** YYYY-MM-DD */
+  date: string;
+  published: boolean;
+  updatedAt?: string;
+}
+
+/** 资讯详情（含 markdown 正文） */
+export interface NewsDetail extends NewsItem {
+  content: string;
+  createdAt?: string;
+}
+
+/** 新建/更新资讯的请求体 */
+export interface NewsInput {
+  slug: string;
+  title: string;
+  description: string;
+  date: string;
+  content: string;
+  published: boolean;
+}
+
+/** 赛季规则（Bot 读取的 markdown） */
+export interface SeasonRule {
+  season: string;
+  content: string;
+  updatedAt?: string;
+}

@@ -9,12 +9,14 @@ import { useApp } from "@/lib/app-context";
 import { SectionTitle, PaperStack } from "@/components/paper/paper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { parseFrontMatter } from "@/lib/markdown";
 import AnimatedLogo from "@/components/layout/AnimatedLogo";
 import winners from "@/data/winners.json";
 import RegisterDialog from "@/components/RegisterDialog";
 import { REG_STATUS_LABEL } from "@/lib/types";
+import type { NewsItem } from "@/lib/types";
 import { useState } from "react";
+import { useFetch } from "@/hooks/useFetch";
+import { api } from "@/lib/api";
 
 interface WinnerCard {
   id: string;
@@ -57,29 +59,15 @@ const projectLinks = [
   },
 ];
 
-const newsModules = import.meta.glob("@/data/news/*.md", {
-  query: "?raw",
-  import: "default",
-  eager: true,
-}) as Record<string, string>;
-
-const news = Object.entries(newsModules)
-  .map(([path, raw]) => ({
-    slug: path.split("/").pop()?.replace(/\.md$/, "") ?? "",
-    data: parseFrontMatter(raw).data,
-  }))
-  .sort((a, b) => {
-    const da = a.data.date ? new Date(a.data.date).getTime() : 0;
-    const db = b.data.date ? new Date(b.data.date).getTime() : 0;
-    return db - da;
-  });
-
 const medalColors = ["bg-[#f5c040]", "bg-[#cfd3c9]", "bg-[#e0a47e]"];
 const rankLabel = (rank: number) =>
   rank === 1 ? "Winner" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank} 名`;
 
 export default function HomePage() {
   const { user, permissions } = useApp();
+  // 最新资讯（后端 news 表）
+  const { data: newsData } = useFetch<NewsItem[]>(() => api.get("/api/news"));
+  const news = newsData ?? [];
 
   const [registerOpen, setRegisterOpen] = useState(false);
   const isAdmin = !!permissions?.isadmin;
@@ -169,7 +157,7 @@ export default function HomePage() {
             >
               <p className="font-bold text-xl text-(--pc-ink)">QQ Group</p>
               <img
-                src="/QQGroupQRcode.png"
+                src="/assets/QQGroupQRcode.png"
                 alt="QQ 群二维码"
                 className="absolute right-3 top-3 w-32 rounded-xl bg-(--pc-white) p-2 shadow-[3px_3px_0px_rgba(0,0,0,0.1)] opacity-0 transition group-hover:opacity-100"
               />
@@ -275,17 +263,17 @@ export default function HomePage() {
                 <div className="flex h-full flex-col gap-2 p-6">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="font-bold text-lg text-(--pc-ink)">
-                      {n.data.title || "未命名资讯"}
+                      {n.title || "未命名资讯"}
                     </h3>
-                    {n.data.date && (
+                    {n.date && (
                       <Badge variant="yellow" className="shrink-0">
-                        {n.data.date}
+                        {n.date}
                       </Badge>
                     )}
                   </div>
-                  {n.data.description && (
+                  {n.description && (
                     <p className="text-xs leading-relaxed text-(--pc-slate)">
-                      {n.data.description}
+                      {n.description}
                     </p>
                   )}
                 </div>

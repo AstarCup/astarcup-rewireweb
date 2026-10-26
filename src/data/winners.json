@@ -49,7 +49,7 @@
   "photos": [
     {
       "id": "photo-s1-1",
-      "imageUrl": "/photos/s1-1.png",
+      "imageUrl": "/assets/photos/s1-1.png",
       "caption": "冠军女装照OvO",
       "season": "s1",
       "position": {
@@ -61,7 +61,7 @@
     },
     {
       "id": "photo-s1-2",
-      "imageUrl": "/photos/s1-2.png",
+      "imageUrl": "/assets/photos/s1-2.png",
       "caption": "冠军女装照OvO",
       "season": "s1",
       "position": {

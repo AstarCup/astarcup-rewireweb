@@ -6,6 +6,7 @@ import {
   History,
   LayoutDashboard,
   Map,
+  Newspaper,
   Radio,
   Settings,
   Swords,
@@ -24,6 +25,7 @@ import RoomManagement from "@/components/staff/RoomManagement";
 import MatchupManagement from "@/components/staff/MatchupManagement";
 import UserManagement from "@/components/staff/UserManagement";
 import SettingsManagement from "@/components/staff/SettingsManagement";
+import ContentManagement from "@/components/staff/ContentManagement";
 
 const TABS = [
   { key: "overview", label: "概览", Icon: LayoutDashboard, Comp: OverviewManagement },
@@ -34,6 +36,7 @@ const TABS = [
   { key: "rooms", label: "房间管理", Icon: DoorOpen, Comp: RoomManagement },
   { key: "schedules", label: "比赛预约管理", Icon: CalendarClock, Comp: MatchScheduleManagement },
   { key: "streaming", label: "房间加入", Icon: Radio, Comp: StreamingManagement },
+  { key: "content", label: "内容管理", Icon: Newspaper, Comp: ContentManagement },
   { key: "settings", label: "系统设置", Icon: Settings, Comp: SettingsManagement },
 ] as const;
 

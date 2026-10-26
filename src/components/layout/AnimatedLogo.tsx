@@ -150,7 +150,7 @@ function AnimatedLogo() {
       >
         {/* 边框白色 限定位置 */}
         <image
-          href="/NewLogo/background.svg"
+          href="/assets/NewLogo/background.svg"
           width="850"
           height="630"
           x="10"

@@ -85,19 +85,19 @@ export default function OverviewManagement() {
             </div>
             <div>
               <CardDescription>报名开放</CardDescription>
-              <p className="mt-1">
+              <div className="mt-1">
                 <Badge variant={ts.registrationEnabled ? "teal" : "outline"}>
                   {ts.registrationEnabled ? "开放" : "关闭"}
                 </Badge>
-              </p>
+              </div>
             </div>
             <div>
               <CardDescription>图池可见</CardDescription>
-              <p className="mt-1">
+              <div className="mt-1">
                 <Badge variant={ts.mappoolVisible ? "blue" : "outline"}>
                   {ts.mappoolVisible ? "可见" : "隐藏"}
                 </Badge>
-              </p>
+              </div>
             </div>
           </div>
         </CardContent>

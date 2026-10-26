@@ -319,10 +319,10 @@ export default function MatchScheduleManagement() {
         <div className="space-y-6">
           {Object.entries(grouped).map(([room, list]) => (
             <div key={room}>
-              <p className="mb-3 flex items-center gap-2 text-sm font-bold text-(--pc-ink)">
+              <div className="mb-3 flex items-center gap-2 text-sm font-bold text-(--pc-ink)">
                 {room}
                 <Badge variant="outline">{list.length}</Badge>
-              </p>
+              </div>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 {list.map((s) => (
                   <ScheduleCard

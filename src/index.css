@@ -5,7 +5,7 @@
 /* ---- 英文字体：Varela Round（覆盖拉丁字母；中文回退到系统中文字体） ---- */
 @font-face {
   font-family: "Varela Round";
-  src: url("/fonts/Varela_Round/VarelaRound-Regular.ttf") format("truetype");
+  src: url("/assets/fonts/Varela_Round/VarelaRound-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;

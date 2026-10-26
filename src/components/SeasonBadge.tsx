@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/hover-card";
 
 /**
- * 赛季徽章：优先显示 /badge/{season}.svg 图片；图片缺失时回退为原来的奖杯 Badge。
+ * 赛季徽章：优先显示 /assets/badge/{season}.svg 图片；图片缺失时回退为原来的奖杯 Badge。
  * 悬停显示赛季名。
  */
 export default function SeasonBadge({
@@ -34,7 +34,7 @@ export default function SeasonBadge({
     <HoverCard openDelay={100}>
       <HoverCardTrigger asChild>
         <img
-          src={`/badge/${season.toLowerCase()}.svg`}
+          src={`/assets/badge/${season.toLowerCase()}.svg`}
           alt={label}
           className="h-6 w-auto max-w-[140px] cursor-help object-contain"
           onError={() => setFailed(true)}
