@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export default function NotFoundPage() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-24 text-center md:px-8">
-      <p className="font-display text-8xl font-bold text-[#e85d75] drop-shadow-[3px_3px_0px_rgba(0,0,0,0.12)]">
+      <p className="font-display text-8xl font-bold text-pc-primary drop-shadow-[3px_3px_0px_rgba(0,0,0,0.12)]">
         404
       </p>
       <h1 className="mt-4 font-bold text-2xl text-(--pc-ink)">页面不存在</h1>

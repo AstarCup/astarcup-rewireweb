@@ -53,21 +53,21 @@ const AFTERNOON_TIMES = Array.from({ length: (22 - 13) * 2 + 1 }, (_, i) => {
 });
 
 const ROUND_OPTIONS: { value: string; label: string }[] = [
-  { value: "1", label: "资格赛 (QUA)" },
-  { value: "2", label: "16强 (RO16)" },
-  { value: "3", label: "8强 (QF)" },
-  { value: "4", label: "半决赛 (SF)" },
-  { value: "5", label: "决赛 (F)" },
-  { value: "6", label: "总决赛 (GF)" },
+  { value: "1", label: "QUA" },
+  { value: "2", label: "RO16" },
+  { value: "3", label: "QF" },
+  { value: "4", label: "SF" },
+  { value: "5", label: "F" },
+  { value: "6", label: "GF" },
 ];
 
-const STAGE_CN: Record<string, string> = {
-  "1": "资格赛",
-  "2": "16强",
-  "3": "8强",
-  "4": "半决赛",
-  "5": "决赛",
-  "6": "总决赛",
+const STAGE_LABEL: Record<string, string> = {
+  "1": "QUA",
+  "2": "RO16",
+  "3": "QF",
+  "4": "SF",
+  "5": "F",
+  "6": "GF",
 };
 
 const ALL_TIMES = [...MORNING_TIMES, ...AFTERNOON_TIMES];
@@ -119,12 +119,22 @@ export default function RoomManagement() {
     s === "full" ? "primary" : s === "closed" ? "outline" : "teal";
 
   const createRoom = async () => {
+    // 后端 CreateRoomBody 的 match_date/match_time 为非可选字符串，且 parse_dt
+    // 只接受 "%Y-%m-%dT%H:%M:%S" 或纯日期，因此这里发完整 ISO 时间（date 取当天 00:00）。
+    if (!form.room_name.trim()) {
+      toast({ variant: "destructive", title: "请填写房间名称" });
+      return;
+    }
+    if (!form.match_date || !form.match_time) {
+      toast({ variant: "destructive", title: "请选择日期与时间" });
+      return;
+    }
     setBusy(true);
     const res = await api.post("/api/rooms", {
       room_name: form.room_name,
       round_number: form.round_number ? Number(form.round_number) : 1,
-      match_date: form.match_date || null,
-      match_time: form.match_time || null,
+      match_date: `${form.match_date}T00:00:00`,
+      match_time: `${form.match_date}T${form.match_time}:00`,
       match_number: form.match_number ? Number(form.match_number) : 1,
       max_participants: form.max_participants ? Number(form.max_participants) : 0,
       description: form.description || null,
@@ -215,7 +225,7 @@ export default function RoomManagement() {
     for (let i = 0; i < ALL_TIMES.length; i++) {
       const dateStr = format(batchDateObj, "yyyy-MM-dd");
       const res = await api.post("/api/rooms", {
-        room_name: `${STAGE_CN[batchStage] ?? batchStage} ${batchStart + i}`,
+        room_name: `${STAGE_LABEL[batchStage] ?? batchStage} ${batchStart + i}`,
         round_number: Number(batchStage),
         match_date: `${dateStr}T00:00:00`,
         match_time: `${dateStr}T${ALL_TIMES[i]}:00`,
@@ -239,7 +249,7 @@ export default function RoomManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle tag="房间管理" accent="#5cb8a5" className="mb-0">
+        <SectionTitle tag="房间管理" accent="var(--pc-teal)" className="mb-0">
           比赛房间
         </SectionTitle>
         <div className="flex items-center gap-2">
@@ -267,7 +277,7 @@ export default function RoomManagement() {
                 <Input
                   value={form.room_name}
                   onChange={setField("room_name")}
-                  placeholder="如：32强 · 1 号房"
+                  placeholder="e.g. RO16 · Room 1"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -303,7 +313,7 @@ export default function RoomManagement() {
                         type="button"
                         role="combobox"
                         aria-expanded={dateOpen}
-                        className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-[#e85d75] focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
+                        className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
                         onClick={() => {
                           if (!dateObj && form.match_date) setDateObj(new Date(form.match_date));
                         }}
@@ -408,7 +418,7 @@ export default function RoomManagement() {
                       type="button"
                       role="combobox"
                       aria-expanded={batchDateOpen}
-                      className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-[#e85d75] focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
+                      className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
                     >
                       {batchDateObj ? format(batchDateObj, "yyyy年M月d日") : "选择日期"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
@@ -457,12 +467,12 @@ export default function RoomManagement() {
               </div>
               <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-3 text-xs text-(--pc-slate)">
                 将创建 {ALL_TIMES.length} 个房间（{ALL_TIMES[0]} ~ {ALL_TIMES[ALL_TIMES.length - 1]}），房间名「
-                {STAGE_CN[batchStage] ?? "阶段"} 1」至「{STAGE_CN[batchStage] ?? "阶段"} {ALL_TIMES.length}」。
+                {STAGE_LABEL[batchStage] ?? "Stage"} 1」至「{STAGE_LABEL[batchStage] ?? "Stage"} {ALL_TIMES.length}」。
               </div>
               {batchBusy && (
                 <div className="h-2 overflow-hidden rounded-full bg-(--pc-paper)">
                   <div
-                    className="h-full rounded-full bg-[#5cb8a5] transition-all duration-200"
+                    className="h-full rounded-full bg-pc-teal transition-all duration-200"
                     style={{ width: `${(batchProgress / ALL_TIMES.length) * 100}%` }}
                   />
                 </div>
@@ -489,7 +499,7 @@ export default function RoomManagement() {
           }}
         >
           <DialogTrigger asChild>
-            <Button variant="outline" className="border-[#e85d75]/60 text-[#e85d75] hover:bg-[#e85d75]/5">
+            <Button variant="outline" className="border-pc-primary/60 text-pc-primary hover:bg-pc-primary/5">
               批量删除
             </Button>
           </DialogTrigger>
@@ -518,7 +528,7 @@ export default function RoomManagement() {
                       type="checkbox"
                       checked={deleteIds.has(room.id)}
                       onChange={() => toggleDeleteId(room.id)}
-                      className="h-4 w-4 accent-[#e85d75]"
+                      className="h-4 w-4 accent-pc-primary"
                     />
                     <span className="font-bold text-(--pc-ink)">{room.roomName}</span>
                     <span className="text-xs text-(--pc-faint)">

@@ -17,6 +17,8 @@ interface AppContextValue {
   /** Re-fetch session & permissions. Returns true if a user is logged in. */
   refresh: () => Promise<boolean>;
   settings: Settings | null;
+  /** 站点设置的请求是否已结束（无论成功失败），用于避免永久 loading。 */
+  settingsLoaded: boolean;
   logout: () => Promise<void>;
 }
 
@@ -27,6 +29,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [permissions, setPermissions] = useState<Permissions | null>(null);
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     const res = await api.get<AuthMe>("/api/auth/me");
@@ -47,7 +50,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refresh().finally(() => setLoading(false));
-    void refreshSettings();
+    void refreshSettings().finally(() => setSettingsLoaded(true));
   }, [refresh, refreshSettings]);
 
   const logout = useCallback(async () => {
@@ -57,8 +60,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, permissions, loading, refresh, settings, logout }),
-    [user, permissions, loading, refresh, settings, logout],
+    () => ({ user, permissions, loading, refresh, settings, settingsLoaded, logout }),
+    [user, permissions, loading, refresh, settings, settingsLoaded, logout],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

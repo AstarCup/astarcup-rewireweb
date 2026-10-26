@@ -35,7 +35,7 @@ export interface SessionUser {
   guServerUsername?: string | null;
   guServerBindAt?: string | null;
   g0v0Bound?: boolean;
-  /** QQ 联系方式（报名可选填写） */
+  /** QQ 联系方式（报名可选填写；仅用于联系，不作为机器人鉴权依据） */
   qq?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -44,6 +44,35 @@ export interface SessionUser {
 export interface Permissions {
   isplayer: boolean;
   isadmin: boolean;
+}
+
+/** 机器人平台身份绑定（QQ / openid 等 -> osu 账号） */
+export interface BotBinding {
+  id: number;
+  platform: string;
+  platformUserId: string;
+  osuId: string;
+  displayName?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BotBindCode {
+  code: string;
+  expiresAt: string;
+  ttlMinutes: number;
+  command: string;
+}
+
+/** 私聊一键绑定链接对应的平台身份 */
+export interface BotBindLinkInfo {
+  platform: string;
+  platformUserId: string;
+  displayName?: string | null;
+  expiresAt: string;
+  osuId: string;
+  username: string;
+  alreadyBound: boolean;
 }
 
 export interface AuthMe {
@@ -89,6 +118,8 @@ export interface MatchSchedule {
   player1Username: string | null;
   player2OsuId: string | null;
   player2Username: string | null;
+  /** 该场比赛所属赛季，例如 s1 / s2 */
+  season?: string | null;
   redScore: number | null;
   blueScore: number | null;
   status: string; // pending | confirmed | completed | cancelled
@@ -454,24 +485,24 @@ export type StaffRole = "referee" | "commentator" | "streamer";
 export const MODS_ORDER: readonly string[] = ["NM", "HD", "HR", "DT", "FM", "LZ", "TB"];
 
 export const CATEGORIES = [
-  "全部",
-  "资格赛",
-  "32强",
-  "16强",
-  "8强",
-  "半决赛",
-  "决赛",
-  "总决赛",
+  "All",
+  "QUA",
+  "RO32",
+  "RO16",
+  "QF",
+  "SF",
+  "F",
+  "GF",
 ] as const;
 
-/** 图池阶段选项（value 为后端存储值，label 为中文显示） */
+/** 图池阶段选项（value 为后端存储值，label 为英文简写） */
 export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: "qualification", label: "资格赛" },
-  { value: "ro16", label: "16强" },
-  { value: "quarterfinals", label: "8强" },
-  { value: "semifinals", label: "半决赛" },
-  { value: "finals", label: "决赛" },
-  { value: "grandfinals", label: "总决赛" },
+  { value: "qualification", label: "QUA" },
+  { value: "ro16", label: "RO16" },
+  { value: "quarterfinals", label: "QF" },
+  { value: "semifinals", label: "SF" },
+  { value: "finals", label: "F" },
+  { value: "grandfinals", label: "GF" },
 ];
 
 export const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(

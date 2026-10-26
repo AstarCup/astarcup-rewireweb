@@ -48,34 +48,13 @@ import {
 } from "@/components/ui/context-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
-import { cn, fmt, fmtInt, formatDateTime } from "@/lib/utils";
+import { cn, fmt, fmtInt, formatDateTime, osuAvatarUrl } from "@/lib/utils";
 import { getDifficultyColor } from "@/lib/difficultyColor";
 import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, seasonLabel } from "@/lib/types";
 import type { MapSelection, BeatmapInfo, MapComment, ModStatsResult, StaffStats, SeasonMappoolStat } from "@/lib/types";
 
-const MOD_COLORS: Record<string, string> = {
-  NM: "#6b7fb5",
-  HD: "#f5c040",
-  HR: "#e85d75",
-  DT: "#a78bfa",
-  FM: "#5cb8a5",
-  LZ: "#ec6ba8",
-  TB: "#2d2d2d",
-};
-
-const MOD_DISPLAY: Record<string, string> = {
-  NM: "No Mod",
-  HD: "Hidden",
-  HR: "Hard Rock",
-  DT: "Double Time",
-  FM: "Free Mod",
-  LZ: "Lazer Mod",
-  TB: "Tiebreaker",
-};
-
-function modBase(m: MapSelection): string {
-  return (m.selectedMods ?? "NM").split("+")[0].toUpperCase() || "NM";
-}
+import { MOD_COLORS, MOD_DISPLAY, modBase } from "@/lib/mods";
+import { site } from "@/lib/site";
 
 /** 列表视图排序用的 MOD 顺序（未列出的 mod 排在最后） */
 const MOD_LIST_ORDER: readonly string[] = ["NM", "HD", "HR", "DT", "LZ", "TB"];
@@ -134,9 +113,9 @@ function ModStatCard({ mod, items }: { mod: string; items: MapSelection[] }) {
     };
   };
   const subs = [
-    toSub(items.filter((m) => m.approved), "已审核", "#5cb8a5"),
-    toSub(items.filter((m) => m.padding), "测图中", "#f5c040"),
-    toSub(items.filter((m) => !m.approved && !m.padding), "待审", "#6b7fb5"),
+    toSub(items.filter((m) => m.approved), "已审核", "var(--pc-teal)"),
+    toSub(items.filter((m) => m.padding), "测图中", "var(--pc-yellow)"),
+    toSub(items.filter((m) => !m.approved && !m.padding), "待审", "var(--pc-blue)"),
   ];
   const s = groupStats(items);
   return (
@@ -238,7 +217,7 @@ function StageStatCard({ row }: { row: SeasonMappoolStat }) {
       {
         id: "approved",
         title: "已审核",
-        accent: "#5cb8a5",
+        accent: "var(--pc-teal)",
         count: row.count,
         star: row.avgStarRating,
         ar: row.avgAr,
@@ -252,7 +231,7 @@ function StageStatCard({ row }: { row: SeasonMappoolStat }) {
       {
         id: "testing",
         title: "测图中",
-        accent: "#f5c040",
+        accent: "var(--pc-yellow)",
         count: row.testingCount,
         star: row.avgStarRatingTesting,
         ar: row.avgArTesting,
@@ -266,7 +245,7 @@ function StageStatCard({ row }: { row: SeasonMappoolStat }) {
       {
         id: "pending",
         title: "待审",
-        accent: "#6b7fb5",
+        accent: "var(--pc-blue)",
         count: row.pendingCount,
         star: row.avgStarRatingPending,
         ar: row.avgArPending,
@@ -320,11 +299,11 @@ function fmtLength(seconds: number | null): string {
 
 function osuMapUrl(s: MapSelection): string {
   if (s.url) return s.url;
-  return `https://osu.ppy.sh/b/${s.beatmapId}`;
+  return site.urls.osuBeatmapShort(s.beatmapId);
 }
 
 function sayobotUrl(s: MapSelection): string {
-  return `https://dl.sayobot.cn/beatmaps/download/full/${s.beatmapsetId ?? s.beatmapId}`;
+  return site.urls.sayobot(s.beatmapsetId ?? s.beatmapId);
 }
 
 function groupMaps(list: MapSelection[]): { mod: string; items: MapSelection[] }[] {
@@ -435,7 +414,7 @@ function CommentDialog({
                 <div className="flex items-start gap-2.5">
                   <Avatar className="h-8 w-8 shrink-0">
                     <AvatarImage
-                      src={c.avatarUrl || `https://a.ppy.sh/${c.userId}`}
+                      src={c.avatarUrl || osuAvatarUrl(c.userId)}
                       alt={c.username}
                     />
                     <AvatarFallback>{c.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
@@ -446,7 +425,7 @@ function CommentDialog({
                       <button
                         onClick={() => void remove(c.id)}
                         disabled={delBusy === c.id}
-                        className="text-xs text-[#e85d75] hover:underline"
+                        className="text-xs text-pc-primary hover:underline"
                       >
                         {delBusy === c.id ? "…" : "删除"}
                       </button>
@@ -854,6 +833,23 @@ export default function MapSelectionManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seasonReady, load]);
 
+  // 数据刷新后清理已不存在的选择，避免批量操作带上过期 id
+  useEffect(() => {
+    if (!data) return;
+    setSelectedIds((prev) => {
+      const valid = new Set(data.map((m) => m.id));
+      let needsPrune = false;
+      for (const id of prev) {
+        if (!valid.has(id)) {
+          needsPrune = true;
+          break;
+        }
+      }
+      if (!needsPrune) return prev;
+      return new Set([...prev].filter((id) => valid.has(id)));
+    });
+  }, [data]);
+
   // Batch-fetch comments for the visible pool.
   useEffect(() => {
     const maps = data ?? [];
@@ -1219,6 +1215,7 @@ export default function MapSelectionManagement() {
     setBusy(`delete-${m.id}`);
     const res = await api.delete(`/api/map-selections/${m.id}`);
     setBusy("");
+    setDeleteTarget(null);
     if (res.ok) {
       toast({ title: "选图已删除" });
       void load();
@@ -1263,6 +1260,7 @@ export default function MapSelectionManagement() {
 
   const [commentTarget, setCommentTarget] = useState<MapSelection | null>(null);
   const [adjustTarget, setAdjustTarget] = useState<MapSelection | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MapSelection | null>(null);
 
   if (!seasonReady || loading) return <LoadingBlock label="加载选图中…" />;
   if (error || !data) return <ErrorBlock message={error || "没有数据"} onRetry={load} />;
@@ -1401,7 +1399,7 @@ export default function MapSelectionManagement() {
                       className="h-16 w-28 shrink-0 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="grid h-16 w-28 shrink-0 place-items-center rounded-lg bg-[#f5c040]/30 text-xs font-bold text-(--pc-ink)">
+                    <div className="grid h-16 w-28 shrink-0 place-items-center rounded-lg bg-pc-yellow/30 text-xs font-bold text-(--pc-ink)">
                       无封面
                     </div>
                   )}
@@ -1413,7 +1411,7 @@ export default function MapSelectionManagement() {
                       [{pickedInfo.version}] by {pickedInfo.creator ?? "-"}
                     </p>
                     {pickedInfo.star_rating != null && (
-                      <p className="mt-1 text-xs font-bold text-[#e85d75]">
+                      <p className="mt-1 text-xs font-bold text-pc-primary">
                         ★ {fmt(pickedInfo.star_rating)}
                       </p>
                     )}
@@ -1421,7 +1419,7 @@ export default function MapSelectionManagement() {
                 </div>
               )}
               {duplicateInfo && (
-                <p className="rounded-xl border-2 border-[#f5c040] bg-[#f5c040]/20 px-3 py-2 text-xs font-bold text-(--pc-ink)">
+                <p className="rounded-xl border-2 border-pc-yellow bg-pc-yellow/20 px-3 py-2 text-xs font-bold text-(--pc-ink)">
                   ⚠ 检测到重复选图：{duplicateInfo}
                 </p>
               )}
@@ -1553,7 +1551,7 @@ export default function MapSelectionManagement() {
               className={cn(
                 "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors",
                 view === v
-                  ? "bg-[#6b7fb5] text-[#fdf6ee]"
+                  ? "bg-pc-blue text-pc-cream"
                   : "bg-transparent text-(--pc-slate) hover:text-(--pc-ink)",
               )}
             >
@@ -1601,7 +1599,7 @@ export default function MapSelectionManagement() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="全部">全部</SelectItem>
+              <SelectItem value="全部">All</SelectItem>
               {CATEGORY_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -1736,7 +1734,7 @@ export default function MapSelectionManagement() {
                       <td
                         onClick={() => copyBid(m)}
                         title="点击复制 BID"
-                        className="cursor-pointer px-3 py-2.5 font-mono text-xs text-[#e85d75] transition-colors hover:bg-(--pc-paper)"
+                        className="cursor-pointer px-3 py-2.5 font-mono text-xs text-pc-primary transition-colors hover:bg-(--pc-paper)"
                       >
                         {m.beatmapId}
                       </td>
@@ -1749,7 +1747,7 @@ export default function MapSelectionManagement() {
                             loading="lazy"
                           />
                         ) : (
-                          <div className="h-10 w-16 rounded-md bg-[#f5c040]/30" />
+                          <div className="h-10 w-16 rounded-md bg-pc-yellow/30" />
                         )}
                       </td>
                       <td className="px-3 py-2.5 font-bold text-(--pc-ink)">
@@ -1820,7 +1818,7 @@ export default function MapSelectionManagement() {
                     </ContextMenuItem>
                     <ContextMenuItem onSelect={() => setAdjustTarget(m)}>调整参数</ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
+                    <ContextMenuItem onSelect={() => setDeleteTarget(m)} className="text-pc-primary">
                       删除
                     </ContextMenuItem>
                   </ContextMenuContent>
@@ -1849,12 +1847,12 @@ export default function MapSelectionManagement() {
                       <HoverCardTrigger asChild>
                         <span className="ml-auto flex cursor-help flex-wrap items-center gap-x-3 gap-y-1 text-xs text-(--pc-slate)">
                           <span>
-                            ★ <b className="font-bold text-[#e85d75]">{fmt(s.avgStar)}</b>
+                            ★ <b className="font-bold text-pc-primary">{fmt(s.avgStar)}</b>
                           </span>
                           <span>长度 {s.avgLen}s</span>
                           <span>BPM {fmt(s.avgBpm)}</span>
-                          <span className="text-[#f5c040]">T {s.testing}</span>
-                          <span className="text-[#6b7fb5]">P {s.pending}</span>
+                          <span className="text-pc-yellow">T {s.testing}</span>
+                          <span className="text-pc-blue">P {s.pending}</span>
                         </span>
                       </HoverCardTrigger>
                       <HoverCardContent side="bottom" align="end" className="w-auto p-3">
@@ -1877,15 +1875,15 @@ export default function MapSelectionManagement() {
                             "group relative overflow-hidden p-0",
                             m.approved && "border-l-8",
                           )}
-                          style={m.approved ? { borderLeftColor: "#5cb8a5" } : undefined}
+                          style={m.approved ? { borderLeftColor: "var(--pc-teal)" } : undefined}
                         >
                           {/* Cover strip */}
-                          <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
+                          <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-pc-teal/40 to-pc-blue/40">
                             {m.coverUrl && (
                               <img src={m.coverUrl} alt="" className="h-full w-full object-cover" />
                             )}
                             {m.approved && (
-                              <span className="absolute right-3 top-2 rounded-lg bg-[#5cb8a5]/90 px-2 py-0.5 text-xs font-bold text-[#fdf6ee]">
+                              <span className="absolute right-3 top-2 rounded-lg bg-pc-teal/90 px-2 py-0.5 text-xs font-bold text-pc-cream">
                                 过审
                               </span>
                             )}
@@ -1935,7 +1933,7 @@ export default function MapSelectionManagement() {
                                     tabIndex={0}
                                     onClick={() => toggleSelect(m.id)}
                                     title="批量选择"
-                                    className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    className="grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                                   >
                                     <Checkbox checked={selectedIds.has(m.id)} className="pointer-events-none" />
                                   </span>
@@ -1946,7 +1944,7 @@ export default function MapSelectionManagement() {
                                       href={sayobotUrl(m)}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                                     >
                                       <Download className="h-3.5 w-3.5" />
                                     </a>
@@ -1961,7 +1959,7 @@ export default function MapSelectionManagement() {
                                       href={osuMapUrl(m)}
                                       target="_blank"
                                       rel="noreferrer"
-                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                                     >
                                       <Globe className="h-3.5 w-3.5" />
                                     </a>
@@ -1974,7 +1972,7 @@ export default function MapSelectionManagement() {
                                   <HoverCardTrigger asChild>
                                     <a
                                       href={`osu://b/${m.beatmapId}`}
-                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                                     >
                                       <svg
                                         viewBox="0 0 24 24"
@@ -1996,14 +1994,14 @@ export default function MapSelectionManagement() {
                                   <HoverCardTrigger asChild>
                                     <button
                                       onClick={() => copyBid(m)}
-                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                      className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                                     >
                                       <Clipboard className="h-3.5 w-3.5" />
                                     </button>
                                   </HoverCardTrigger>
                                   <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
                                     <p className="text-xs font-bold text-(--pc-ink)">
-                                      BID: <span className="font-mono text-[#e85d75]">{m.beatmapId}</span>
+                                      BID: <span className="font-mono text-pc-primary">{m.beatmapId}</span>
                                     </p>
                                   </HoverCardContent>
                                 </HoverCard>
@@ -2034,14 +2032,14 @@ export default function MapSelectionManagement() {
 
                             {/* Nominator */}
                             <div className="mt-3 flex items-center gap-2">
-                              {m.selectedByAvatar ? (
+                              {m.selectedByAvatar || osuAvatarUrl(m.selectedBy) ? (
                                 <img
-                                  src={m.selectedByAvatar}
+                                  src={m.selectedByAvatar || osuAvatarUrl(m.selectedBy)}
                                   alt=""
                                   className="h-6 w-6 rounded-full object-cover"
                                 />
                               ) : (
-                                <div className="grid h-6 w-6 place-items-center rounded-full bg-[#f5c040]/30 text-[10px] font-bold text-(--pc-ink)">
+                                <div className="grid h-6 w-6 place-items-center rounded-full bg-pc-yellow/30 text-[10px] font-bold text-(--pc-ink)">
                                   {(m.selectedByUsername || m.selectedBy || "?").slice(0, 1)}
                                 </div>
                               )}
@@ -2052,7 +2050,7 @@ export default function MapSelectionManagement() {
                                 <HoverCardTrigger asChild>
                                   <button
                                     onClick={() => setCommentTarget(m)}
-                                    className="ml-auto grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-[#e85d75]"
+                                    className="ml-auto grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                                   >
                                     <MessageSquare className="h-3.5 w-3.5" />
                                   </button>
@@ -2081,8 +2079,10 @@ export default function MapSelectionManagement() {
                                         className="flex items-center gap-1.5 rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1 text-left transition hover:-translate-y-0.5"
                                       >
                                         <Avatar className="h-5 w-5">
-                                          {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
-                                          <AvatarFallback className="bg-[#f5c040]/30 text-[8px] font-bold text-(--pc-ink)">
+                                          {(c.avatarUrl || osuAvatarUrl(c.userId)) && (
+                                            <AvatarImage src={c.avatarUrl || osuAvatarUrl(c.userId)} alt={c.username} />
+                                          )}
+                                          <AvatarFallback className="bg-pc-yellow/30 text-[8px] font-bold text-(--pc-ink)">
                                             {c.username?.slice(0, 1).toUpperCase() || "?"}
                                           </AvatarFallback>
                                         </Avatar>
@@ -2095,8 +2095,10 @@ export default function MapSelectionManagement() {
                                     <HoverCardContent className="w-72">
                                       <div className="flex items-center gap-2.5">
                                         <Avatar className="h-10 w-10 rounded-xl">
-                                          {c.avatarUrl && <AvatarImage src={c.avatarUrl} alt={c.username} />}
-                                          <AvatarFallback className="bg-[#f5c040]/30 font-bold text-(--pc-ink)">
+                                          {(c.avatarUrl || osuAvatarUrl(c.userId)) && (
+                                            <AvatarImage src={c.avatarUrl || osuAvatarUrl(c.userId)} alt={c.username} />
+                                          )}
+                                          <AvatarFallback className="bg-pc-yellow/30 font-bold text-(--pc-ink)">
                                             {c.username?.slice(0, 1).toUpperCase() || "?"}
                                           </AvatarFallback>
                                         </Avatar>
@@ -2117,7 +2119,7 @@ export default function MapSelectionManagement() {
                                 {comments.length > 3 && (
                                   <button
                                     onClick={() => setCommentTarget(m)}
-                                    className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-[10px] font-bold text-[#e85d75]"
+                                    className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-[10px] font-bold text-pc-primary"
                                   >
                                     +{comments.length - 3}
                                   </button>
@@ -2138,7 +2140,7 @@ export default function MapSelectionManagement() {
                           调整参数
                         </ContextMenuItem>
                         <ContextMenuSeparator />
-                        <ContextMenuItem onSelect={() => void removeMap(m)} className="text-[#e85d75]">
+                        <ContextMenuItem onSelect={() => setDeleteTarget(m)} className="text-pc-primary">
                           删除
                         </ContextMenuItem>
                       </ContextMenuContent>
@@ -2167,6 +2169,37 @@ export default function MapSelectionManagement() {
         busy={busy === "bulk"}
       />
 
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>删除选图</DialogTitle>
+            <DialogDescription>
+              确定删除「
+              {[deleteTarget?.artist, deleteTarget?.title].filter(Boolean).join(" - ") ||
+                deleteTarget?.version ||
+                "该选图"}
+              」吗？此操作不可撤销。
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={busy.startsWith("delete-")}
+            >
+              取消
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteTarget && void removeMap(deleteTarget)}
+              disabled={busy.startsWith("delete-")}
+            >
+              {busy.startsWith("delete-") ? "删除中…" : "确认删除"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <CommentDialog
         open={!!commentTarget}
         onOpenChange={(o) => !o && setCommentTarget(null)}
@@ -2185,7 +2218,7 @@ export default function MapSelectionManagement() {
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>
-              {category === "全部" ? "全部阶段" : CATEGORY_LABEL[category] ?? category} 统计
+              {category === "全部" ? "All Stages" : CATEGORY_LABEL[category] ?? category} Stats
             </DialogTitle>
             <DialogDescription>
               {season ? `赛季 ${seasonLabel(settings, season)}` : "全部赛季"} 图池统计数据

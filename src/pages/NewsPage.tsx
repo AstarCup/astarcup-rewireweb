@@ -33,7 +33,7 @@ export default function NewsPage() {
                 </Badge>
                 <h2 className="font-bold text-xl text-(--pc-ink)">{item.title}</h2>
                 <p className="mt-2 text-sm text-(--pc-slate)">{item.description}</p>
-                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-[#e85d75]">
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-pc-primary">
                   阅读全文 →
                 </span>
               </Card>

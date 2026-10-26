@@ -6,6 +6,8 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { useApp } from "@/lib/app-context";
+import { site } from "@/lib/site";
+import { osuAvatarUrl } from "@/lib/utils";
 import { SectionTitle, PaperStack } from "@/components/paper/paper";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,21 +47,21 @@ const projectLinks = [
   {
     label: "osu! Plus Plus",
     desc: "OPP工具箱",
-    href: "https://github.com/osuplusplus/OPP",
+    to: "/tools",
   },
   {
     label: "Ez2Lazer",
     desc: "支持asio、强化mania的第三方客户端",
-    href: "https://github.com/SK-la/Ez2Lazer",
+    to: "/tools",
   },
   {
     label: "g0v0 lazer",
     desc: "咕服专用客户端，支持asio",
-    href: "https://github.com/GooGuTeam/g0v0/",
+    to: "/tools",
   },
 ];
 
-const medalColors = ["bg-[#f5c040]", "bg-[#cfd3c9]", "bg-[#e0a47e]"];
+const medalColors = ["bg-pc-yellow", "bg-[#cfd3c9]", "bg-[#e0a47e]"];
 const rankLabel = (rank: number) =>
   rank === 1 ? "Winner" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank} 名`;
 
@@ -80,15 +82,15 @@ export default function HomePage() {
       <section className="relative overflow-hidden px-4 pt-12 pb-4 md:px-8">
         <span
           aria-hidden
-          className="absolute -left-8 top-4 h-28 w-28 rotate-[-8deg] rounded-3xl bg-[#5cb8a5]/30"
+          className="absolute -left-8 top-4 h-28 w-28 rotate-[-8deg] rounded-3xl bg-pc-teal/30"
         />
         <span
           aria-hidden
-          className="absolute right-10 top-20 h-16 w-16 rotate-12 rounded-2xl bg-[#f5c040]/40"
+          className="absolute right-10 top-20 h-16 w-16 rotate-12 rounded-2xl bg-pc-yellow/40"
         />
         <span
           aria-hidden
-          className="absolute right-1/3 top-2 h-8 w-8 rotate-[30deg] rounded-lg bg-[#e85d75]/20"
+          className="absolute right-1/3 top-2 h-8 w-8 rotate-[30deg] rounded-lg bg-pc-primary/20"
         />
         <div className="relative mx-auto max-w-6xl">
             <div className="flex flex-col items-start gap-6">
@@ -131,16 +133,14 @@ export default function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-6 md:px-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {projectLinks.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              key={l.label}
+              to={l.to}
               className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
             >
               <p className="font-bold text-xl text-(--pc-ink)">{l.label}</p>
               <p className="mt-1 text-xs text-(--pc-faint)">{l.desc}</p>
-            </a>
+            </Link>
           ))}
         </div>
       </section>
@@ -150,7 +150,7 @@ export default function HomePage() {
         <section className="mx-auto max-w-6xl px-4 py-6 md:px-8">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <a
-              href="https://qm.qq.com/q/sFydxoQtaw"
+              href={site.contact.qqGroup}
               target="_blank"
               rel="noreferrer"
               className="group relative flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
@@ -163,7 +163,7 @@ export default function HomePage() {
               />
             </a>
             <a
-              href="https://space.bilibili.com/11872433"
+              href={site.contact.bilibili}
               target="_blank"
               rel="noreferrer"
               className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
@@ -172,7 +172,7 @@ export default function HomePage() {
               <p className="mt-1 text-xs text-(--pc-faint)">比赛录像与精彩集锦</p>
             </a>
             <a
-              href="https://live.bilibili.com/725565"
+              href={site.contact.bilibiliLive}
               target="_blank"
               rel="noreferrer"
               className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
@@ -190,13 +190,13 @@ export default function HomePage() {
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {quickLinks.map((item, i) => {
             const Icon = item.icon;
-            const color = ["#e85d75", "#5cb8a5", "#f5c040", "#6b7fb5"][i % 4];
+            const color = ["var(--pc-primary)", "var(--pc-teal)", "var(--pc-yellow)", "var(--pc-blue)"][i % 4];
             return (
               <Link key={item.to} to={item.to} className="block">
                 <PaperStack className="h-full" layers={i % 2 === 0 ? 2 : 3}>
                   <div className="flex h-full flex-col gap-3 p-6">
                     <span
-                      className="inline-flex h-12 w-12 rotate-[-2deg] items-center justify-center rounded-xl text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
+                      className="inline-flex h-12 w-12 rotate-[-2deg] items-center justify-center rounded-xl text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
                       style={{ backgroundColor: color }}
                     >
                       <Icon className="h-6 w-6" />
@@ -215,12 +215,12 @@ export default function HomePage() {
 
       {/* Winners */}
       <section className="mx-auto max-w-6xl px-4 py-12 md:px-8">
-        <SectionTitle tag="荣耀殿堂" accent="#f5c040">
+        <SectionTitle tag="荣耀殿堂" accent="var(--pc-yellow)">
           历届冠军
         </SectionTitle>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {sortedWinners.map((w, i) => {
-            const medal = medalColors[Math.min(Math.max(w.rank - 1, 0), 2)] ?? "bg-[#f5c040]";
+            const medal = medalColors[Math.min(Math.max(w.rank - 1, 0), 2)] ?? "bg-pc-yellow";
             return (
               <PaperStack key={w.id} className="h-full" layers={w.rank % 2 === 0 ? 2 : 3}>
                 <div
@@ -232,7 +232,7 @@ export default function HomePage() {
                     className={`grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.1)] ${medal}`}
                   >
                     <img
-                      src={w.avatarUrl}
+                      src={w.avatarUrl || osuAvatarUrl(w.osuId)}
                       alt={w.playerName}
                       className="h-full w-full object-cover"
                     />

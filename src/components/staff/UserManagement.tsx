@@ -32,7 +32,7 @@ import {
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { formatDate } from "@/lib/utils";
+import { formatDate, osuAvatarUrl } from "@/lib/utils";
 import {
   REG_STATUS_OPTIONS,
   REG_STATUS_VARIANT,
@@ -117,17 +117,23 @@ export default function UserManagement() {
     const list = filtered;
     if (list.length === 0) return;
     setBusy("batch-reset");
-    const results = await Promise.all(
-      list.map((u) =>
-        api.patch(`/api/admin/users/${u.osuId}`, { registrationStatus: "not_registered" }),
-      ),
-    );
+    // 限制并发，避免一次性打爆后端
+    const CONCURRENCY = 5;
+    let ok = 0;
+    for (let i = 0; i < list.length; i += CONCURRENCY) {
+      const chunk = list.slice(i, i + CONCURRENCY);
+      const results = await Promise.all(
+        chunk.map((u) =>
+          api.patch(`/api/admin/users/${u.osuId}`, { registrationStatus: "not_registered" }),
+        ),
+      );
+      ok += results.filter((r) => r.ok).length;
+    }
     setBusy(null);
-    const ok = results.every((r) => r.ok);
     toast(
-      ok
+      ok === list.length
         ? { title: `已将 ${list.length} 人改为未报名` }
-        : { variant: "destructive", title: "部分操作失败" },
+        : { variant: "destructive", title: `部分操作失败（成功 ${ok}/${list.length}）` },
     );
     void load();
   };
@@ -153,7 +159,7 @@ export default function UserManagement() {
 
   return (
     <div>
-      <SectionTitle tag="用户管理" accent="#6b7fb5">
+      <SectionTitle tag="用户管理" accent="var(--pc-blue)">
         注册用户
       </SectionTitle>
 
@@ -221,7 +227,7 @@ export default function UserManagement() {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-(--pc-faint)">
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-(--pc-faint)">
                   没有匹配的用户
                 </td>
               </tr>
@@ -235,21 +241,23 @@ export default function UserManagement() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
-                            {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.username} />}
+                            {(u.avatarUrl || osuAvatarUrl(u.osuId)) && (
+                              <AvatarImage src={u.avatarUrl || osuAvatarUrl(u.osuId)} alt={u.username} />
+                            )}
                             <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
                           </Avatar>
                           <span className="font-bold text-(--pc-ink)">{u.username}</span>
                         </div>
                       </td>
                       <td
-                        className="cursor-pointer px-4 py-3 font-mono text-xs text-(--pc-slate) transition-colors hover:text-[#e85d75]"
+                        className="cursor-pointer px-4 py-3 font-mono text-xs text-(--pc-slate) transition-colors hover:text-pc-primary"
                         title="点击复制 osuId"
                         onClick={() => void copyText(u.osuId, "osuId")}
                       >
                         {u.osuId}
                       </td>
                       <td
-                        className="cursor-pointer px-4 py-3 font-mono text-xs text-(--pc-slate) transition-colors hover:text-[#e85d75]"
+                        className="cursor-pointer px-4 py-3 font-mono text-xs text-(--pc-slate) transition-colors hover:text-pc-primary"
                         title={u.qq ? "点击复制 QQ" : undefined}
                         onClick={() => u.qq && void copyText(u.qq, "QQ")}
                       >
@@ -269,7 +277,7 @@ export default function UserManagement() {
                   <ContextMenuContent className="w-52">
                     {regStatus !== "approved" && (
                       <ContextMenuItem onSelect={() => approve(u)} disabled={busy !== null}>
-                        <BadgeCheck className="mr-2 h-4 w-4 text-[#5cb8a5]" />
+                        <BadgeCheck className="mr-2 h-4 w-4 text-pc-teal" />
                         通过审核
                       </ContextMenuItem>
                     )}
@@ -282,7 +290,7 @@ export default function UserManagement() {
                           disabled={busy !== null}
                         >
                           {regStatus === o.value ? (
-                            <Check className="mr-2 h-4 w-4 text-[#e85d75]" />
+                            <Check className="mr-2 h-4 w-4 text-pc-primary" />
                           ) : (
                             <span className="mr-2 w-4" />
                           )}
@@ -295,12 +303,12 @@ export default function UserManagement() {
                       onSelect={() => setGroup(u, u.userGroup === "admin" ? "player" : "admin")}
                       disabled={busy !== null}
                     >
-                      <Users className="mr-2 h-4 w-4 text-[#6b7fb5]" />
+                      <Users className="mr-2 h-4 w-4 text-pc-blue" />
                       设为{u.userGroup === "admin" ? "玩家" : "管理员"}
                     </ContextMenuItem>
                     <ContextMenuSeparator />
                     <ContextMenuItem
-                      className="text-[#e85d75] focus:text-[#e85d75]"
+                      className="text-pc-primary focus:text-pc-primary"
                       onSelect={() => setDeleteTarget(u)}
                     >
                       <Trash2 className="mr-2 h-4 w-4" />

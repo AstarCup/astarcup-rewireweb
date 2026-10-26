@@ -15,7 +15,7 @@ function AnimatedLogo() {
                         }
                     }
                     @keyframes StarLane {
-                        0% 100% {
+                        0%, 100% {
                             transform: translateY(0px) translateX(-2px);
                             width: 80.9756851196289px;
                         }
@@ -50,7 +50,7 @@ function AnimatedLogo() {
                     }
 
                     @keyframes TextScale {
-                        0% 100% {
+                        0%, 100% {
                             transform: scale(1) translateY(0px);
                         }
                         50% {
@@ -58,7 +58,7 @@ function AnimatedLogo() {
                         }
                     }
                     @keyframes TextRotate {
-                        0% 100% {
+                        0%, 100% {
                             transform: rotate(0deg);
                         }
                         50% {
@@ -66,7 +66,7 @@ function AnimatedLogo() {
                         }
                     }
                     @keyframes TextRotate2 {
-                        0% 100% {
+                        0%, 100% {
                             transform: rotate(0deg);
                         }
                         50% {

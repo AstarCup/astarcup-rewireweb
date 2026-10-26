@@ -36,7 +36,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import { cn, osuAvatarUrl } from "@/lib/utils";
 import { REG_STATUS_LABEL, REG_STATUS_VARIANT } from "@/lib/types";
 import type { Settings, AdminUserStub } from "@/lib/types";
 
@@ -60,12 +60,12 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
 ];
 
 const STAGE_OPTIONS: { value: string; label: string }[] = [
-  { value: "qua", label: "资格赛" },
-  { value: "ro16", label: "16强" },
-  { value: "qf", label: "四分之一决赛" },
-  { value: "sf", label: "半决赛" },
-  { value: "f", label: "决赛" },
-  { value: "gf", label: "总决赛" },
+  { value: "qua", label: "QUA" },
+  { value: "ro16", label: "RO16" },
+  { value: "qf", label: "QF" },
+  { value: "sf", label: "SF" },
+  { value: "f", label: "F" },
+  { value: "gf", label: "GF" },
 ];
 
 function StageCombobox({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -82,9 +82,9 @@ function StageCombobox({ value, onChange }: { value: string; onChange: (v: strin
           type="button"
           role="combobox"
           aria-expanded={open}
-          className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-[#e85d75]"
+          className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary"
         >
-          {current ? `${current.label} (${current.value})` : value || "选择阶段"}
+          {current ? current.label : value || "选择阶段"}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
         </button>
       </PopoverTrigger>
@@ -186,9 +186,14 @@ export default function SettingsManagement() {
   };
 
   const removeSeason = (index: number) => {
-    const id = seasons[index].id;
-    setSeasons((list) => list.filter((_, i) => i !== index));
-    if (currentSeason === id) setCurrentSeason(seasons.find((s) => s.id !== id)?.id ?? "");
+    const removed = seasons[index];
+    if (!removed) return;
+    const remaining = seasons.filter((_, i) => i !== index);
+    // 删除当前赛季时，选相邻（同下标）的赛季作为替代，否则取最后一个
+    if (currentSeason === removed.id) {
+      setCurrentSeason(remaining[Math.min(index, remaining.length - 1)]?.id ?? "");
+    }
+    setSeasons(remaining);
   };
 
   // 已结束赛季：拉取参加过该赛季但未审核的玩家
@@ -226,7 +231,7 @@ export default function SettingsManagement() {
       mappool_visible: String(mappoolVisible),
       seasons: seasonsDict,
     };
-    const res = await api.post<Settings>("/api/settings", body, { method: "PUT" });
+    const res = await api.put<Settings>("/api/settings", body);
     setBusy(false);
     if (res.ok) {
       toast({ title: "设置已保存" });
@@ -242,7 +247,7 @@ export default function SettingsManagement() {
 
   return (
     <div>
-      <SectionTitle tag="系统设置" accent="#e85d75">
+      <SectionTitle tag="系统设置" accent="var(--pc-primary)">
         赛事设置
       </SectionTitle>
 
@@ -331,7 +336,7 @@ export default function SettingsManagement() {
             <div className="mt-4 space-y-2">
               {seasons.map((s, i) => (
                 <div
-                  key={i}
+                  key={s.id}
                   className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3"
                 >
                   <Badge variant="outline">{s.id}</Badge>
@@ -404,7 +409,7 @@ export default function SettingsManagement() {
                 type="checkbox"
                 checked={registrationEnabled}
                 onChange={(e) => setRegistrationEnabled(e.target.checked)}
-                className="h-5 w-5 accent-[#e85d75]"
+                className="h-5 w-5 accent-pc-primary"
               />
             </label>
             <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
@@ -416,7 +421,7 @@ export default function SettingsManagement() {
                 type="checkbox"
                 checked={mappoolVisible}
                 onChange={(e) => setMappoolVisible(e.target.checked)}
-                className="h-5 w-5 accent-[#6b7fb5]"
+                className="h-5 w-5 accent-pc-blue"
               />
             </label>
           </div>
@@ -448,7 +453,9 @@ export default function SettingsManagement() {
                 {seasonPlayers.map((u) => (
                   <li key={u.osuId} className="flex items-center gap-3 px-4 py-2.5">
                     <Avatar className="h-8 w-8">
-                      {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.username} />}
+                      {(u.avatarUrl || osuAvatarUrl(u.osuId)) && (
+                        <AvatarImage src={u.avatarUrl || osuAvatarUrl(u.osuId)} alt={u.username} />
+                      )}
                       <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
                     </Avatar>
                     <span className="font-bold text-(--pc-ink)">{u.username}</span>

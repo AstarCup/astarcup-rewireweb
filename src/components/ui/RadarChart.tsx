@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 export interface RadarSkill {
@@ -34,10 +35,19 @@ export default function RadarChart({
   size = 260,
   className,
 }: RadarChartProps) {
+  const gradId = useId();
   const radius = 78;
   const cx = 100;
   const cy = 100;
   const ringCount = 5;
+
+  // 归一化：非数字 → 0，并夹到 [-10, 10]，避免 toFixed/NaN 崩溃或非法 points
+  const safeSkills: RadarSkill[] = skills.map((s) => {
+    const v = Number(s.value);
+    return { label: s.label, value: Number.isFinite(v) ? Math.max(-10, Math.min(10, v)) : 0 };
+  });
+
+  if (safeSkills.length === 0) return null;
 
   return (
     <svg
@@ -49,9 +59,9 @@ export default function RadarChart({
       aria-label="技能雷达图"
     >
       <defs>
-        <linearGradient id="radar-stroke-grad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#e85d75" />
-          <stop offset="100%" stopColor="#6b7fb5" />
+        <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="var(--pc-primary)" />
+          <stop offset="100%" stopColor="var(--pc-blue)" />
         </linearGradient>
       </defs>
 
@@ -61,9 +71,9 @@ export default function RadarChart({
         return (
           <polygon
             key={i}
-            points={skills
+            points={safeSkills
               .map((_, j) => {
-                const a = (Math.PI * 2 * j) / skills.length - Math.PI / 2;
+                const a = (Math.PI * 2 * j) / safeSkills.length - Math.PI / 2;
                 return `${(cx + Math.cos(a) * r).toFixed(2)},${(cy + Math.sin(a) * r).toFixed(2)}`;
               })
               .join(" ")}
@@ -76,8 +86,8 @@ export default function RadarChart({
       })}
 
       {/* 轴线 */}
-      {skills.map((_, i) => {
-        const a = (Math.PI * 2 * i) / skills.length - Math.PI / 2;
+      {safeSkills.map((_, i) => {
+        const a = (Math.PI * 2 * i) / safeSkills.length - Math.PI / 2;
         return (
           <line
             key={i}
@@ -94,30 +104,30 @@ export default function RadarChart({
 
       {/* 数据区域 */}
       <polygon
-        points={polygonPoints(skills, radius)}
+        points={polygonPoints(safeSkills, radius)}
         fill="rgba(232,93,117,0.25)"
-        stroke="url(#radar-stroke-grad)"
+        stroke={`url(#${gradId})`}
         strokeWidth="2"
         strokeLinejoin="round"
       />
 
       {/* 顶点：正值粉色，负值蓝色（反向绘制） */}
-      {skills.map((s, i) => {
-        const p = vertexPos(s, i, skills.length, radius);
+      {safeSkills.map((s, i) => {
+        const p = vertexPos(s, i, safeSkills.length, radius);
         return (
           <circle
             key={i}
             cx={p.x}
             cy={p.y}
             r="3"
-            fill={p.negative ? "#6b7fb5" : "#e85d75"}
+            fill={p.negative ? "var(--pc-blue)" : "var(--pc-primary)"}
           />
         );
       })}
 
       {/* 标签与数值（数值在标签下方，不画进雷达图内） */}
-      {skills.map((s, i) => {
-        const a = (Math.PI * 2 * i) / skills.length - Math.PI / 2;
+      {safeSkills.map((s, i) => {
+        const a = (Math.PI * 2 * i) / safeSkills.length - Math.PI / 2;
         const lx = cx + Math.cos(a) * (radius + 20);
         const ly = cy + Math.sin(a) * (radius + 20);
         return (

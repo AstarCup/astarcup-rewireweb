@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useApp } from "@/lib/app-context";
 import { LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
@@ -21,38 +21,15 @@ import {
   MODS_ORDER,
 } from "@/lib/types";
 import type { MapSelection } from "@/lib/types";
+import { MOD_COLORS, MOD_DISPLAY, modBase } from "@/lib/mods";
 import { cn, fmt } from "@/lib/utils";
-
-const MOD_COLORS: Record<string, string> = {
-  NM: "#6b7fb5",
-  HD: "#f5c040",
-  HR: "#e85d75",
-  DT: "#a78bfa",
-  FM: "#5cb8a5",
-  LZ: "#ec6ba8",
-  TB: "#2d2d2d",
-};
-
-const MOD_DISPLAY: Record<string, string> = {
-  NM: "No Mod",
-  HD: "Hidden",
-  HR: "Hard Rock",
-  DT: "Double Time",
-  FM: "Free Mod",
-  LZ: "Lazer Mod",
-  TB: "Tiebreaker",
-};
-
-function modBase(m: MapSelection): string {
-  return (m.selectedMods ?? "NM").split("+")[0].toUpperCase() || "NM";
-}
 
 function starColor(s: number | null): string {
   const v = s ?? 0;
   if (v < 2) return "#4a90d9";
-  if (v < 3.5) return "#5cb8a5";
-  if (v < 5) return "#f5c040";
-  if (v < 6.5) return "#e85d75";
+  if (v < 3.5) return "var(--pc-teal)";
+  if (v < 5) return "var(--pc-yellow)";
+  if (v < 6.5) return "var(--pc-primary)";
   if (v < 8) return "#a78bfa";
   return "#7c3aed";
 }
@@ -70,7 +47,10 @@ export default function ReplayCollectionManagement() {
   const [busy, setBusy] = useState<number | null>(null);
   const [downloading, setDownloading] = useState(false);
 
-  const curSeason = season || seasonOptions[seasonOptions.length - 1]?.value || "s1";
+  const poolReqRef = useRef(0);
+  const uploadedReqRef = useRef(0);
+
+  const curSeason = season || seasonOptions[seasonOptions.length - 1]?.value || "";
 
   // 默认直接选中最新赛季，不提供「最新赛季」占位选项
   useEffect(() => {
@@ -80,7 +60,9 @@ export default function ReplayCollectionManagement() {
   }, [season, seasonOptions]);
 
   const loadPool = async () => {
+    const id = ++poolReqRef.current;
     setLoading(true);
+    setError(null);
     const res = await api.get<MapSelection[]>(
       "/api/map-selections" +
         qs({
@@ -89,12 +71,14 @@ export default function ReplayCollectionManagement() {
           padding: true,
         }),
     );
+    if (id !== poolReqRef.current) return;
     setLoading(false);
     if (res.ok) setMaps(res.data);
     else setError(res.error.message);
   };
 
   const loadUploaded = async () => {
+    const id = ++uploadedReqRef.current;
     const res = await api.get<Record<string, string[]>>(
       "/api/replays/uploaded" +
         qs({
@@ -102,6 +86,7 @@ export default function ReplayCollectionManagement() {
           category: category === "全部" ? "all" : category,
         }),
     );
+    if (id !== uploadedReqRef.current) return;
     if (res.ok) setUploaded(res.data);
   };
 
@@ -258,7 +243,7 @@ export default function ReplayCollectionManagement() {
 
   return (
     <div>
-      <SectionTitle tag="回放收集" accent="#6b7fb5">
+      <SectionTitle tag="回放收集" accent="var(--pc-blue)">
         已上传回放
       </SectionTitle>
 
@@ -286,7 +271,7 @@ export default function ReplayCollectionManagement() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="全部">全部</SelectItem>
+              <SelectItem value="全部">All</SelectItem>
               {CATEGORY_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -350,9 +335,9 @@ export default function ReplayCollectionManagement() {
                     <Card
                       key={m.id}
                       className={cn("overflow-hidden p-0", usernames.length > 0 && "border-l-8")}
-                      style={usernames.length > 0 ? { borderLeftColor: "#5cb8a5" } : undefined}
+                      style={usernames.length > 0 ? { borderLeftColor: "var(--pc-teal)" } : undefined}
                     >
-                      <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-[#5cb8a5]/40 to-[#6b7fb5]/40">
+                      <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-pc-teal/40 to-pc-blue/40">
                         {m.coverUrl && (
                           <img src={m.coverUrl} alt="" className="h-full w-full object-cover" />
                         )}

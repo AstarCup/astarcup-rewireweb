@@ -1,11 +1,10 @@
 import { useState } from "react";
 import JSZip from "jszip";
-import { Copy, Download, ExternalLink, Loader2 } from "lucide-react";
+import { Download, Loader2, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { blob, downloadBlob } from "@/lib/api";
-import { fmt } from "@/lib/utils";
+import { site } from "@/lib/site";
 import type { MapSelection } from "@/lib/types";
 
 /** Beatmapset id usable for /api/beatmaps/download (custom/original maps excluded). */
@@ -16,18 +15,6 @@ export function mapFileSid(m: MapSelection): number | null {
 export function mapFileName(m: MapSelection): string {
   const base = [m.artist, m.title, `[${m.version}]`].filter(Boolean).join(" - ");
   return (base.replace(/[\\/:*?"<>|]/g, "_") || `map_${m.beatmapId}`) + ".osz";
-}
-
-function titleOf(m: MapSelection): string {
-  return [m.artist, m.version].filter(Boolean).join(" - ") || m.title || "未知曲目";
-}
-
-export async function downloadSingleMap(m: MapSelection): Promise<boolean> {
-  const sid = mapFileSid(m);
-  if (sid == null) return false;
-  const b = await blob(`/api/beatmaps/download?sid=${sid}&source=sayobot`);
-  downloadBlob(b, mapFileName(m));
-  return true;
 }
 
 /** 图池批量下载（打包为 zip） */
@@ -42,27 +29,39 @@ export function BulkDownload({ maps, className }: { maps: MapSelection[]; classN
     if (downloadables.length === 0) return;
     setBusy(true);
     setProgress({ done: 0, total: downloadables.length });
-    const zip = new JSZip();
-    let okCount = 0;
-    for (const m of downloadables) {
-      try {
-        const b = await blob(`/api/beatmaps/download?sid=${mapFileSid(m)}&source=sayobot`);
-        zip.file(mapFileName(m), b);
-        okCount += 1;
-      } catch {
-        /* 单图失败跳过，不中断整体打包 */
+    try {
+      const zip = new JSZip();
+      const usedNames = new Set<string>();
+      let okCount = 0;
+      let processed = 0;
+      for (const m of downloadables) {
+        try {
+          const b = await blob(`/api/beatmaps/download?sid=${mapFileSid(m)}&source=sayobot`);
+          // 同名谱面（同 artist/title/version）避免在 zip 内互相覆盖
+          let name = mapFileName(m);
+          if (usedNames.has(name)) name = name.replace(/\.osz$/, `_${m.beatmapId}.osz`);
+          usedNames.add(name);
+          zip.file(name, b);
+          okCount += 1;
+        } catch {
+          /* 单图失败跳过，不中断整体打包 */
+        }
+        processed += 1;
+        setProgress({ done: processed, total: downloadables.length });
       }
-      setProgress({ done: okCount, total: downloadables.length });
+      if (okCount > 0) {
+        const out = await zip.generateAsync({ type: "blob" });
+        downloadBlob(out, `mappool_${new Date().toISOString().slice(0, 10)}.zip`);
+        toast({ title: "图池已下载", description: `成功 ${okCount} / 共 ${downloadables.length}` });
+      } else {
+        toast({ variant: "destructive", title: "下载失败", description: "没有可下载的谱面" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "下载失败", description: "打包或下载出错" });
+    } finally {
+      setBusy(false);
+      setProgress(null);
     }
-    if (okCount > 0) {
-      const out = await zip.generateAsync({ type: "blob" });
-      downloadBlob(out, `mappool_${new Date().toISOString().slice(0, 10)}.zip`);
-      toast({ title: "图池已下载", description: `成功 ${okCount} / 共 ${downloadables.length}` });
-    } else {
-      toast({ variant: "destructive", title: "下载失败", description: "没有可下载的谱面" });
-    }
-    setBusy(false);
-    setProgress(null);
   };
 
   return (
@@ -92,110 +91,31 @@ export function BulkDownload({ maps, className }: { maps: MapSelection[]; classN
   );
 }
 
-/** 表格行悬浮详情卡（fixed 定位避免被容器裁剪） */
-export function MapHoverCard({
-  map,
-  rect,
+/** 生成 OPP 深链：opp://mappool/{tournament}?season=..&category=.. */
+export function oppPoolLink(season: string, category: string): string {
+  const params = new URLSearchParams();
+  params.set("season", season);
+  if (category && category !== "全部") params.set("category", category);
+  const qs = params.toString();
+  return `${site.opp.scheme}://mappool/${site.opp.tournament}${qs ? `?${qs}` : ""}`;
+}
+
+/** OPP 工具联动按钮：唤起 OPP 打开当前赛季/轮次图池 */
+export function OppPoolButton({
+  season,
+  category,
+  className,
 }: {
-  map: MapSelection;
-  rect: { left: number; top: number; bottom: number };
+  season: string;
+  category: string;
+  className?: string;
 }) {
-  const width = 320;
-  const left = Math.min(Math.max(8, rect.left), window.innerWidth - width - 8);
-  const top = rect.bottom + 8;
-  const stats: [string, string][] = [
-    ["星级", `${fmt(map.starRating)}★`],
-    ["CS", fmt(map.cs)],
-    ["AR", fmt(map.ar)],
-    ["OD", fmt(map.od)],
-    ["HP", fmt(map.hp)],
-    ["BPM", map.bpm != null ? String(map.bpm) : "-"],
-    ["时长", map.totalLength != null ? `${Math.round(map.totalLength)}s` : "-"],
-    ["MaxCombo", map.maxCombo != null ? String(map.maxCombo) : "-"],
-  ];
-
-  const copyBid = () => {
-    void navigator.clipboard
-      .writeText(String(map.beatmapId))
-      .then(() => toast({ title: "已复制 BID", description: String(map.beatmapId) }))
-      .catch(() => toast({ variant: "destructive", title: "复制失败" }));
-  };
-
   return (
-    <div
-      className="fixed z-50 w-[320px] overflow-hidden rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) shadow-[6px_6px_0px_rgba(0,0,0,0.14)]"
-      style={{ left, top }}
-    >
-      {map.coverUrl ? (
-        <img src={map.coverUrl} alt={map.title} className="h-28 w-full object-cover" />
-      ) : (
-        <div className="flex h-28 w-full items-center justify-center bg-[#f5c040]/30 px-4">
-          <span className="line-clamp-2 text-center text-sm font-bold text-(--pc-ink)">
-            {map.title || "未命名图"}
-          </span>
-        </div>
-      )}
-      <div className="grid gap-3 p-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Badge variant="outline" className="border-[#6b7fb5]/40 text-[#6b7fb5]">
-              {map.modPosition ?? map.selectedMods ?? "NM"}
-            </Badge>
-            <Badge className="border-[#5cb8a5] bg-[#5cb8a5] text-[#fdf6ee]">
-              {map.selectedMods ?? "NM"}
-            </Badge>
-            {map.isCustome && <Badge variant="yellow">订制</Badge>}
-            {map.isOrigin && <Badge variant="blue">原创</Badge>}
-          </div>
-          <p className="mt-2 font-bold text-sm text-(--pc-ink)">{titleOf(map)}</p>
-          {map.creator && <p className="text-xs text-(--pc-faint)">谱师：{map.creator}</p>}
-        </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          {stats.map(([k, v]) => (
-            <div key={k} className="rounded-lg bg-(--pc-paper) px-1.5 py-1 text-center">
-              <p className="text-[10px] text-(--pc-faint)">{k}</p>
-              <p className="text-xs font-bold text-(--pc-ink)">{v}</p>
-            </div>
-          ))}
-        </div>
-        {map.customModName && (
-          <p className="text-xs text-(--pc-slate)">
-            自定义 Mod：<span className="font-bold text-[#6b7fb5]">{map.customModName}</span>
-            {map.customDTRate ? ` (DT ×${map.customDTRate})` : ""}
-          </p>
-        )}
-        {map.comment && <p className="text-xs text-(--pc-faint)">备注：{map.comment}</p>}
-        <div className="flex flex-wrap gap-1.5">
-          <Button variant="outline" size="sm" onClick={copyBid}>
-            <Copy className="h-3.5 w-3.5" />
-            复制 BID
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-          >
-            <a href={map.url ?? `https://osu.ppy.sh/beatmaps/${map.beatmapId}`} target="_blank" rel="noreferrer">
-              <ExternalLink className="h-3.5 w-3.5" />
-              osu!
-            </a>
-          </Button>
-          <Button
-            variant="teal"
-            size="sm"
-            onClick={() => {
-              void downloadSingleMap(map).then((ok) =>
-                ok
-                  ? toast({ title: "开始下载" })
-                  : toast({ variant: "destructive", title: "该图不支持下载" }),
-              );
-            }}
-          >
-            <Download className="h-3.5 w-3.5" />
-            下载
-          </Button>
-        </div>
-      </div>
-    </div>
+    <Button asChild variant="primary" size="sm" className={className}>
+      <a href={oppPoolLink(season, category)}>
+        <Wrench className="h-4 w-4" />
+        从OPP中打开图池
+      </a>
+    </Button>
   );
 }

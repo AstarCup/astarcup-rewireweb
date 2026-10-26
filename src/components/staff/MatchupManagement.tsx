@@ -116,7 +116,7 @@ export default function MatchupManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle tag="对战列表" accent="#f5c040" className="mb-0">
+        <SectionTitle tag="对战列表" accent="var(--pc-yellow)" className="mb-0">
           比赛对战
         </SectionTitle>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>

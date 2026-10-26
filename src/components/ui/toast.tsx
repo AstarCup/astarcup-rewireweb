@@ -27,9 +27,9 @@ const toastVariants = cva(
     variants: {
       variant: {
         default: "border-(--pc-border) bg-(--pc-paper) text-(--pc-ink)",
-        destructive: "border-[#e85d75] bg-[#e85d75] text-[#fdf6ee]",
-        success: "border-[#5cb8a5] bg-[#5cb8a5] text-[#fdf6ee]",
-        warning: "border-[#f5c040] bg-[#f5c040] text-(--pc-ink)",
+        destructive: "destructive border-pc-primary bg-pc-primary text-pc-cream",
+        success: "success border-pc-teal bg-pc-teal text-pc-cream",
+        warning: "warning border-pc-yellow bg-pc-yellow text-(--pc-ink)",
       },
     },
     defaultVariants: {
@@ -73,13 +73,14 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-lg p-1 text-(--pc-faint) opacity-70 transition hover:text-(--pc-ink) group-[.variant-destructive]:hover:text-[#fdf6ee] group-[.variant-success]:hover:text-[#fdf6ee]",
+      "absolute right-2 top-2 rounded-lg p-1 text-(--pc-faint) opacity-70 transition hover:text-(--pc-ink) group-[.destructive]:text-pc-cream/80 group-[.destructive]:hover:text-pc-cream group-[.success]:text-pc-cream/80 group-[.success]:hover:text-pc-cream group-[.warning]:text-(--pc-ink)",
       className,
     )}
+    aria-label="关闭"
     toast-close=""
     {...props}
   >
-    <X className="h-4 w-4" />
+    <X className="h-4 w-4" aria-hidden="true" />
   </ToastPrimitives.Close>
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;

@@ -44,6 +44,7 @@ function statusLabel(s: string): string {
 }
 
 interface RowForm {
+  season: string;
   red: string;
   blue: string;
   link: string;
@@ -76,6 +77,9 @@ function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: Schedu
         <Badge variant={statusVariant(s.status)}>{statusLabel(s.status)}</Badge>
       </div>
       {roomName && <p className="mt-1 text-xs text-(--pc-faint)">房间：{roomName}</p>}
+      <p className="mt-1 text-xs text-(--pc-faint)">
+        赛季：{s.season ? s.season.toUpperCase() : "未标注"}
+      </p>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="grid gap-1.5">
@@ -96,6 +100,15 @@ function ScheduleCard({ s, form, busy, onForm, onSaveDetails, onStatus }: Schedu
             placeholder={s.blueScore != null ? String(s.blueScore) : "0"}
           />
         </div>
+      </div>
+
+      <div className="mt-3 grid gap-1.5">
+        <Label className="text-xs text-(--pc-slate)">赛季</Label>
+        <Input
+          value={form.season}
+          onChange={setField("season")}
+          placeholder={s.season || "如 s2"}
+        />
       </div>
 
       <div className="mt-3 space-y-2">
@@ -150,13 +163,23 @@ export default function MatchScheduleManagement() {
   const [roomId, setRoomId] = useState("");
   const [r1, setR1] = useState("");
   const [r2, setR2] = useState("");
-  const [busy, setBusy] = useState("");
+  const [busyKeys, setBusyKeys] = useState<Set<string>>(new Set());
   const [forms, setForms] = useState<Record<number, RowForm>>({});
+
+  // 每个操作使用独立 key，避免一个操作完成时清掉另一个进行中的忙碌标记
+  const markBusy = (key: string, on: boolean) =>
+    setBusyKeys((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
 
   const playerList = players.data ?? [];
 
   const rowForm = (s: MatchSchedule): RowForm =>
     forms[s.id] ?? {
+      season: "",
       red: "",
       blue: "",
       link: "",
@@ -172,7 +195,7 @@ export default function MatchScheduleManagement() {
       toast({ title: "请选择房间与两名不同选手" });
       return;
     }
-    setBusy("create");
+    markBusy("create", true);
     const a = playerList.find((p) => p.osuId === r1);
     const b = playerList.find((p) => p.osuId === r2);
     const res = await api.post("/api/schedules", {
@@ -183,7 +206,7 @@ export default function MatchScheduleManagement() {
       player2_osuId: r2,
       player2_username: b?.username ?? "",
     });
-    setBusy("");
+    markBusy("create", false);
     if (res.ok) {
       toast({ title: "赛程已创建" });
       setCreateOpen(false);
@@ -199,17 +222,21 @@ export default function MatchScheduleManagement() {
   const saveDetails = async (s: MatchSchedule) => {
     const f = rowForm(s);
     const body: Record<string, string | number | null> = {
+      season: f.season === "" ? (s.season ?? null) : f.season,
       red_score: f.red === "" ? null : Number(f.red),
       blue_score: f.blue === "" ? null : Number(f.blue),
       match_link: f.link === "" ? (s.matchLink ?? null) : f.link,
       stream_link: f.stream === "" ? (s.streamLink ?? null) : f.stream,
       replay_link: f.replay === "" ? (s.replayLink ?? null) : f.replay,
     };
-    setBusy(`details-${s.id}`);
+    markBusy(`details-${s.id}`, true);
     const res = await api.patch(`/api/schedules/${s.id}/details`, body);
-    setBusy("");
+    markBusy(`details-${s.id}`, false);
     if (res.ok) {
-      setForms((m) => ({ ...m, [s.id]: { red: "", blue: "", link: "", stream: "", replay: "" } }));
+      setForms((m) => ({
+        ...m,
+        [s.id]: { season: "", red: "", blue: "", link: "", stream: "", replay: "" },
+      }));
       toast({ title: "保存成功" });
       void load();
     } else {
@@ -218,9 +245,9 @@ export default function MatchScheduleManagement() {
   };
 
   const updateStatus = async (s: MatchSchedule, status: string) => {
-    setBusy(`status-${s.id}`);
+    markBusy(`status-${s.id}`, true);
     const res = await api.patch(`/api/schedules/${s.id}`, { status });
-    setBusy("");
+    markBusy(`status-${s.id}`, false);
     if (res.ok) {
       toast({ title: "状态已更新" });
       void load();
@@ -242,7 +269,7 @@ export default function MatchScheduleManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle tag="比赛预约管理" accent="#e85d75" className="mb-0">
+        <SectionTitle tag="比赛预约管理" accent="var(--pc-primary)" className="mb-0">
           赛程安排
         </SectionTitle>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -305,8 +332,8 @@ export default function MatchScheduleManagement() {
               <DialogClose asChild>
                 <Button variant="outline">取消</Button>
               </DialogClose>
-              <Button variant="primary" onClick={create} disabled={busy === "create"}>
-                {busy === "create" ? "创建中…" : "创建"}
+              <Button variant="primary" onClick={create} disabled={busyKeys.has("create")}>
+                {busyKeys.has("create") ? "创建中…" : "创建"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -329,7 +356,7 @@ export default function MatchScheduleManagement() {
                     key={s.id}
                     s={s}
                     form={rowForm(s)}
-                    busy={busy === `details-${s.id}`}
+                    busy={busyKeys.has(`details-${s.id}`)}
                     onForm={(f) => setRowForm(s, f)}
                     onSaveDetails={() => void saveDetails(s)}
                     onStatus={(st) => void updateStatus(s, st)}

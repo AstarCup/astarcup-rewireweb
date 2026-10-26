@@ -71,13 +71,13 @@ export default function StaffDashboardPage() {
         <PageHeader title="管理后台" subtitle="工作人员专用" />
         <div className="mx-auto max-w-2xl px-4 py-12">
           <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="text-2xl font-bold text-[#e85d75]">没有访问权限</p>
+            <p className="text-2xl font-bold text-pc-primary">没有访问权限</p>
             <p className="mt-3 text-sm text-(--pc-slate)">
               此页面为工作人员管理后台，仅管理员可访问。
             </p>
             <Link
               to="/player-info"
-              className="mt-6 inline-block rounded-xl bg-[#5cb8a5] px-5 py-2.5 text-sm font-bold text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
+              className="mt-6 inline-block rounded-xl bg-pc-teal px-5 py-2.5 text-sm font-bold text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
             >
               返回个人信息页
             </Link>
@@ -102,7 +102,7 @@ export default function StaffDashboardPage() {
                 "flex items-center gap-1.5 whitespace-nowrap rounded-xl border-2 px-4 py-2.5 text-sm font-bold transition-all duration-200",
                 "hover:-translate-y-0.5 active:translate-y-0.5",
                 activeTab === t.key
-                  ? "border-[#e85d75] bg-[#e85d75] text-[#fdf6ee] shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
+                  ? "border-pc-primary bg-pc-primary text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
                   : "border-(--pc-border) bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]",
               )}
             >

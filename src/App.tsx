@@ -13,8 +13,10 @@ import GuidePage from "@/pages/GuidePage";
 import SchedulePage from "@/pages/SchedulePage";
 import MappoolPage from "@/pages/MappoolPage";
 import RegistrationsPage from "@/pages/RegistrationsPage";
+import ToolsPage from "@/pages/ToolsPage";
 import ContactPage from "@/pages/ContactPage";
 import PhotosPage from "@/pages/PhotosPage";
+import BotBindPage from "@/pages/BotBindPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 function PublicLayout() {
@@ -38,6 +40,7 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/bind" element={<BotBindPage />} />
         <Route path="/player-info" element={<PlayerInfoPage />} />
         <Route path="/staff-dashboard" element={<StaffDashboardPage />} />
         <Route path="/news" element={<NewsPage />} />
@@ -45,6 +48,7 @@ export default function App() {
         <Route path="/guide" element={<GuidePage />} />
         <Route path="/schedule" element={<SchedulePage />} />
         <Route path="/mappool" element={<MappoolPage />} />
+        <Route path="/tools" element={<ToolsPage />} />
         <Route path="/registrations" element={<RegistrationsPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/photos" element={<PhotosPage />} />

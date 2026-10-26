@@ -3,6 +3,9 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 // vditor 运行时会从 `{cdn}/dist/...` 动态加载图标、Lute 引擎、i18n、代码高亮等资源，
 // 默认 cdn 是 unpkg（国内不可靠）。这里把需要的子集自托管在 /vendor/vditor 下：
@@ -72,14 +75,14 @@ function vditorVendor(): Plugin {
 // Frontend dev server proxies /api + /files to the Rust backend.
 // Same-origin requests => auth cookie works naturally, no CORS involved.
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
+  const env = loadEnv(mode, rootDir, "VITE_");
   const BACKEND = env.VITE_BACKEND || "http://localhost:4000";
 
   return {
     plugins: [react(), tailwindcss(), vditorVendor()],
     resolve: {
       alias: {
-        "@": path.resolve(__dirname, "./src"),
+        "@": path.resolve(rootDir, "./src"),
       },
     },
     server: {

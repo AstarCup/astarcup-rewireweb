@@ -60,7 +60,7 @@ export default function RegisterPage() {
             <CardDescription>你已使用 {user.username} 的 osu! 账号登录。</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-xl bg-[#5cb8a5] text-[#fdf6ee] shadow-[2px_2px_0px_rgba(0,0,0,0.1)]">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-pc-teal text-pc-cream shadow-[2px_2px_0px_rgba(0,0,0,0.1)]">
               <ShieldCheck className="h-6 w-6" />
             </span>
             <div>
@@ -91,19 +91,19 @@ export default function RegisterPage() {
       <Card className="mt-8 rotate-[0.2deg]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-[#e85d75]" />
+            <Lock className="h-5 w-5 text-pc-primary" />
             登录 / 报名
           </CardTitle>
           <CardDescription>使用 osu! 账号登录，即可完成报名。</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {errorText && (
-            <div className="rounded-xl border-2 border-[#e85d75]/40 bg-[#e85d75]/10 p-4 text-sm font-bold text-[#e85d75]">
+            <div className="rounded-xl border-2 border-pc-primary/40 bg-pc-primary/10 p-4 text-sm font-bold text-pc-primary">
               {errorText}
             </div>
           )}
           {urlError && (
-            <div className="rounded-xl border-2 border-[#e85d75]/40 bg-[#e85d75]/10 p-4 text-sm font-bold text-[#e85d75]">
+            <div className="rounded-xl border-2 border-pc-primary/40 bg-pc-primary/10 p-4 text-sm font-bold text-pc-primary">
               {urlError}
             </div>
           )}
@@ -137,7 +137,7 @@ export default function RegisterPage() {
       </Card>
 
       {success && (
-        <div className="mt-6 rounded-2xl bg-[#5cb8a5]/15 border-2 border-[#5cb8a5]/40 p-4 text-center text-sm font-bold text-(--pc-ink)">
+        <div className="mt-6 rounded-2xl bg-pc-teal/15 border-2 border-pc-teal/40 p-4 text-center text-sm font-bold text-(--pc-ink)">
           登录成功！正在跳转首页…
         </div>
       )}

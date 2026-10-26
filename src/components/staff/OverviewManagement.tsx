@@ -5,7 +5,7 @@ import { SectionTitle } from "@/components/paper/paper";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { fmt, fmtInt } from "@/lib/utils";
+import { fmt, fmtInt, osuAvatarUrl } from "@/lib/utils";
 import { seasonLabel } from "@/lib/types";
 import type { StaffStats, SeasonPlayerStat } from "@/lib/types";
 
@@ -14,10 +14,10 @@ const SEASON_METRICS: {
   label: string;
   accent: string;
 }[] = [
-  { key: "totalRegistrations", label: "总报名", accent: "#e85d75" },
-  { key: "approvedPlayers", label: "已过审选手", accent: "#5cb8a5" },
-  { key: "unapprovedPlayers", label: "没过审选手", accent: "#f5c040" },
-  { key: "replayCount", label: "回放数", accent: "#6b7fb5" },
+  { key: "totalRegistrations", label: "总报名", accent: "var(--pc-primary)" },
+  { key: "approvedPlayers", label: "已过审选手", accent: "var(--pc-teal)" },
+  { key: "unapprovedPlayers", label: "没过审选手", accent: "var(--pc-yellow)" },
+  { key: "replayCount", label: "回放数", accent: "var(--pc-blue)" },
 ];
 
 export default function OverviewManagement() {
@@ -28,16 +28,18 @@ export default function OverviewManagement() {
   if (error || !data) return <ErrorBlock message={error || "没有数据"} onRetry={load} />;
 
   const stats = data;
-  const seasonKeys = Object.keys(stats.seasonStats ?? {}).sort();
+  const seasonKeys = Object.keys(stats.seasonStats ?? {}).sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true }),
+  );
   const ts = stats.tournamentSettings;
 
   return (
     <div>
       {/* Welcome banner */}
       <div className="mb-6 flex items-center gap-4 rounded-2xl bg-(--pc-white) p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-        <Avatar className="h-16 w-16 rounded-2xl border-2 border-[#e85d75]">
-          <AvatarImage src={user?.avatarUrl ?? undefined} alt={user?.username ?? ""} />
-          <AvatarFallback className="bg-[#f5c040]/30 text-xl font-bold text-(--pc-ink)">
+        <Avatar className="h-16 w-16 rounded-2xl border-2 border-pc-primary">
+          <AvatarImage src={user?.avatarUrl || osuAvatarUrl(user?.osuId)} alt={user?.username ?? ""} />
+          <AvatarFallback className="bg-pc-yellow/30 text-xl font-bold text-(--pc-ink)">
             {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
           </AvatarFallback>
         </Avatar>
@@ -50,7 +52,7 @@ export default function OverviewManagement() {
         </div>
       </div>
 
-      <SectionTitle tag="后台概览" accent="#e85d75">
+      <SectionTitle tag="后台概览" accent="var(--pc-primary)">
         运营数据一览
       </SectionTitle>
 
@@ -104,7 +106,7 @@ export default function OverviewManagement() {
       </Card>
 
       {/* 分赛季数据板块 */}
-      <SectionTitle tag="赛季数据" accent="#5cb8a5" className="mt-10">
+      <SectionTitle tag="赛季数据" accent="var(--pc-teal)" className="mt-10">
         按赛季查看报名 / 图池 / 回放统计
       </SectionTitle>
 
