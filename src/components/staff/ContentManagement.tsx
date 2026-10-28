@@ -30,14 +30,38 @@ const EMPTY_FORM: NewsInput = {
   published: true,
 };
 
-/** 全屏弹窗：覆盖 DialogContent 默认的居中小卡片样式 */
+/** 本机日期 YYYY-MM-DD（新建资讯时写入隐藏的 date 字段） */
+function todayLocal(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** 标题 → slug；纯中文标题没有 ASCII 字符时退回 news-日期 */
+function slugFromTitle(title: string): string {
+  const base = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48)
+    .replace(/-+$/g, "");
+  return base || `news-${todayLocal()}`;
+}
+
+/** 全屏弹窗：覆盖 DialogContent 默认的居中小卡片样式。
+ * 必须带 flex-col：底层 DialogContent 是 flex，缺少方向时会把
+ * 头/正文/尾并排成三列。 */
 const FULLSCREEN =
-  "fixed inset-0 left-0 top-0 z-50 flex h-screen w-screen max-w-none translate-x-0 " +
+  "fixed inset-0 left-0 top-0 z-50 flex flex-col h-screen w-screen max-w-none translate-x-0 " +
   "translate-y-0 rotate-0 rounded-none border-0 p-0 gap-0 shadow-none";
 
 /** 弹窗头/尾的通用样式（避开右上角关闭按钮） */
 const DIALOG_HEAD =
   "shrink-0 border-b-2 border-(--pc-border) px-6 py-4 pr-14";
+/** 资讯弹窗头：标题在左，保存按钮在右，右上角留给关闭按钮 */
+const DIALOG_HEAD_BAR =
+  "shrink-0 flex items-start justify-between gap-4 border-b-2 border-(--pc-border) px-6 py-4 pr-16";
 const DIALOG_BODY = "min-h-0 flex-1 overflow-y-auto px-6 py-5";
 const DIALOG_FOOT = "shrink-0 border-t-2 border-(--pc-border) px-6 py-4";
 
@@ -88,7 +112,7 @@ export default function ContentManagement() {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm({ ...EMPTY_FORM });
+    setForm({ ...EMPTY_FORM, date: todayLocal() });
   };
 
   const openEdit = async (item: NewsItem) => {
@@ -111,11 +135,24 @@ export default function ContentManagement() {
 
   const saveForm = async () => {
     if (!form) return;
+    // slug / 日期不在界面上暴露：日期缺省取当天，slug 缺省由标题生成
+    const payload: NewsInput = {
+      ...form,
+      date: form.date || todayLocal(),
+      slug: form.slug.trim() || slugFromTitle(form.title),
+    };
     setFormBusy(true);
-    const res =
+    let res =
       editingId === null
-        ? await api.post<NewsDetail>("/api/admin/news", form)
-        : await api.put<NewsDetail>(`/api/admin/news/${editingId}`, form);
+        ? await api.post<NewsDetail>("/api/admin/news", payload)
+        : await api.put<NewsDetail>(`/api/admin/news/${editingId}`, payload);
+    // 新建时自动 slug 可能撞名，自动追加序号重试（字段已隐藏，用户无法手动改）
+    for (let n = 2; editingId === null && !res.ok && res.error.status === 409 && n <= 6; n++) {
+      res = await api.post<NewsDetail>("/api/admin/news", {
+        ...payload,
+        slug: `${payload.slug}-${n}`,
+      });
+    }
     setFormBusy(false);
     if (res.ok) {
       toast({ title: editingId === null ? "资讯已创建" : "资讯已更新" });
@@ -284,12 +321,17 @@ export default function ContentManagement() {
       {/* 新建 / 编辑资讯：全屏弹窗 + vditor */}
       <Dialog open={form !== null} onOpenChange={(o) => !o && setForm(null)}>
         <DialogContent className={FULLSCREEN}>
-          <DialogHeader className={DIALOG_HEAD}>
-            <DialogTitle>{editingId === null ? "新建资讯" : "编辑资讯"}</DialogTitle>
-            <DialogDescription>
-              正文为 Markdown，保存后前台「赛事资讯」与首页立即生效。
-            </DialogDescription>
-          </DialogHeader>
+          <div className={DIALOG_HEAD_BAR}>
+            <div className="min-w-0">
+              <DialogTitle>{editingId === null ? "新建资讯" : "编辑资讯"}</DialogTitle>
+              <DialogDescription className="mt-1">
+                正文为 Markdown，保存后前台「赛事资讯」与首页立即生效。
+              </DialogDescription>
+            </div>
+            <Button className="shrink-0" onClick={() => void saveForm()} disabled={formBusy}>
+              {formBusy ? "保存中…" : "保存"}
+            </Button>
+          </div>
           {form && (
             <div className={DIALOG_BODY}>
               <div className="grid gap-4">
@@ -301,29 +343,6 @@ export default function ContentManagement() {
                     onChange={(e) => setField("title", e.target.value)}
                     placeholder="例如：AstraCup S2 开始报名"
                   />
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="grid gap-2">
-                    <Label htmlFor="news-slug">slug *</Label>
-                    <Input
-                      id="news-slug"
-                      value={form.slug}
-                      onChange={(e) => setField("slug", e.target.value)}
-                      placeholder="s2-recruit（小写字母/数字/中划线）"
-                    />
-                    <p className="text-xs text-(--pc-faint)">
-                      用于网址 /news/xxx，创建后不建议修改
-                    </p>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="news-date">日期 *</Label>
-                    <Input
-                      id="news-date"
-                      type="date"
-                      value={form.date}
-                      onChange={(e) => setField("date", e.target.value)}
-                    />
-                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="news-desc">摘要</Label>
@@ -353,14 +372,6 @@ export default function ContentManagement() {
               </div>
             </div>
           )}
-          <DialogFooter className={DIALOG_FOOT}>
-            <Button variant="outline" onClick={() => setForm(null)}>
-              取消
-            </Button>
-            <Button onClick={() => void saveForm()} disabled={formBusy}>
-              {formBusy ? "保存中…" : "保存"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -402,17 +413,11 @@ export default function ContentManagement() {
             </Button>
           </div>
         </div>
-        <p className="mb-4 mt-3 text-xs leading-relaxed text-(--pc-slate)">
-          AstrBot 调用 <code className="rounded bg-(--pc-paper) px-1">GET /api/bot/rules</code>{" "}
-          时读取这里的内容，优先级：系统设置里的 rules 覆盖 → 本表 → rules/ 文件兜底。正文为
-          Markdown，点击行在全屏编辑器中修改。
-        </p>
-
         {rulesLoading ? (
           <LoadingBlock label="加载规则中…" />
         ) : (
           <>
-            <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+            <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
               <table className="w-full min-w-[720px] text-sm">
                 <thead>
                   <tr className="border-b-2 border-(--pc-border) text-left text-xs text-(--pc-faint)">

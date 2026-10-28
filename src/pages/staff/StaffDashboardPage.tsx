@@ -92,14 +92,14 @@ export default function StaffDashboardPage() {
   return (
     <div className="min-h-screen bg-(--pc-paper) pb-16">
       <div className="mx-auto max-w-6xl px-4 pt-8">
-        {/* Horizontal scrollable tab bar */}
-        <div className="flex gap-2 overflow-x-auto pb-3 pt-1.5">
+        {/* Full-width tab grid：等宽铺满整行，标签过多时自动换行，不再横向滚动 */}
+        <div className="grid grid-cols-2 gap-2 pb-3 pt-1.5 sm:grid-cols-3 md:grid-cols-5">
           {TABS.map((t) => (
             <button
               key={t.key}
               onClick={() => selectTab(t.key)}
               className={cn(
-                "flex items-center gap-1.5 whitespace-nowrap rounded-xl border-2 px-4 py-2.5 text-sm font-bold transition-all duration-200",
+                "flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border-2 px-3 py-2.5 text-sm font-bold transition-all duration-200",
                 "hover:-translate-y-0.5 active:translate-y-0.5",
                 activeTab === t.key
                   ? "border-pc-primary bg-pc-primary text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
