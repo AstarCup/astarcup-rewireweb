@@ -233,8 +233,13 @@ export default function PlayerInfoPage() {
 
   const openBookingDialog = async () => {
     setSelectedRoomId("");
+    // 只列出当前赛季的可预约房间，避免跨赛季误约
+    const season = (settings?.current_season ?? "").trim().toLowerCase();
     rooms.run(() =>
-      api.get<MatchRoom[]>("/api/rooms" + qs({ status: "open", withSchedules: true })),
+      api.get<MatchRoom[]>(
+        "/api/rooms" +
+          qs({ status: "open", withSchedules: true, season: season || undefined }),
+      ),
     );
     setDialogOpen(true);
   };

@@ -14,8 +14,10 @@ interface ScheduleGroup {
   items: MatchSchedule[];
 }
 
-function statusBadge(status: string) {
-  switch (status) {
+/** 赛程所属赛季：自身没标时跟随房间 */
+const seasonOf = (s: MatchSchedule) => (s.season ?? s.room?.season ?? "").toLowerCase();
+
+function statusBadge(status: string) {  switch (status) {
     case "pending":
       return (
         <Badge variant="primary" className="border-pc-primary bg-pc-primary">
@@ -45,8 +47,7 @@ function statusBadge(status: string) {
   }
 }
 
-function groupSchedules(list: MatchSchedule[]): ScheduleGroup[] {
-  const groups: ScheduleGroup[] = [];
+function groupSchedules(list: MatchSchedule[]): ScheduleGroup[] {  const groups: ScheduleGroup[] = [];
   for (const item of list) {
     const room: MatchRoom | null = item.room ?? null;
     const idKey = room?.id != null ? String(room.id) : "未分组";
@@ -158,10 +159,13 @@ export default function SchedulePage() {
   const all = data ?? [];
   const seasons = useMemo(() => {
     const set = new Set<string>();
-    for (const s of all) if (s.season) set.add(s.season);
+    for (const s of all) {
+      const se = seasonOf(s);
+      if (se) set.add(se);
+    }
     return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }, [all]);
-  const visible = season === "all" ? all : all.filter((s) => s.season === season);
+  const visible = season === "all" ? all : all.filter((s) => seasonOf(s) === season);
   const groups = groupSchedules(visible);
 
   return (

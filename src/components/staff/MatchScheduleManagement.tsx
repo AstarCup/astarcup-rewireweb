@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { api, qs } from "@/lib/api";
@@ -27,6 +27,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import type { MatchRoom, MatchSchedule, PlayerStub } from "@/lib/types";
+import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
+import SeasonSelect from "@/components/staff/SeasonSelect";
 
 const STATUS_META: Record<string, { label: string; variant: "primary" | "teal" | "yellow" | "blue" | "outline" }> = {
   pending: { label: "待确认", variant: "yellow" },
@@ -42,6 +44,9 @@ function statusVariant(s: string): "primary" | "teal" | "yellow" | "blue" | "out
 function statusLabel(s: string): string {
   return STATUS_META[s]?.label ?? s;
 }
+
+/** 赛程所属赛季：自身没有时跟随房间 */
+const seasonOfSchedule = (s: MatchSchedule) => (s.season ?? s.room?.season ?? "").toLowerCase();
 
 interface RowForm {
   season: string;
@@ -65,6 +70,7 @@ interface ScheduleCardProps {
   s: MatchSchedule;
   form: RowForm;
   busy: boolean;
+  seasonOptions: { value: string; label: string }[];
   onForm: (f: RowForm) => void;
   onSaveDetails: () => void;
   onStatus: (status: string) => void;
@@ -75,6 +81,7 @@ function ScheduleCard({
   s,
   form,
   busy,
+  seasonOptions,
   onForm,
   onSaveDetails,
   onStatus,
@@ -134,10 +141,11 @@ function ScheduleCard({
             </button>
           )}
         </div>
-        <Input
-          value={form.season}
-          onChange={setField("season")}
-          placeholder={s.season || "如 s2"}
+        <SeasonSelect
+          value={form.season || (s.season ?? "").toLowerCase()}
+          onChange={(v) => onForm({ ...form, season: v })}
+          options={seasonOptions}
+          className="w-full"
         />
       </div>
 
@@ -188,6 +196,27 @@ export default function MatchScheduleManagement() {
   const players = useFetch<PlayerStub[]>(() =>
     api.get("/api/players" + qs({ status: "approved" })),
   );
+  const currentSeason = useCurrentSeason();
+  const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
+  const activeSeason = seasonFilter ?? currentSeason;
+  const seasonOptions = useSeasonOptions([
+    ...(data ?? []).map((s) => s.season ?? s.room?.season),
+    ...(rooms.data ?? []).map((r) => r.season),
+  ]);
+  /** 列表按赛季过滤：赛程自身没标赛季时用房间的赛季兜底 */
+  const schedules = useMemo(
+    () =>
+      (data ?? []).filter(
+        (s) => activeSeason === "all" || seasonOfSchedule(s) === activeSeason,
+      ),
+    [data, activeSeason],
+  );
+  /** 创建赛程时只列出当前筛选赛季的房间 */
+  const roomChoices = useMemo(() => {
+    const list = rooms.data ?? [];
+    if (activeSeason === "all") return list;
+    return list.filter((r) => (r.season ?? "").toLowerCase() === activeSeason);
+  }, [rooms.data, activeSeason]);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [roomId, setRoomId] = useState("");
@@ -298,7 +327,7 @@ export default function MatchScheduleManagement() {
   if (error || !data) return <ErrorBlock message={error || "没有数据"} onRetry={load} />;
 
   // Group by room
-  const grouped = data.reduce<Record<string, MatchSchedule[]>>((acc, s) => {
+  const grouped = schedules.reduce<Record<string, MatchSchedule[]>>((acc, s) => {
     const key = s.room?.roomName || "未分配房间";
     (acc[key] = acc[key] || []).push(s);
     return acc;
@@ -310,6 +339,14 @@ export default function MatchScheduleManagement() {
         <SectionTitle tag="比赛预约管理" accent="var(--pc-primary)" className="mb-0">
           赛程安排
         </SectionTitle>
+        <div className="flex items-center gap-2">
+        <SeasonSelect
+          value={activeSeason}
+          onChange={(v) => setSeasonFilter(v)}
+          options={seasonOptions}
+          includeAll
+          className="w-36"
+        />
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button variant="primary">创建赛程</Button>
@@ -327,9 +364,10 @@ export default function MatchScheduleManagement() {
                     <SelectValue placeholder="选择房间" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(rooms.data ?? []).map((r) => (
+                    {roomChoices.map((r) => (
                       <SelectItem key={r.id} value={String(r.id)}>
                         {r.roomName}
+                        {r.season ? ` · ${r.season.toUpperCase()}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -376,10 +414,13 @@ export default function MatchScheduleManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
-      {data.length === 0 ? (
-        <p className="py-10 text-center text-sm text-(--pc-faint)">还没有赛程。</p>
+      {schedules.length === 0 ? (
+        <p className="py-10 text-center text-sm text-(--pc-faint)">
+          {activeSeason === "all" ? "还没有赛程。" : "当前赛季还没有赛程。"}
+        </p>
       ) : (
         <div className="space-y-6">
           {Object.entries(grouped).map(([room, list]) => (
@@ -395,6 +436,7 @@ export default function MatchScheduleManagement() {
                     s={s}
                     form={rowForm(s)}
                     busy={busyKeys.has(`details-${s.id}`) || busyKeys.has(`season-${s.id}`)}
+                    seasonOptions={seasonOptions}
                     onForm={(f) => setRowForm(s, f)}
                     onSaveDetails={() => void saveDetails(s)}
                     onStatus={(st) => void updateStatus(s, st)}

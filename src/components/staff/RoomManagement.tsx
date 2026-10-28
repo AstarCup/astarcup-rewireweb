@@ -32,6 +32,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import type { MatchRoom } from "@/lib/types";
+import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
+import SeasonSelect from "@/components/staff/SeasonSelect";
 
 const EMPTY_FORM = {
   room_name: "",
@@ -72,6 +74,22 @@ const STAGE_LABEL: Record<string, string> = {
 
 const ALL_TIMES = [...MORNING_TIMES, ...AFTERNOON_TIMES];
 
+/** 小并发映射：批量请求既不要串行慢，也不要一次打 25/50 个 */
+async function mapLimit<T>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      const index = cursor++;
+      await fn(items[index], index);
+    }
+  });
+  await Promise.all(workers);
+}
+
 function formatMatchTime(iso?: string | null): string {
   if (!iso) return "-";
   // 后端将本地(+8)墙钟时间按 UTC 序列化(后缀 +00:00)，此处按 +08:00 墙钟解析，避免偏移 8 小时
@@ -94,6 +112,21 @@ function formatMatchTime(iso?: string | null): string {
 
 export default function RoomManagement() {
   const { data, loading, error, load } = useFetch<MatchRoom[]>(() => api.get("/api/rooms"));
+  const currentSeason = useCurrentSeason();
+  const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
+  // 默认只看当前赛季；选「全部赛季」时展示所有房间
+  const activeSeason = seasonFilter ?? currentSeason;
+  const seasonOptions = useSeasonOptions((data ?? []).map((r) => r.season));
+  const rooms = useMemo(
+    () =>
+      (data ?? []).filter(
+        (r) => activeSeason === "all" || (r.season ?? "").toLowerCase() === activeSeason,
+      ),
+    [data, activeSeason],
+  );
+  const [newRoomSeason, setNewRoomSeason] = useState("");
+  const [batchSeason, setBatchSeason] = useState("");
+  const [seasonBusy, setSeasonBusy] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -106,11 +139,13 @@ export default function RoomManagement() {
   const [batchMax, setBatchMax] = useState("");
   const [batchBusy, setBatchBusy] = useState(false);
   const [batchProgress, setBatchProgress] = useState(0);
+  const [batchTotal, setBatchTotal] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<MatchRoom | null>(null);
   const [delBusy, setDelBusy] = useState(false);
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<Set<number>>(new Set());
   const [batchDelBusy, setBatchDelBusy] = useState(false);
+  const [batchDelProgress, setBatchDelProgress] = useState(0);
 
   const setField = (k: keyof typeof EMPTY_FORM) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -136,8 +171,9 @@ export default function RoomManagement() {
       match_date: `${form.match_date}T00:00:00`,
       match_time: `${form.match_date}T${form.match_time}:00`,
       match_number: form.match_number ? Number(form.match_number) : 1,
-      max_participants: form.max_participants ? Number(form.max_participants) : 0,
+      max_participants: form.max_participants ? Number(form.max_participants) : 2,
       description: form.description || null,
+      season: newRoomSeason || currentSeason || undefined,
     });
     setBusy(false);
     if (res.ok) {
@@ -175,39 +211,66 @@ export default function RoomManagement() {
 
   const toggleDeleteAll = () =>
     setDeleteIds((prev) =>
-      prev.size === (data ?? []).length ? new Set<number>() : new Set((data ?? []).map((r) => r.id)),
+      prev.size === rooms.length ? new Set<number>() : new Set(rooms.map((r) => r.id)),
     );
+
+  /** 房间改赛季：后端会把该房间下的赛程一起迁移 */
+  const changeSeason = async (room: MatchRoom, season: string) => {
+    if (!season || season === (room.season ?? "").toLowerCase()) return;
+    setSeasonBusy(room.id);
+    const res = await api.patch(`/api/rooms/${room.id}`, { season });
+    setSeasonBusy(null);
+    if (res.ok) {
+      toast({ title: "房间赛季已更新（赛程已同步）" });
+      void load();
+    } else {
+      toast({ variant: "destructive", title: "赛季更新失败" });
+    }
+  };
 
   const confirmBatchDelete = async () => {
     if (deleteIds.size === 0) return;
+    const ids = Array.from(deleteIds);
     setBatchDelBusy(true);
+    setBatchDelProgress(0);
     let ok = 0;
-    for (const id of Array.from(deleteIds)) {
+    let done = 0;
+    await mapLimit(ids, 4, async (id) => {
       const res = await api.delete(`/api/rooms/${id}`);
       if (res.ok) ok += 1;
-    }
+      done += 1;
+      setBatchDelProgress(done);
+    });
     setBatchDelBusy(false);
-    toast({ title: `批量删除完成：成功 ${ok} / ${deleteIds.size}` });
+    const failed = ids.length - ok;
+    toast({
+      title: `批量删除完成：成功 ${ok} / ${ids.length}`,
+      description: failed > 0 ? `${failed} 个删除失败，可刷新后重试` : undefined,
+    });
     setBatchDeleteOpen(false);
     setDeleteIds(new Set());
     void load();
   };
 
-  // 本阶段已有房间的最大场次 +1，避免跨天批量新建时场次重复
+  // 本阶段已有房间的最大场次 +1，避免跨天批量新建时场次重复（只统计目标赛季）
   const batchStart = useMemo(() => {
     if (!batchStage) return 1;
-    const max = (data ?? []).reduce(
-      (m, r) => (r.roundNumber === Number(batchStage) ? Math.max(m, r.matchNumber) : m),
-      0,
-    );
+    const target = (batchSeason || currentSeason).toLowerCase();
+    const max = (data ?? [])
+      .filter((r) => (r.season ?? "").toLowerCase() === target)
+      .reduce(
+        (m, r) => (r.roundNumber === Number(batchStage) ? Math.max(m, r.matchNumber) : m),
+        0,
+      );
     return max + 1;
-  }, [batchStage, data]);
+  }, [batchStage, batchSeason, currentSeason, data]);
 
   const resetBatch = () => {
     setBatchDateObj(undefined);
     setBatchStage("");
     setBatchMax("");
     setBatchProgress(0);
+    setBatchTotal(0);
   };
 
   const batchCreate = async () => {
@@ -219,25 +282,53 @@ export default function RoomManagement() {
       toast({ title: "请选择阶段" });
       return;
     }
+    const dateStr = format(batchDateObj, "yyyy-MM-dd");
+    const targetSeason = (batchSeason || currentSeason).toLowerCase();
+    // 同一赛季、同一天已经存在的时段直接跳过，避免重复批量生成同一批房间
+    const taken = new Set(
+      (data ?? [])
+        .filter((r) => (r.season ?? "").toLowerCase() === targetSeason)
+        .map((r) => (r.matchTime ?? "").slice(0, 16)),
+    );
+    const slots = ALL_TIMES.map((t) => ({ time: t, key: `${dateStr}T${t}` })).filter(
+      (s) => !taken.has(s.key),
+    );
+    const skipped = ALL_TIMES.length - slots.length;
+    if (slots.length === 0) {
+      toast({
+        title: "所选日期的时段都已有房间",
+        description: "换一天，或先删除该日期已有房间后再批量新建。",
+      });
+      return;
+    }
     setBatchBusy(true);
     setBatchProgress(0);
+    setBatchTotal(slots.length);
     let ok = 0;
-    for (let i = 0; i < ALL_TIMES.length; i++) {
-      const dateStr = format(batchDateObj, "yyyy-MM-dd");
+    let done = 0;
+    await mapLimit(slots, 4, async (slot, i) => {
       const res = await api.post("/api/rooms", {
         room_name: `${STAGE_LABEL[batchStage] ?? batchStage} ${batchStart + i}`,
         round_number: Number(batchStage),
         match_date: `${dateStr}T00:00:00`,
-        match_time: `${dateStr}T${ALL_TIMES[i]}:00`,
+        match_time: `${slot.key}:00`,
         match_number: batchStart + i,
-        max_participants: batchMax ? Number(batchMax) : 0,
+        max_participants: batchMax ? Number(batchMax) : 2,
         description: null,
+        season: batchSeason || currentSeason || undefined,
       });
       if (res.ok) ok += 1;
-      setBatchProgress(i + 1);
-    }
+      done += 1;
+      setBatchProgress(done);
+    });
     setBatchBusy(false);
-    toast({ title: `批量完成：成功 ${ok} / ${ALL_TIMES.length}` });
+    const failed = slots.length - ok;
+    toast({
+      title: `批量新建完成：成功 ${ok} / ${slots.length}${
+        skipped > 0 ? `，跳过 ${skipped} 个已存在时段` : ""
+      }`,
+      description: failed > 0 ? `${failed} 个创建失败，请重试` : undefined,
+    });
     setBatchOpen(false);
     resetBatch();
     void load();
@@ -253,6 +344,13 @@ export default function RoomManagement() {
           比赛房间
         </SectionTitle>
         <div className="flex items-center gap-2">
+        <SeasonSelect
+          value={activeSeason}
+          onChange={(v) => setSeasonFilter(v)}
+          options={seasonOptions}
+          includeAll
+          className="w-36"
+        />
         <Dialog
           open={open}
           onOpenChange={(o) => {
@@ -278,6 +376,15 @@ export default function RoomManagement() {
                   value={form.room_name}
                   onChange={setField("room_name")}
                   placeholder="e.g. RO16 · Room 1"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>赛季</Label>
+                <SeasonSelect
+                  value={newRoomSeason || currentSeason}
+                  onChange={setNewRoomSeason}
+                  options={seasonOptions}
+                  className="w-full"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -442,6 +549,15 @@ export default function RoomManagement() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5">
+                  <Label>赛季</Label>
+                  <SeasonSelect
+                    value={batchSeason || currentSeason}
+                    onChange={setBatchSeason}
+                    options={seasonOptions}
+                    className="w-full"
+                  />
+                </div>
+                <div className="grid gap-1.5">
                   <Label>阶段</Label>
                   <Select value={batchStage} onValueChange={setBatchStage}>
                     <SelectTrigger className="w-full">
@@ -456,24 +572,25 @@ export default function RoomManagement() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid gap-1.5">
-                  <Label>最大人数</Label>
-                  <Input
-                    type="number"
-                    value={batchMax}
-                    onChange={(e) => setBatchMax(e.target.value)}
-                  />
-                </div>
+              </div>
+              <div className="grid gap-1.5">
+                <Label>最大人数</Label>
+                <Input
+                  type="number"
+                  value={batchMax}
+                  onChange={(e) => setBatchMax(e.target.value)}
+                />
               </div>
               <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-3 text-xs text-(--pc-slate)">
                 将创建 {ALL_TIMES.length} 个房间（{ALL_TIMES[0]} ~ {ALL_TIMES[ALL_TIMES.length - 1]}），房间名「
                 {STAGE_LABEL[batchStage] ?? "Stage"} 1」至「{STAGE_LABEL[batchStage] ?? "Stage"} {ALL_TIMES.length}」。
+                同一天已有房间的时段会自动跳过。
               </div>
               {batchBusy && (
                 <div className="h-2 overflow-hidden rounded-full bg-(--pc-paper)">
                   <div
                     className="h-full rounded-full bg-pc-teal transition-all duration-200"
-                    style={{ width: `${(batchProgress / ALL_TIMES.length) * 100}%` }}
+                    style={{ width: `${batchTotal ? (batchProgress / batchTotal) * 100 : 0}%` }}
                   />
                 </div>
               )}
@@ -484,7 +601,7 @@ export default function RoomManagement() {
               </DialogClose>
               <Button variant="primary" onClick={() => void batchCreate()} disabled={batchBusy}>
                 {batchBusy
-                  ? `创建中 ${batchProgress}/${ALL_TIMES.length}`
+                  ? `创建中 ${batchProgress}/${batchTotal || ALL_TIMES.length}`
                   : `一键新建 ${ALL_TIMES.length} 个房间`}
               </Button>
             </DialogFooter>
@@ -506,16 +623,18 @@ export default function RoomManagement() {
           <DialogContent className="max-w-xl">
             <DialogHeader>
               <DialogTitle>批量删除房间</DialogTitle>
-              <DialogDescription>勾选要删除的房间，确认后逐个删除（不可撤销）。</DialogDescription>
+              <DialogDescription>
+                勾选要删除的房间，确认后逐个删除（不可撤销）。房间下的赛程、比分、对战与人员安排会一并删除。
+              </DialogDescription>
             </DialogHeader>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-(--pc-faint)">已选 {deleteIds.size} / {data.length} 个房间</span>
+              <span className="text-xs text-(--pc-faint)">已选 {deleteIds.size} / {rooms.length} 个房间</span>
               <Button variant="outline" size="sm" onClick={toggleDeleteAll}>
-                {deleteIds.size === data.length ? "取消全选" : "全选"}
+                {deleteIds.size === rooms.length ? "取消全选" : "全选"}
               </Button>
             </div>
             <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-(--pc-border)">
-              {data.map((room) => {
+              {rooms.map((room) => {
                 const stageLabel =
                   ROUND_OPTIONS.find((o) => o.value === String(room.roundNumber))?.label ??
                   `R${room.roundNumber}`;
@@ -547,7 +666,9 @@ export default function RoomManagement() {
                 onClick={() => void confirmBatchDelete()}
                 disabled={batchDelBusy || deleteIds.size === 0}
               >
-                {batchDelBusy ? `删除中…` : `删除 ${deleteIds.size} 个房间`}
+                {batchDelBusy
+                  ? `删除中 ${batchDelProgress}/${deleteIds.size}`
+                  : `删除 ${deleteIds.size} 个房间`}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -555,14 +676,17 @@ export default function RoomManagement() {
         </div>
       </div>
 
-      {data.length === 0 ? (
-        <p className="py-10 text-center text-sm text-(--pc-faint)">还没有房间。</p>
+      {rooms.length === 0 ? (
+        <p className="py-10 text-center text-sm text-(--pc-faint)">
+          {activeSeason === "all" ? "还没有房间。" : "当前赛季还没有房间。"}
+        </p>
       ) : (
         <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-          <table className="w-full min-w-[820px] text-left text-sm">
+          <table className="w-full min-w-[900px] text-left text-sm">
             <thead>
               <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
                 <th className="px-4 py-3 font-bold text-(--pc-slate)">房间名称</th>
+                <th className="px-4 py-3 font-bold text-(--pc-slate)">赛季</th>
                 <th className="px-4 py-3 font-bold text-(--pc-slate)">阶段</th>
                 <th className="px-4 py-3 font-bold text-(--pc-slate)">编号</th>
                 <th className="px-4 py-3 font-bold text-(--pc-slate)">比赛时间</th>
@@ -573,7 +697,7 @@ export default function RoomManagement() {
               </tr>
             </thead>
             <tbody>
-              {data.map((room) => {
+              {rooms.map((room) => {
                 const scheduleCount = room.schedules?.length ?? room.scheduleIds?.length ?? 0;
                 const stageLabel =
                   ROUND_OPTIONS.find((o) => o.value === String(room.roundNumber))?.label ??
@@ -585,6 +709,15 @@ export default function RoomManagement() {
                       {room.description && (
                         <p className="mt-0.5 text-xs text-(--pc-faint)">{room.description}</p>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <SeasonSelect
+                        value={(room.season ?? "").toLowerCase()}
+                        onChange={(v) => void changeSeason(room, v)}
+                        options={seasonOptions}
+                        className="h-8 w-24"
+                        disabled={seasonBusy === room.id}
+                      />
                     </td>
                     <td className="px-4 py-3 font-sans text-(--pc-slate)">{stageLabel}</td>
                     <td className="px-4 py-3 font-sans text-(--pc-slate)">{room.matchNumber}</td>

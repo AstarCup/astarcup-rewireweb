@@ -101,6 +101,8 @@ export interface MatchRoom {
   maxParticipants: number;
   status: string; // open | full | closed
   description?: string | null;
+  /** 房间所属赛季，例如 s1 / s2；房间下的赛程跟随该值 */
+  season?: string | null;
   createdBy?: string | null;
   createdAt?: string;
   updatedAt?: string;
@@ -140,6 +142,8 @@ export interface PlayerMatchup {
   player2OsuId: string;
   player2Username: string;
   status: string; // available | scheduled | completed
+  /** 对战所属赛季，例如 s1 / s2 */
+  season?: string | null;
   createdBy?: string | null;
   createdAt?: string;
   updatedAt?: string;

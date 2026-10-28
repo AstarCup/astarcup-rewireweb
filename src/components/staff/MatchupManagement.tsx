@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useFetch, LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { api, qs } from "@/lib/api";
@@ -25,6 +25,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import type { PlayerMatchup, PlayerStub } from "@/lib/types";
+import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
+import SeasonSelect from "@/components/staff/SeasonSelect";
 
 const STATUS_META: Record<string, { label: string; variant: "primary" | "teal" | "yellow" | "blue" | "outline" }> = {
   available: { label: "可预约", variant: "teal" },
@@ -46,10 +48,22 @@ export default function MatchupManagement() {
   const players = useFetch<PlayerStub[]>(() =>
     api.get("/api/players" + qs({ status: "approved" })),
   );
+  const currentSeason = useCurrentSeason();
+  const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
+  const activeSeason = seasonFilter ?? currentSeason;
+  const seasonOptions = useSeasonOptions((data ?? []).map((m) => m.season));
+  const matchups = useMemo(
+    () =>
+      (data ?? []).filter(
+        (m) => activeSeason === "all" || (m.season ?? "").toLowerCase() === activeSeason,
+      ),
+    [data, activeSeason],
+  );
 
   const [createOpen, setCreateOpen] = useState(false);
   const [p1, setP1] = useState("");
   const [p2, setP2] = useState("");
+  const [newSeason, setNewSeason] = useState("");
   const [busy, setBusy] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PlayerMatchup | null>(null);
   const [delBusy, setDelBusy] = useState(false);
@@ -71,6 +85,7 @@ export default function MatchupManagement() {
       player1Username: a?.username ?? "",
       player2OsuId: p2,
       player2Username: b?.username ?? "",
+      season: newSeason || currentSeason || undefined,
     });
     setBusy(false);
     if (res.ok) {
@@ -78,9 +93,22 @@ export default function MatchupManagement() {
       setCreateOpen(false);
       setP1("");
       setP2("");
+      setNewSeason("");
       void load();
     } else {
       toast({ variant: "destructive", title: "创建失败" });
+    }
+  };
+
+  /** 把对战改到另一个赛季 */
+  const changeSeason = async (m: PlayerMatchup, season: string) => {
+    if (!season || season === (m.season ?? "").toLowerCase()) return;
+    const res = await api.patch(`/api/matchups/${m.id}`, { season });
+    if (res.ok) {
+      toast({ title: "对战赛季已更新" });
+      void load();
+    } else {
+      toast({ variant: "destructive", title: "赛季更新失败" });
     }
   };
 
@@ -119,7 +147,15 @@ export default function MatchupManagement() {
         <SectionTitle tag="对战列表" accent="var(--pc-yellow)" className="mb-0">
           比赛对战
         </SectionTitle>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <div className="flex items-center gap-2">
+          <SeasonSelect
+            value={activeSeason}
+            onChange={(v) => setSeasonFilter(v)}
+            options={seasonOptions}
+            includeAll
+            className="w-36"
+          />
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
             <Button variant="primary">新建对战</Button>
           </DialogTrigger>
@@ -159,6 +195,15 @@ export default function MatchupManagement() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="grid gap-1.5">
+                <Label>赛季</Label>
+                <SeasonSelect
+                  value={newSeason || currentSeason}
+                  onChange={setNewSeason}
+                  options={seasonOptions}
+                  className="w-full"
+                />
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild>
@@ -170,13 +215,16 @@ export default function MatchupManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
-      {data.length === 0 ? (
-        <p className="py-10 text-center text-sm text-(--pc-faint)">还没有对战。</p>
+      {matchups.length === 0 ? (
+        <p className="py-10 text-center text-sm text-(--pc-faint)">
+          {activeSeason === "all" ? "还没有对战。" : "当前赛季还没有对战。"}
+        </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {data.map((m) => (
+          {matchups.map((m) => (
             <Card key={m.id} className="p-5">
               <div className="flex items-center justify-between gap-3">
                 <p className="font-bold text-(--pc-ink)">
@@ -197,6 +245,13 @@ export default function MatchupManagement() {
                     <SelectItem value="completed">已完成</SelectItem>
                   </SelectContent>
                 </Select>
+                <Label className="ml-2 text-xs text-(--pc-faint)">赛季</Label>
+                <SeasonSelect
+                  value={(m.season ?? "").toLowerCase()}
+                  onChange={(v) => void changeSeason(m, v)}
+                  options={seasonOptions}
+                  className="h-9 w-24"
+                />
                 <Dialog open={deleteTarget?.id === m.id} onOpenChange={(o) => !o && setDeleteTarget(null)}>
                   <DialogTrigger asChild>
                     <Button variant="destructive" size="sm" className="ml-auto" onClick={() => setDeleteTarget(m)}>

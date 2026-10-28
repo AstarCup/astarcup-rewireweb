@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/app-context";
+import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
+import SeasonSelect from "@/components/staff/SeasonSelect";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -56,6 +58,18 @@ export default function StreamingManagement() {
   const assignments = useFetch<StaffRoomAssignment[]>(() =>
     api.get("/api/staff/assignments"),
   );
+  const currentSeason = useCurrentSeason();
+  const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
+  const activeSeason = seasonFilter ?? currentSeason;
+  const seasonOptions = useSeasonOptions((rooms.data ?? []).map((r) => r.season));
+  /** 只展示当前赛季的房间；历史赛季的房间不再出现在加入列表 */
+  const seasonRooms = useMemo(
+    () =>
+      (rooms.data ?? []).filter(
+        (r) => activeSeason === "all" || (r.season ?? "").toLowerCase() === activeSeason,
+      ),
+    [rooms.data, activeSeason],
+  );
 
   const [applyOpen, setApplyOpen] = useState(false);
   const [roomId, setRoomId] = useState("");
@@ -65,7 +79,16 @@ export default function StreamingManagement() {
   const [busy, setBusy] = useState(false);
   const [revoking, setRevoking] = useState<number | null>(null);
 
-  const list = assignments.data ?? [];
+  /** 人员安排列表同样按赛季过滤（安排挂在房间上，用房间赛季判断） */
+  const list = useMemo(
+    () =>
+      (assignments.data ?? []).filter(
+        (a) =>
+          activeSeason === "all" ||
+          (a.room?.season ?? "").toLowerCase() === activeSeason,
+      ),
+    [assignments.data, activeSeason],
+  );
   // 用户信息晚于挂载到达时补全默认值（不覆盖用户已填写的内容）
   useEffect(() => {
     if (!user) return;
@@ -86,7 +109,7 @@ export default function StreamingManagement() {
       arr.push(a);
       byRoom.set(a.roomId, arr);
     }
-    return (rooms.data ?? []).map((room) => {
+    return seasonRooms.map((room) => {
       const inRoom = byRoom.get(room.id) ?? [];
       return {
         room,
@@ -95,7 +118,7 @@ export default function StreamingManagement() {
         streamer: inRoom.filter((a) => a.role === "streamer").length,
       };
     });
-  }, [rooms.data, assignments.data]);
+  }, [seasonRooms, assignments.data]);
 
   const apply = async () => {
     if (!roomId || !staffOsuId || !staffUsername) {
@@ -131,7 +154,9 @@ export default function StreamingManagement() {
     }
   };
 
-  const remaining = list.filter((a) => !rooms.data?.some((r) => r.id === a.roomId));
+  const remaining = (assignments.data ?? []).filter(
+    (a) => !rooms.data?.some((r) => r.id === a.roomId),
+  );
 
   return (
     <div>
@@ -139,6 +164,14 @@ export default function StreamingManagement() {
         <SectionTitle tag="房间加入" accent="var(--pc-primary)" className="mb-0">
           主播 / 解说 / 裁判安排
         </SectionTitle>
+        <div className="flex items-center gap-2">
+        <SeasonSelect
+          value={activeSeason}
+          onChange={(v) => setSeasonFilter(v)}
+          options={seasonOptions}
+          includeAll
+          className="w-36"
+        />
         <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
           <DialogTrigger asChild>
             <Button variant="primary">申请加入房间</Button>
@@ -156,9 +189,10 @@ export default function StreamingManagement() {
                     <SelectValue placeholder="选择房间" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(rooms.data ?? []).map((r) => (
+                    {seasonRooms.map((r) => (
                       <SelectItem key={r.id} value={String(r.id)}>
                         {r.roomName}
+                        {r.season ? ` · ${r.season.toUpperCase()}` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -198,6 +232,7 @@ export default function StreamingManagement() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {rooms.loading || assignments.loading ? (
