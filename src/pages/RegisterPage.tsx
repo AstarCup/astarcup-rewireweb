@@ -15,6 +15,7 @@ const errorMessages: Record<string, string> = {
   auth_failed: "osu! 授权失败，请重试。",
   no_code: "未能获取授权码，请重新登录。",
   token_failed: "登录令牌校验失败，请重试。",
+  osu_unreachable: "无法连接 osu! 授权服务器，请检查网络或代理后重试。",
 };
 
 export default function RegisterPage() {
