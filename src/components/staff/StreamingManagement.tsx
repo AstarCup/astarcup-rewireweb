@@ -4,8 +4,9 @@ import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
 import SeasonSelect from "@/components/staff/SeasonSelect";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
-import { api } from "@/lib/api";
-import { formatWallClock } from "@/lib/utils";
+import { api, qs } from "@/lib/api";
+import { stageLabelOf } from "@/lib/rooms";
+import { formatWallClock, cn, osuAvatarUrl } from "@/lib/utils";
 import { SectionTitle } from "@/components/paper/paper";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,9 @@ const ROLE_META: Record<StaffRole, { variant: "primary" | "teal" | "yellow" | "b
   streamer: { variant: "blue" },
 };
 
+/** 职位展示顺序 */
+const ROLE_ORDER: StaffRole[] = ["referee", "commentator", "streamer"];
+
 // 比赛时间：日期取 matchDate、时间取 matchTime，按 +8 墙钟展示
 function roomSchedule(room: MatchRoom): string {
   const naive = (iso?: string | null) =>
@@ -54,7 +58,10 @@ function roomSchedule(room: MatchRoom): string {
 
 export default function StreamingManagement() {
   const { user } = useApp();
-  const rooms = useFetch<MatchRoom[]>(() => api.get("/api/rooms"));
+  // 带赛程返回，用于只展示「已有玩家预约」的房间
+  const rooms = useFetch<MatchRoom[]>(() =>
+    api.get("/api/rooms" + qs({ withSchedules: true })),
+  );
   const assignments = useFetch<StaffRoomAssignment[]>(() =>
     api.get("/api/staff/assignments"),
   );
@@ -62,11 +69,13 @@ export default function StreamingManagement() {
   const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
   const activeSeason = seasonFilter ?? currentSeason;
   const seasonOptions = useSeasonOptions((rooms.data ?? []).map((r) => r.season));
-  /** 只展示当前赛季的房间；历史赛季的房间不再出现在加入列表 */
+  /** 只展示当前赛季、且已经有玩家预约（存在赛程）的房间 */
   const seasonRooms = useMemo(
     () =>
       (rooms.data ?? []).filter(
-        (r) => activeSeason === "all" || (r.season ?? "").toLowerCase() === activeSeason,
+        (r) =>
+          (activeSeason === "all" || (r.season ?? "").toLowerCase() === activeSeason) &&
+          (r.schedules?.length ?? 0) > 0,
       ),
     [rooms.data, activeSeason],
   );
@@ -78,6 +87,7 @@ export default function StreamingManagement() {
   const [staffUsername, setStaffUsername] = useState(user?.username ?? "");
   const [busy, setBusy] = useState(false);
   const [revoking, setRevoking] = useState<number | null>(null);
+  const [roleBusy, setRoleBusy] = useState<string | null>(null);
 
   /** 人员安排列表同样按赛季过滤（安排挂在房间上，用房间赛季判断） */
   const list = useMemo(
@@ -101,24 +111,45 @@ export default function StreamingManagement() {
     void assignments.load();
   };
 
-  // 按房间聚合安排，避免每渲染一次就全量过滤
-  const counts = useMemo(() => {
-    const byRoom = new Map<number, StaffRoomAssignment[]>();
+  // 按房间聚合安排：房间卡片上的职位按钮与已加入名单都从这里取
+  const byRoom = useMemo(() => {
+    const map = new Map<number, StaffRoomAssignment[]>();
     for (const a of assignments.data ?? []) {
-      const arr = byRoom.get(a.roomId) ?? [];
+      const arr = map.get(a.roomId) ?? [];
       arr.push(a);
-      byRoom.set(a.roomId, arr);
+      map.set(a.roomId, arr);
     }
-    return seasonRooms.map((room) => {
-      const inRoom = byRoom.get(room.id) ?? [];
-      return {
-        room,
-        referee: inRoom.filter((a) => a.role === "referee").length,
-        commentator: inRoom.filter((a) => a.role === "commentator").length,
-        streamer: inRoom.filter((a) => a.role === "streamer").length,
-      };
-    });
-  }, [seasonRooms, assignments.data]);
+    return map;
+  }, [assignments.data]);
+
+  /** 点职位 = 加入，再点 = 取消 */
+  const toggleRole = async (room: MatchRoom, targetRole: StaffRole) => {
+    if (!user) {
+      toast({ variant: "destructive", title: "请先登录" });
+      return;
+    }
+    const key = `${room.id}-${targetRole}`;
+    if (roleBusy === key) return;
+    const mine = (byRoom.get(room.id) ?? []).find(
+      (a) => a.staffOsuId === user.osuId && a.role === targetRole,
+    );
+    setRoleBusy(key);
+    const res = mine
+      ? await api.delete(`/api/staff/assignments/${mine.id}`)
+      : await api.post("/api/staff/assignments", {
+          roomId: room.id,
+          staffOsuId: user.osuId,
+          staffUsername: user.username,
+          staffRole: targetRole,
+        });
+    setRoleBusy(null);
+    if (res.ok) {
+      toast({ title: mine ? `已取消${ROLE_LABEL[targetRole]}` : `已加入${ROLE_LABEL[targetRole]}` });
+      void assignments.load();
+    } else {
+      toast({ variant: "destructive", title: res.error.message || "操作失败" });
+    }
+  };
 
   const apply = async () => {
     if (!roomId || !staffOsuId || !staffUsername) {
@@ -244,23 +275,110 @@ export default function StreamingManagement() {
         />
       ) : (
         <div>
+          {seasonRooms.length === 0 && (
+            <p className="rounded-2xl bg-(--pc-white) p-6 text-center text-sm text-(--pc-faint) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
+              {activeSeason === "all"
+                ? "还没有玩家预约的房间。"
+                : "当前赛季还没有玩家预约的房间。"}
+            </p>
+          )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {counts?.map(({ room, referee, commentator, streamer }) => (
-              <Card key={room.id} className="p-5">
-                <div className="flex items-center justify-between">
-                  <p className="font-bold text-(--pc-ink)">{room.roomName}</p>
-                  <Badge variant={room.status === "full" ? "primary" : "teal"}>{room.status}</Badge>
-                </div>
-                <p className="mt-1 text-xs text-(--pc-faint)">
-                  R{room.roundNumber} · {roomSchedule(room)}
-                </p>
-                <div className="mt-3 flex gap-2">
-                  <Badge variant="teal">裁判 {referee}</Badge>
-                  <Badge variant="yellow">解说 {commentator}</Badge>
-                  <Badge variant="blue">主播 {streamer}</Badge>
-                </div>
-              </Card>
-            ))}
+            {seasonRooms.map((room) => {
+              const people = byRoom.get(room.id) ?? [];
+              return (
+                <Card key={room.id} className="p-5">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-(--pc-ink)">{room.roomName}</p>
+                    <Badge variant={room.status === "full" ? "primary" : "teal"}>
+                      {room.status}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-xs text-(--pc-faint)">
+                    {stageLabelOf(room)} · {roomSchedule(room)}
+                  </p>
+
+                  {/* 房间里的对阵（头像 + 双方名字） */}
+                  {(room.schedules ?? []).length > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      {(room.schedules ?? []).map((s) => (
+                        <div key={s.id} className="flex flex-wrap items-center gap-1.5 text-sm">
+                          <img
+                            src={osuAvatarUrl(s.player1OsuId)}
+                            alt=""
+                            className="h-5 w-5 rounded-full object-cover"
+                          />
+                          <span className="font-bold text-pc-primary">
+                            {s.player1Username || "?"}
+                          </span>
+                          <span className="text-xs text-(--pc-faint)">vs</span>
+                          <span className="font-bold text-pc-blue">
+                            {s.player2Username || "?"}
+                          </span>
+                          <img
+                            src={osuAvatarUrl(s.player2OsuId)}
+                            alt=""
+                            className="h-5 w-5 rounded-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 职位按钮：点一下加入，再点一下取消 */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {ROLE_ORDER.map((r) => {
+                      const count = people.filter((a) => a.role === r).length;
+                      const mine = people.some(
+                        (a) => a.role === r && a.staffOsuId === user?.osuId,
+                      );
+                      return (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => void toggleRole(room, r)}
+                          disabled={roleBusy === `${room.id}-${r}`}
+                          title={mine ? "点击取消加入" : `点击加入${ROLE_LABEL[r]}`}
+                          className={cn(
+                            "flex items-center gap-1.5 rounded-full border-2 px-3 py-1 text-xs font-bold transition-all duration-150",
+                            mine
+                              ? "border-pc-teal bg-pc-teal text-pc-cream"
+                              : "border-(--pc-border) bg-(--pc-white) text-(--pc-slate) hover:-translate-y-0.5 hover:border-pc-teal hover:text-pc-teal",
+                            roleBusy === `${room.id}-${r}` && "opacity-60",
+                          )}
+                        >
+                          {ROLE_LABEL[r]} {count}
+                          {mine && <span className="text-[10px]">已加入 ✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* 已加入的人：头像 + 名字 + 职位 */}
+                  {people.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {people.map((a) => (
+                        <span
+                          key={a.id}
+                          className="flex items-center gap-1.5 rounded-full border border-(--pc-border) bg-(--pc-paper) py-0.5 pl-0.5 pr-2 text-xs"
+                        >
+                          <img
+                            src={osuAvatarUrl(a.staffOsuId)}
+                            alt=""
+                            className="h-5 w-5 rounded-full object-cover"
+                          />
+                          <span className="font-bold text-(--pc-ink)">{a.staffUsername}</span>
+                          <span className="text-(--pc-faint)">
+                            {ROLE_LABEL[a.role as StaffRole] ?? a.role}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-xs text-(--pc-faint)">暂无人加入，点上面的职位即可加入</p>
+                  )}
+                </Card>
+              );
+            })}
           </div>
 
           <SectionTitle tag="当前安排" accent="var(--pc-teal)" className="mt-8 mb-0">

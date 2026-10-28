@@ -34,6 +34,7 @@ import {
 import type { MatchRoom } from "@/lib/types";
 import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
 import SeasonSelect from "@/components/staff/SeasonSelect";
+import { stageLabelOf } from "@/lib/rooms";
 
 const EMPTY_FORM = {
   room_name: "",
@@ -635,9 +636,7 @@ export default function RoomManagement() {
             </div>
             <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-(--pc-border)">
               {rooms.map((room) => {
-                const stageLabel =
-                  ROUND_OPTIONS.find((o) => o.value === String(room.roundNumber))?.label ??
-                  `R${room.roundNumber}`;
+                const stageLabel = stageLabelOf(room);
                 return (
                   <label
                     key={room.id}
@@ -699,9 +698,7 @@ export default function RoomManagement() {
             <tbody>
               {rooms.map((room) => {
                 const scheduleCount = room.schedules?.length ?? room.scheduleIds?.length ?? 0;
-                const stageLabel =
-                  ROUND_OPTIONS.find((o) => o.value === String(room.roundNumber))?.label ??
-                  `R${room.roundNumber}`;
+                const stageLabel = stageLabelOf(room);
                 return (
                   <tr key={room.id} className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
                     <td className="px-4 py-3">

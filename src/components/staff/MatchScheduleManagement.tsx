@@ -3,12 +3,10 @@ import { toast } from "@/hooks/use-toast";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { api, qs } from "@/lib/api";
 import { SectionTitle } from "@/components/paper/paper";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectTrigger,
@@ -45,150 +43,36 @@ function statusLabel(s: string): string {
   return STATUS_META[s]?.label ?? s;
 }
 
+/** 后端把本地墙钟时间按 UTC 序列化（+00:00），直接取墙钟部分显示 */
+function wallClock(iso?: string | null): string {
+  if (!iso) return "—";
+  const naive = iso.replace(/Z$/, "").replace(/[+-]\d{2}:\d{2}$/, "");
+  const [datePart, timePart = ""] = naive.split("T");
+  return timePart ? `${datePart} ${timePart.slice(0, 5)}` : datePart;
+}
+
 /** 赛程所属赛季：自身没有时跟随房间 */
 const seasonOfSchedule = (s: MatchSchedule) => (s.season ?? s.room?.season ?? "").toLowerCase();
 
-interface RowForm {
-  season: string;
+interface EditForm {
   red: string;
   blue: string;
+  season: string;
   link: string;
   stream: string;
   replay: string;
+  status: string;
 }
 
-const EMPTY_ROW_FORM: RowForm = {
-  season: "",
+const EMPTY_EDIT: EditForm = {
   red: "",
   blue: "",
+  season: "",
   link: "",
   stream: "",
   replay: "",
+  status: "pending",
 };
-
-interface ScheduleCardProps {
-  s: MatchSchedule;
-  form: RowForm;
-  busy: boolean;
-  seasonOptions: { value: string; label: string }[];
-  onForm: (f: RowForm) => void;
-  onSaveDetails: () => void;
-  onStatus: (status: string) => void;
-  onClearSeason: () => void;
-}
-
-function ScheduleCard({
-  s,
-  form,
-  busy,
-  seasonOptions,
-  onForm,
-  onSaveDetails,
-  onStatus,
-  onClearSeason,
-}: ScheduleCardProps) {
-  const setField = (k: keyof RowForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    onForm({ ...form, [k]: e.target.value });
-
-  const roomName = s.room?.roomName;
-
-  return (
-    <Card className="p-5">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-base font-bold text-(--pc-ink)">
-          {s.player1Username || "?"} <span className="text-(--pc-faint)">vs</span>{" "}
-          {s.player2Username || "?"}
-        </p>
-        <Badge variant={statusVariant(s.status)}>{statusLabel(s.status)}</Badge>
-      </div>
-      {roomName && <p className="mt-1 text-xs text-(--pc-faint)">房间：{roomName}</p>}
-      <p className="mt-1 text-xs text-(--pc-faint)">
-        赛季：{s.season ? s.season.toUpperCase() : "未标注"}
-      </p>
-
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="grid gap-1.5">
-          <Label className="text-xs text-(--pc-slate)">红方比分</Label>
-          <Input
-            type="number"
-            value={form.red}
-            onChange={setField("red")}
-            placeholder={s.redScore != null ? String(s.redScore) : "0"}
-          />
-        </div>
-        <div className="grid gap-1.5">
-          <Label className="text-xs text-(--pc-slate)">蓝方比分</Label>
-          <Input
-            type="number"
-            value={form.blue}
-            onChange={setField("blue")}
-            placeholder={s.blueScore != null ? String(s.blueScore) : "0"}
-          />
-        </div>
-      </div>
-
-      <div className="mt-3 grid gap-1.5">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs text-(--pc-slate)">赛季</Label>
-          {s.season && (
-            <button
-              type="button"
-              className="text-xs text-(--pc-faint) underline-offset-2 hover:text-pc-primary hover:underline disabled:opacity-50"
-              onClick={onClearSeason}
-              disabled={busy}
-            >
-              清除
-            </button>
-          )}
-        </div>
-        <SeasonSelect
-          value={form.season || (s.season ?? "").toLowerCase()}
-          onChange={(v) => onForm({ ...form, season: v })}
-          options={seasonOptions}
-          className="w-full"
-        />
-      </div>
-
-      <div className="mt-3 space-y-2">
-        <div className="grid gap-1.5">
-          <Label className="text-xs text-(--pc-slate)">比赛链接</Label>
-          <Input value={form.link} onChange={setField("link")} placeholder={s.matchLink || "mech.ink"} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label className="text-xs text-(--pc-slate)">直播链接</Label>
-          <Input value={form.stream} onChange={setField("stream")} placeholder={s.streamLink || "bilibili"} />
-        </div>
-        <div className="grid gap-1.5">
-          <Label className="text-xs text-(--pc-slate)">回放链接</Label>
-          <Input value={form.replay} onChange={setField("replay")} placeholder={s.replayLink || "可选"} />
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Select value={s.status} onValueChange={onStatus}>
-          <SelectTrigger className="h-9 w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">待确认</SelectItem>
-            <SelectItem value="confirmed">已确认</SelectItem>
-            <SelectItem value="completed">已完成</SelectItem>
-            <SelectItem value="cancelled">已取消</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="primary"
-          size="sm"
-          className="ml-auto"
-          onClick={onSaveDetails}
-          disabled={busy}
-        >
-          保存
-        </Button>
-      </div>
-    </Card>
-  );
-}
 
 export default function MatchScheduleManagement() {
   const { data, loading, error, load } = useFetch<MatchSchedule[]>(() => api.get("/api/schedules"));
@@ -203,14 +87,16 @@ export default function MatchScheduleManagement() {
     ...(data ?? []).map((s) => s.season ?? s.room?.season),
     ...(rooms.data ?? []).map((r) => r.season),
   ]);
-  /** 列表按赛季过滤：赛程自身没标赛季时用房间的赛季兜底 */
+
+  /** 列表按赛季过滤（赛程自身没标赛季时用房间的赛季兜底），晚的在前 */
   const schedules = useMemo(
     () =>
-      (data ?? []).filter(
-        (s) => activeSeason === "all" || seasonOfSchedule(s) === activeSeason,
-      ),
+      (data ?? [])
+        .filter((s) => activeSeason === "all" || seasonOfSchedule(s) === activeSeason)
+        .sort((a, b) => (b.room?.matchTime ?? "").localeCompare(a.room?.matchTime ?? "")),
     [data, activeSeason],
   );
+
   /** 创建赛程时只列出当前筛选赛季的房间 */
   const roomChoices = useMemo(() => {
     const list = rooms.data ?? [];
@@ -222,31 +108,20 @@ export default function MatchScheduleManagement() {
   const [roomId, setRoomId] = useState("");
   const [r1, setR1] = useState("");
   const [r2, setR2] = useState("");
-  const [busyKeys, setBusyKeys] = useState<Set<string>>(new Set());
-  const [forms, setForms] = useState<Record<number, RowForm>>({});
+  const [createBusy, setCreateBusy] = useState(false);
 
-  // 每个操作使用独立 key，避免一个操作完成时清掉另一个进行中的忙碌标记
-  const markBusy = (key: string, on: boolean) =>
-    setBusyKeys((prev) => {
-      const next = new Set(prev);
-      if (on) next.add(key);
-      else next.delete(key);
-      return next;
-    });
+  const [editTarget, setEditTarget] = useState<MatchSchedule | null>(null);
+  const [editForm, setEditForm] = useState<EditForm>(EMPTY_EDIT);
+  const [saving, setSaving] = useState(false);
 
   const playerList = players.data ?? [];
-
-  const rowForm = (s: MatchSchedule): RowForm => forms[s.id] ?? EMPTY_ROW_FORM;
-
-  const setRowForm = (s: MatchSchedule, f: RowForm) =>
-    setForms((m) => ({ ...m, [s.id]: f }));
 
   const create = async () => {
     if (!roomId || !r1 || !r2 || r1 === r2) {
       toast({ title: "请选择房间与两名不同选手" });
       return;
     }
-    markBusy("create", true);
+    setCreateBusy(true);
     const a = playerList.find((p) => p.osuId === r1);
     const b = playerList.find((p) => p.osuId === r2);
     const res = await api.post("/api/schedules", {
@@ -257,7 +132,7 @@ export default function MatchScheduleManagement() {
       player2_osuId: r2,
       player2_username: b?.username ?? "",
     });
-    markBusy("create", false);
+    setCreateBusy(false);
     if (res.ok) {
       toast({ title: "赛程已创建" });
       setCreateOpen(false);
@@ -266,72 +141,56 @@ export default function MatchScheduleManagement() {
       setR2("");
       void load();
     } else {
-      toast({ variant: "destructive", title: "创建失败" });
+      toast({ variant: "destructive", title: res.error.message || "创建失败" });
     }
   };
 
-  const saveDetails = async (s: MatchSchedule) => {
-    const f = rowForm(s);
-    const body: Record<string, string | number | null> = {
-      season: f.season === "" ? (s.season ?? null) : f.season,
-      red_score: f.red === "" ? null : Number(f.red),
-      blue_score: f.blue === "" ? null : Number(f.blue),
-      match_link: f.link === "" ? (s.matchLink ?? null) : f.link,
-      stream_link: f.stream === "" ? (s.streamLink ?? null) : f.stream,
-      replay_link: f.replay === "" ? (s.replayLink ?? null) : f.replay,
+  const openEdit = (s: MatchSchedule) => {
+    setEditTarget(s);
+    setEditForm({
+      red: s.redScore != null ? String(s.redScore) : "",
+      blue: s.blueScore != null ? String(s.blueScore) : "",
+      season: (s.season ?? s.room?.season ?? "").toLowerCase(),
+      link: s.matchLink ?? "",
+      stream: s.streamLink ?? "",
+      replay: s.replayLink ?? "",
+      status: s.status,
+    });
+  };
+
+  const setEdit = (k: keyof EditForm, v: string) => setEditForm((f) => ({ ...f, [k]: v }));
+
+  const saveEdit = async () => {
+    if (!editTarget) return;
+    setSaving(true);
+    const body = {
+      season: editForm.season || undefined,
+      clearSeason: !editForm.season,
+      red_score: editForm.red === "" ? null : Number(editForm.red),
+      blue_score: editForm.blue === "" ? null : Number(editForm.blue),
+      match_link: editForm.link || null,
+      stream_link: editForm.stream || null,
+      replay_link: editForm.replay || null,
     };
-    markBusy(`details-${s.id}`, true);
-    const res = await api.patch(`/api/schedules/${s.id}/details`, body);
-    markBusy(`details-${s.id}`, false);
-    if (res.ok) {
-      setForms((m) => ({
-        ...m,
-        [s.id]: { ...EMPTY_ROW_FORM },
-      }));
-      toast({ title: "保存成功" });
-      void load();
-    } else {
-      toast({ variant: "destructive", title: "保存失败" });
+    const res = await api.patch(`/api/schedules/${editTarget.id}/details`, body);
+    let ok = res.ok;
+    // 状态走独立接口，保证旧后端也能生效
+    if (ok && editForm.status !== editTarget.status) {
+      const r = await api.patch(`/api/schedules/${editTarget.id}`, { status: editForm.status });
+      ok = r.ok;
     }
-  };
-
-  const clearSeason = async (s: MatchSchedule) => {
-    markBusy(`season-${s.id}`, true);
-    const res = await api.patch(`/api/schedules/${s.id}/details`, { clearSeason: true });
-    markBusy(`season-${s.id}`, false);
-    if (res.ok) {
-      setForms((m) => ({
-        ...m,
-        [s.id]: { ...(m[s.id] ?? EMPTY_ROW_FORM), season: "" },
-      }));
-      toast({ title: "赛季已清除" });
+    setSaving(false);
+    if (ok) {
+      toast({ title: "赛程已更新" });
+      setEditTarget(null);
       void load();
     } else {
-      toast({ variant: "destructive", title: "清除赛季失败" });
-    }
-  };
-
-  const updateStatus = async (s: MatchSchedule, status: string) => {
-    markBusy(`status-${s.id}`, true);
-    const res = await api.patch(`/api/schedules/${s.id}`, { status });
-    markBusy(`status-${s.id}`, false);
-    if (res.ok) {
-      toast({ title: "状态已更新" });
-      void load();
-    } else {
-      toast({ variant: "destructive", title: "状态更新失败" });
+      toast({ variant: "destructive", title: !res.ok ? res.error.message : "状态更新失败" });
     }
   };
 
   if (loading) return <LoadingBlock label="加载赛程中…" />;
   if (error || !data) return <ErrorBlock message={error || "没有数据"} onRetry={load} />;
-
-  // Group by room
-  const grouped = schedules.reduce<Record<string, MatchSchedule[]>>((acc, s) => {
-    const key = s.room?.roomName || "未分配房间";
-    (acc[key] = acc[key] || []).push(s);
-    return acc;
-  }, {});
 
   return (
     <div>
@@ -340,80 +199,80 @@ export default function MatchScheduleManagement() {
           赛程安排
         </SectionTitle>
         <div className="flex items-center gap-2">
-        <SeasonSelect
-          value={activeSeason}
-          onChange={(v) => setSeasonFilter(v)}
-          options={seasonOptions}
-          includeAll
-          className="w-36"
-        />
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button variant="primary">创建赛程</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>创建赛程</DialogTitle>
-              <DialogDescription>选择房间与两名选手。</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3">
-              <div className="grid gap-1.5">
-                <Label>房间</Label>
-                <Select value={roomId} onValueChange={setRoomId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择房间" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roomChoices.map((r) => (
-                      <SelectItem key={r.id} value={String(r.id)}>
-                        {r.roomName}
-                        {r.season ? ` · ${r.season.toUpperCase()}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <SeasonSelect
+            value={activeSeason}
+            onChange={(v) => setSeasonFilter(v)}
+            options={seasonOptions}
+            includeAll
+            className="w-36"
+          />
+          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+            <DialogTrigger asChild>
+              <Button variant="primary">创建赛程</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>创建赛程</DialogTitle>
+                <DialogDescription>选择房间与两名选手。</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-3">
+                <div className="grid gap-1.5">
+                  <Label>房间</Label>
+                  <Select value={roomId} onValueChange={setRoomId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择房间" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roomChoices.map((r) => (
+                        <SelectItem key={r.id} value={String(r.id)}>
+                          {r.roomName}
+                          {r.season ? ` · ${r.season.toUpperCase()}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>选手一（红方）</Label>
+                  <Select value={r1} onValueChange={setR1}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择选手一" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {playerList.map((p) => (
+                        <SelectItem key={p.osuId} value={p.osuId}>
+                          {p.username}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>选手二（蓝方）</Label>
+                  <Select value={r2} onValueChange={setR2}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择选手二" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {playerList.map((p) => (
+                        <SelectItem key={p.osuId} value={p.osuId}>
+                          {p.username}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div className="grid gap-1.5">
-                <Label>选手一</Label>
-                <Select value={r1} onValueChange={setR1}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择选手一" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {playerList.map((p) => (
-                      <SelectItem key={p.osuId} value={p.osuId}>
-                        {p.username}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1.5">
-                <Label>选手二</Label>
-                <Select value={r2} onValueChange={setR2}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择选手二" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {playerList.map((p) => (
-                      <SelectItem key={p.osuId} value={p.osuId}>
-                        {p.username}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">取消</Button>
-              </DialogClose>
-              <Button variant="primary" onClick={create} disabled={busyKeys.has("create")}>
-                {busyKeys.has("create") ? "创建中…" : "创建"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">取消</Button>
+                </DialogClose>
+                <Button variant="primary" onClick={create} disabled={createBusy}>
+                  {createBusy ? "创建中…" : "创建"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -422,33 +281,187 @@ export default function MatchScheduleManagement() {
           {activeSeason === "all" ? "还没有赛程。" : "当前赛季还没有赛程。"}
         </p>
       ) : (
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([room, list]) => (
-            <div key={room}>
-              <div className="mb-3 flex items-center gap-2 text-sm font-bold text-(--pc-ink)">
-                {room}
-                <Badge variant="outline">{list.length}</Badge>
-              </div>
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {list.map((s) => (
-                  <ScheduleCard
+        <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+          <table className="w-full min-w-[980px] text-left text-sm">
+            <thead>
+              <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper) text-xs text-(--pc-slate)">
+                <th className="whitespace-nowrap px-4 py-3 font-bold">时间</th>
+                <th className="px-4 py-3 font-bold">房间</th>
+                <th className="px-4 py-3 font-bold">对阵</th>
+                <th className="whitespace-nowrap px-4 py-3 font-bold">比分</th>
+                <th className="whitespace-nowrap px-4 py-3 font-bold">赛季</th>
+                <th className="whitespace-nowrap px-4 py-3 font-bold">状态</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right font-bold">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {schedules.map((s) => {
+                const room = s.room ?? null;
+                const hasScore = s.redScore != null && s.blueScore != null;
+                return (
+                  <tr
                     key={s.id}
-                    s={s}
-                    form={rowForm(s)}
-                    busy={busyKeys.has(`details-${s.id}`) || busyKeys.has(`season-${s.id}`)}
-                    seasonOptions={seasonOptions}
-                    onForm={(f) => setRowForm(s, f)}
-                    onSaveDetails={() => void saveDetails(s)}
-                    onStatus={(st) => void updateStatus(s, st)}
-                    onClearSeason={() => void clearSeason(s)}
-                  />
-                ))}
-              </div>
-              <Separator className="mt-6" />
-            </div>
-          ))}
+                    className="border-b border-(--pc-border)/60 last:border-0 hover:bg-(--pc-paper)"
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 font-sans text-(--pc-slate)">
+                      {wallClock(room?.matchTime ?? room?.matchDate)}
+                    </td>
+                    <td className="px-4 py-3 text-(--pc-ink)">{room?.roomName || "未分配房间"}</td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={
+                          hasScore && s.redScore! > s.blueScore!
+                            ? "font-bold text-pc-primary"
+                            : "text-pc-primary"
+                        }
+                      >
+                        {s.player1Username || "?"}
+                      </span>
+                      <span className="mx-1.5 text-xs text-(--pc-faint)">vs</span>
+                      <span
+                        className={
+                          hasScore && s.blueScore! > s.redScore!
+                            ? "font-bold text-pc-blue"
+                            : "text-pc-blue"
+                        }
+                      >
+                        {s.player2Username || "?"}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-sans font-bold text-(--pc-ink)">
+                      {hasScore ? `${s.redScore} : ${s.blueScore}` : "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      {s.season ? (
+                        <Badge variant="outline">{s.season.toUpperCase()}</Badge>
+                      ) : (
+                        <span className="text-xs text-(--pc-faint)">未标注</span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3">
+                      <Badge variant={statusVariant(s.status)}>{statusLabel(s.status)}</Badge>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-right">
+                      <Button variant="outline" size="sm" onClick={() => openEdit(s)}>
+                        编辑
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
+
+      {/* 编辑赛程 */}
+      <Dialog open={editTarget !== null} onOpenChange={(o) => !o && setEditTarget(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editTarget?.player1Username || "?"} vs {editTarget?.player2Username || "?"}
+            </DialogTitle>
+            <DialogDescription>
+              房间：{editTarget?.room?.roomName || "未分配"} · 时间：
+              {wallClock(editTarget?.room?.matchTime ?? editTarget?.room?.matchDate)}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1.5">
+                <Label>红方比分</Label>
+                <Input
+                  type="number"
+                  value={editForm.red}
+                  onChange={(e) => setEdit("red", e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>蓝方比分</Label>
+                <Input
+                  type="number"
+                  value={editForm.blue}
+                  onChange={(e) => setEdit("blue", e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-1.5">
+              <div className="flex items-center justify-between">
+                <Label>赛季</Label>
+                {editForm.season && (
+                  <button
+                    type="button"
+                    className="text-xs text-(--pc-faint) underline-offset-2 hover:text-pc-primary hover:underline"
+                    onClick={() => setEdit("season", "")}
+                  >
+                    清除
+                  </button>
+                )}
+              </div>
+              <SeasonSelect
+                value={editForm.season}
+                onChange={(v) => setEdit("season", v)}
+                options={seasonOptions}
+                placeholder="未标注"
+                className="w-full"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>比赛链接</Label>
+              <Input
+                value={editForm.link}
+                onChange={(e) => setEdit("link", e.target.value)}
+                placeholder="https://osu.ppy.sh/multiplayer/rooms/.../events"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>直播链接</Label>
+              <Input
+                value={editForm.stream}
+                onChange={(e) => setEdit("stream", e.target.value)}
+                placeholder="直播地址（可选）"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label>回放链接</Label>
+              <Input
+                value={editForm.replay}
+                onChange={(e) => setEdit("replay", e.target.value)}
+                placeholder="回放地址（可选）"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>状态</Label>
+              <Select value={editForm.status} onValueChange={(v) => setEdit("status", v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">待确认</SelectItem>
+                  <SelectItem value="confirmed">已确认</SelectItem>
+                  <SelectItem value="completed">已完成</SelectItem>
+                  <SelectItem value="cancelled">已取消</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">取消</Button>
+            </DialogClose>
+            <Button variant="primary" onClick={() => void saveEdit()} disabled={saving}>
+              {saving ? "保存中…" : "保存"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

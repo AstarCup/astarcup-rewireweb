@@ -38,7 +38,7 @@ export default function SeasonSelect({
       </SelectTrigger>
       <SelectContent>
         {includeAll && <SelectItem value="all">全部赛季</SelectItem>}
-        {options.map((o) => (
+        {(options ?? []).map((o) => (
           <SelectItem key={o.value} value={o.value}>
             {o.label}
           </SelectItem>

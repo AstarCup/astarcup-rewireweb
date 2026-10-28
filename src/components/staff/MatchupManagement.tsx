@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useFetch, LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { api, qs } from "@/lib/api";
+import { osuAvatarUrl } from "@/lib/utils";
 import { SectionTitle } from "@/components/paper/paper";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -227,9 +228,21 @@ export default function MatchupManagement() {
           {matchups.map((m) => (
             <Card key={m.id} className="p-5">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-bold text-(--pc-ink)">
-                  {m.player1Username} <span className="text-(--pc-faint)">vs</span> {m.player2Username}
-                </p>
+                <div className="flex flex-wrap items-center gap-1.5 text-sm">
+                  <img
+                    src={osuAvatarUrl(m.player1OsuId)}
+                    alt=""
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                  <span className="font-bold text-pc-primary">{m.player1Username || "?"}</span>
+                  <span className="text-xs text-(--pc-faint)">vs</span>
+                  <span className="font-bold text-pc-blue">{m.player2Username || "?"}</span>
+                  <img
+                    src={osuAvatarUrl(m.player2OsuId)}
+                    alt=""
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                </div>
                 <Badge variant={statusVariant(m.status)}>{statusLabel(m.status)}</Badge>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2">
