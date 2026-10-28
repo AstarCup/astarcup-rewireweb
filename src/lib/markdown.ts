@@ -60,6 +60,8 @@ function inline(src: string): string {
   );
   // bold
   s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  // strikethrough（赛季规则里常用 ~~旧内容~~ 标记已失效内容）
+  s = s.replace(/~~([^~]+)~~/g, "<del>$1</del>");
   // inline code
   s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
   // italic
@@ -108,15 +110,10 @@ export function renderMarkdown(src: string): string {
     }
 
     let m: RegExpMatchArray | null;
-    if ((m = /^###\s+(.*)/.exec(trimmed))) {
+    if ((m = /^(#{1,6})\s+(.*)/.exec(trimmed))) {
       closeList();
-      out.push(`<h3>${inline(m[1])}</h3>`);
-    } else if ((m = /^##\s+(.*)/.exec(trimmed))) {
-      closeList();
-      out.push(`<h2>${inline(m[1])}</h2>`);
-    } else if ((m = /^#\s+(.*)/.exec(trimmed))) {
-      closeList();
-      out.push(`<h1>${inline(m[1])}</h1>`);
+      const level = m[1].length;
+      out.push(`<h${level}>${inline(m[2])}</h${level}>`);
     } else if (/^[-*]\s+/.test(trimmed)) {
       if (!inList) {
         inList = true;
