@@ -25,8 +25,11 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ComponentRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    /** 覆盖右上角关闭按钮的样式（例如加背景） */
+    closeClassName?: string;
+  }
+>(({ className, children, closeClassName, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -40,7 +43,12 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1 opacity-70 transition hover:opacity-100 hover:-translate-y-0.5 focus:outline-none">
+      <DialogPrimitive.Close
+        className={cn(
+          "absolute right-4 top-4 rounded-lg p-1 opacity-70 transition hover:opacity-100 hover:-translate-y-0.5 focus:outline-none",
+          closeClassName,
+        )}
+      >
         <X className="h-4 w-4" />
         <span className="sr-only">关闭</span>
       </DialogPrimitive.Close>

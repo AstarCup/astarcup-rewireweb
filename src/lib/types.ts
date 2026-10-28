@@ -313,6 +313,8 @@ export interface Settings {
   current_season_stage?: string;
   registration_enabled?: string | boolean;
   mappool_visible?: string | boolean;
+  /** 是否使用 g0v0 私服比赛：开启后报名才要求绑定 g0v0 账号 */
+  use_gv0?: string | boolean;
   /** 赛季池：{ 赛季id: { name, status } } 字典 */
   seasons?: Record<string, SeasonInfo>;
   availableSeasons?: { value: string; label: string; status?: string }[];

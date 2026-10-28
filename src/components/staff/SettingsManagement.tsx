@@ -136,6 +136,7 @@ export default function SettingsManagement() {
   const [newSeasonName, setNewSeasonName] = useState("");
   const [registrationEnabled, setRegistrationEnabled] = useState(true);
   const [mappoolVisible, setMappoolVisible] = useState(true);
+  const [useGv0, setUseGv0] = useState(false);
   const [busy, setBusy] = useState(false);
   const [seasonPlayers, setSeasonPlayers] = useState<AdminUserStub[] | null>(null);
   const [seasonPlayersFor, setSeasonPlayersFor] = useState<string | null>(null);
@@ -160,6 +161,7 @@ export default function SettingsManagement() {
     );
     setRegistrationEnabled(String(data.registration_enabled ?? true) !== "false");
     setMappoolVisible(String(data.mappool_visible ?? true) !== "false");
+    setUseGv0(String(data.use_gv0 ?? false) === "true");
   }, [data]);
 
   const setField =
@@ -229,6 +231,7 @@ export default function SettingsManagement() {
       max_pp_for_registration: form.max_pp_for_registration,
       registration_enabled: String(registrationEnabled),
       mappool_visible: String(mappoolVisible),
+      use_gv0: String(useGv0),
       seasons: seasonsDict,
     };
     const res = await api.put<Settings>("/api/settings", body);
@@ -399,7 +402,7 @@ export default function SettingsManagement() {
           <Separator className="my-6" />
 
           {/* 开关 */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
               <div>
                 <p className="font-bold text-(--pc-ink)">开放报名</p>
@@ -422,6 +425,20 @@ export default function SettingsManagement() {
                 checked={mappoolVisible}
                 onChange={(e) => setMappoolVisible(e.target.checked)}
                 className="h-5 w-5 accent-pc-blue"
+              />
+            </label>
+            <label className="flex cursor-pointer items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
+              <div>
+                <p className="font-bold text-(--pc-ink)">使用 g0v0 比赛</p>
+                <p className="text-xs text-(--pc-faint)">
+                  {useGv0 ? "开启后报名需先绑定 g0v0 账号" : "关闭时无 g0v0 绑定也可报名"}
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={useGv0}
+                onChange={(e) => setUseGv0(e.target.checked)}
+                className="h-5 w-5 accent-pc-teal"
               />
             </label>
           </div>

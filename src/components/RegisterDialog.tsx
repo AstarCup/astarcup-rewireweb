@@ -54,6 +54,8 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
   const [qq, setQq] = useState("");
 
   const g0v0Bound = !!user?.g0v0Bound;
+  /** 只有「使用 g0v0 比赛」开启时才要求绑定 */
+  const requireGv0 = String(settings?.use_gv0 ?? false) === "true";
   const handleBind = async () => {
     setBindBusy(true);
     const res = await api.get<{ authUrl: string }>("/api/bind/url");
@@ -106,7 +108,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
   };
 
   const submitRegistration = async () => {
-    if (!g0v0Bound) {
+    if (requireGv0 && !g0v0Bound) {
       setRegMsg("请先绑定 g0v0 服务器账号后再报名");
       return;
     }
@@ -181,7 +183,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
         onOpenChange(o);
       }}
     >
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>比赛报名确认</DialogTitle>
           <DialogDescription>提交后需等待管理员审核通过。</DialogDescription>
@@ -202,7 +204,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
               你的 PP（{fmtInt(userPp)}）不在报名区间 {fmtInt(minPp)} ~ {fmtInt(maxPp)} 内，无法报名。
             </p>
           )}
-          {!g0v0Bound && (
+          {requireGv0 && !g0v0Bound && (
             <div className="rounded-xl border-2 border-pc-yellow bg-pc-yellow/10 p-4">
               <p className="text-sm font-bold text-(--pc-ink)">
                 尚未绑定 g0v0 服务器账号
@@ -230,32 +232,34 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
             </div>
           </div>
 
-          {/* 技能自评 */}
+          {/* 技能自评：左边输入，右边雷达图 */}
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
             <p className="text-sm font-bold text-(--pc-ink)">
               技能自评（选填）：给你自己打个分，或者用来迷惑别人。
             </p>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              {SKILL_FIELDS.map((f) => (
-                <label key={f.key} className="grid gap-1">
-                  <span className="text-xs text-(--pc-slate)">{f.label}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    value={skills[f.key]}
-                    onChange={(e) =>
-                      setSkills((prev) => ({ ...prev, [f.key]: e.target.value }))
-                    }
-                    placeholder="0-10"
-                    className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-pc-primary"
-                  />
-                </label>
-              ))}
-            </div>
-            <div className="mt-4 flex justify-center">
-              <RadarChart skills={radarSkills} size={230} />
+            <div className="mt-3 grid gap-4 md:grid-cols-[minmax(0,1fr)_250px] md:items-center">
+              <div className="grid grid-cols-2 gap-3">
+                {SKILL_FIELDS.map((f) => (
+                  <label key={f.key} className="grid gap-1">
+                    <span className="text-xs text-(--pc-slate)">{f.label}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      step="0.1"
+                      value={skills[f.key]}
+                      onChange={(e) =>
+                        setSkills((prev) => ({ ...prev, [f.key]: e.target.value }))
+                      }
+                      placeholder="0-10"
+                      className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-pc-primary"
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="flex justify-center">
+                <RadarChart skills={radarSkills} size={230} />
+              </div>
             </div>
           </div>
 
@@ -356,7 +360,13 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           <Button
             variant="primary"
             onClick={() => void submitRegistration()}
-            disabled={regBusy || !regEnabled || (maxPp > 0 && !ppOk) || !g0v0Bound || !qq.trim()}
+            disabled={
+              regBusy ||
+              !regEnabled ||
+              (maxPp > 0 && !ppOk) ||
+              (requireGv0 && !g0v0Bound) ||
+              !qq.trim()
+            }
           >
             {regBusy ? "提交中…" : "确认报名"}
           </Button>

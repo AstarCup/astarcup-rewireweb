@@ -72,9 +72,14 @@ export default function PlayerInfoPage() {
   const [selectedRoomId, setSelectedRoomId] = useState<string>("");
   const rooms = useAsync<MatchRoom[]>();
   const booking = useAsync<{ matchupId: number; messageId: number; room?: MatchRoom }>();
-  // 只显示可预约房间：未被安排/占用，且距比赛开始超过 2 小时（已过期或临近 2 小时内均不可约）
+  // 只显示可预约房间：当前赛季、未被安排/占用，且距比赛开始超过 2 小时
   const BOOK_WINDOW_MS = 2 * 60 * 60 * 1000;
+  const bookSeason = (settings?.current_season ?? "").trim().toLowerCase();
+  /** 只有开启「使用 g0v0 比赛」时才强制绑定 */
+  const requireGv0 = String(settings?.use_gv0 ?? false) === "true";
   const bookableRooms = (rooms.data ?? []).filter((r) => {
+    // 赛季兜底：后端已按 season 过滤，这里再拦一次，避免旧接口忽略参数
+    if (bookSeason && (r.season ?? "").toLowerCase() !== bookSeason) return false;
     if (r.claimed) return false;
     if (!r.matchTime) return true;
     const t = new Date(r.matchTime).getTime();
@@ -379,7 +384,11 @@ export default function PlayerInfoPage() {
               <Gamepad2 className="h-5 w-5 text-pc-teal" />
               g0v0 服务器绑定
             </CardTitle>
-            <CardDescription>报名比赛前需先绑定 g0v0 私服账号</CardDescription>
+            <CardDescription>
+              {requireGv0
+                ? "报名比赛前需先绑定 g0v0 私服账号"
+                : "当前比赛不使用 g0v0 服务器，绑定为可选项"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {user.g0v0Bound ? (
@@ -409,7 +418,9 @@ export default function PlayerInfoPage() {
             ) : (
               <>
                 <p className="text-sm text-(--pc-faint)">
-                  尚未绑定 g0v0 服务器账号，绑定后才能报名比赛。
+                  {requireGv0
+                    ? "尚未绑定 g0v0 服务器账号，绑定后才能报名比赛。"
+                    : "尚未绑定 g0v0 账号；当前比赛不使用 g0v0，可不绑定。"}
                 </p>
                 <Button
                   variant="teal"

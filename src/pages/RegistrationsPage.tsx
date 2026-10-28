@@ -19,7 +19,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -89,6 +88,21 @@ async function copyOsuId(osuId: string) {
   try {
     await navigator.clipboard.writeText(osuId);
     toast({ title: "已复制 osuID", description: osuId });
+    return;
+  } catch {
+    // 非安全上下文 / 无剪贴板权限时退回 execCommand
+  }
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = osuId;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand("copy");
+    ta.remove();
+    if (ok) toast({ title: "已复制 osuID", description: osuId });
+    else toast({ variant: "destructive", title: "复制失败" });
   } catch {
     toast({ variant: "destructive", title: "复制失败" });
   }
@@ -104,6 +118,8 @@ function PlayerCard({
   onSelect: (p: SessionUser) => void;
 }) {
   const cover = coverUrl(player);
+  // 只有「使用 g0v0 比赛」开启时才展示 g0v0 绑定信息
+  const showGv0 = String(settings?.use_gv0 ?? false) === "true";
   return (
     <HoverCard openDelay={0} closeDelay={100}>
       <HoverCardTrigger asChild>
@@ -151,7 +167,8 @@ function PlayerCard({
                 </p>
               </div>
             </div>
-            {/* g0v0：头像 + 玩家名，置于最底部 */}
+            {/* g0v0：头像 + 玩家名，置于最底部（未启用 g0v0 比赛时不显示） */}
+            {showGv0 && (
             <div className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1">
               {player.guServerUserId || player.guServerUsername ? (
                 <>
@@ -173,6 +190,7 @@ function PlayerCard({
                 <span className="text-xs text-(--pc-faint)/60">未绑定 g0v0</span>
               )}
             </div>
+            )}
           </div>
         </button>
       </HoverCardTrigger>
@@ -316,85 +334,26 @@ export default function RegistrationsPage() {
 
         <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
           {selected && (
-            <DialogContent className="max-w-lg overflow-y-auto max-h-[85vh]">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  {selected.username}
-                  {statusBadge(selected.registrationStatus)}
-                </DialogTitle>
-                <DialogDescription>{selected.country ?? "未知地区"}</DialogDescription>
-              </DialogHeader>
-              <div className="flex flex-col items-center gap-4 py-2 text-center">
-                <Avatar className="h-24 w-24 rounded-2xl border-2 border-(--pc-border)">
-                  <AvatarImage src={selected.avatarUrl || osuAvatarUrl(selected.osuId)} alt={selected.username} />
-                  <AvatarFallback className="bg-pc-yellow/30 text-2xl font-bold text-(--pc-ink)">
-                    {selected.username?.slice(0, 1).toUpperCase() ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="grid w-full grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
-                    <p className="text-xs text-(--pc-faint)">PP</p>
-                    <p className="mt-1 font-sans font-bold text-pc-blue">
-                      {fmtInt(selected.pp)}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
-                    <p className="text-xs text-(--pc-faint)">世界排名</p>
-                    <p className="mt-1 font-sans font-bold text-(--pc-ink)">
-                      {selected.globalRank != null ? `#${fmtInt(selected.globalRank)}` : "-"}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
-                    <p className="text-xs text-(--pc-faint)">地区排名</p>
-                    <p className="mt-1 font-sans font-bold text-(--pc-ink)">
-                      {selected.countryRank != null ? `#${fmtInt(selected.countryRank)}` : "-"}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
-                    <p className="text-xs text-(--pc-faint)">osuID</p>
-                    <p className="mt-1 font-mono text-sm font-bold text-(--pc-ink)">
-                      {selected.osuId}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="w-full rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3 text-center">
-                  <p className="text-xs text-(--pc-faint)">g0v0 服务器玩家</p>
-                  {selected.guServerUserId || selected.guServerUsername ? (
-                    <div className="mt-1 flex items-center justify-center gap-2">
-                      {selected.guServerUserId && (
-                        <img
-                          src={site.urls.g0v0Avatar(selected.guServerUserId)}
-                          alt=""
-                          className="h-8 w-8 rounded-full border-2 border-(--pc-border) object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = "none";
-                          }}
-                        />
-                      )}
-                      <span className="font-bold text-pc-teal">
-                        {selected.guServerUsername || `#${selected.guServerUserId}`}
-                      </span>
-                    </div>
-                  ) : (
-                    <p className="mt-1 font-bold text-(--pc-faint)">未绑定</p>
-                  )}
-                </div>
-
-                <div className="flex justify-center rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3">
-                  <RadarChart skills={radarSkills(selected)} size={230} />
-                </div>
-
-                <div className="flex w-full flex-wrap justify-center gap-2">
-                  <Button variant="teal" size="sm" onClick={() => void copyOsuId(selected.osuId)}>
-                    <Copy className="h-4 w-4" />
-                    复制 osuID
-                  </Button>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                  >
+            <DialogContent
+              className="max-h-[85vh] max-w-4xl overflow-y-auto p-0"
+              closeClassName="border-2 border-(--pc-border) bg-(--pc-white) p-2 opacity-100 shadow-[2px_2px_0px_rgba(0,0,0,0.08)] hover:-translate-y-0.5"
+            >
+              {/* 顶部封面 + 头像 + 名字/地区 + 右上操作 */}
+              <div className="relative">
+                <div
+                  className="h-28 w-full bg-cover bg-center bg-gradient-to-br from-pc-teal/30 to-pc-blue/30"
+                  style={
+                    coverUrl(selected)
+                      ? {
+                          backgroundImage:
+                            `url(${coverUrl(selected)}), ` +
+                            "linear-gradient(135deg, rgba(92,184,165,.45), rgba(107,127,181,.45))",
+                        }
+                      : undefined
+                  }
+                />
+                <div className="absolute right-14 top-4 flex flex-wrap items-center justify-end gap-2">
+                  <Button asChild variant="outline" size="sm">
                     <a
                       href={site.urls.osuUser(selected.osuId)}
                       target="_blank"
@@ -404,6 +363,114 @@ export default function RegistrationsPage() {
                       osu! 主页
                     </a>
                   </Button>
+                </div>
+
+                <div className="relative -mt-12 flex items-end gap-4 px-6">
+                  <Avatar className="h-24 w-24 rounded-2xl border-2 border-(--pc-border) bg-(--pc-white)">
+                    <AvatarImage
+                      src={selected.avatarUrl || osuAvatarUrl(selected.osuId)}
+                      alt={selected.username}
+                    />
+                    <AvatarFallback className="bg-pc-yellow/30 text-2xl font-bold text-(--pc-ink)">
+                      {selected.username?.slice(0, 1).toUpperCase() ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 pb-1">
+                    <DialogTitle className="flex flex-wrap items-center gap-2">
+                      {selected.username}
+                      {statusBadge(selected.registrationStatus)}
+                    </DialogTitle>
+                    <DialogDescription className="mt-1">
+                      {selected.country ?? "未知地区"}
+                    </DialogDescription>
+                  </div>
+                </div>
+              </div>
+
+              {/* 左：数据 + 参加过赛季；右：雷达图 */}
+              <div className="grid gap-6 px-6 pb-6 pt-4 md:grid-cols-[minmax(0,1fr)_280px]">
+                <div className="flex flex-col gap-4">
+                  <div className="grid w-full grid-cols-2 gap-3">
+                    <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
+                      <p className="text-xs text-(--pc-faint)">PP</p>
+                      <p className="mt-1 font-sans text-2xl font-bold text-pc-blue">
+                        {fmtInt(selected.pp)}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
+                      <p className="text-xs text-(--pc-faint)">世界排名</p>
+                      <p className="mt-1 font-sans text-2xl font-bold text-(--pc-ink)">
+                        {selected.globalRank != null ? `#${fmtInt(selected.globalRank)}` : "-"}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-(--pc-white) border-2 border-(--pc-border) p-3">
+                      <p className="text-xs text-(--pc-faint)">地区排名</p>
+                      <p className="mt-1 font-sans text-2xl font-bold text-(--pc-ink)">
+                        {selected.countryRank != null ? `#${fmtInt(selected.countryRank)}` : "-"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => void copyOsuId(selected.osuId)}
+                      className="group rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-pc-teal"
+                      title="点击复制 osuID"
+                    >
+                      <span className="flex items-center justify-between text-xs text-(--pc-faint)">
+                        osuID
+                        <Copy className="h-3.5 w-3.5 opacity-60 transition group-hover:text-pc-teal group-hover:opacity-100" />
+                      </span>
+                      <span className="mt-1 block font-mono text-lg font-bold text-(--pc-ink)">
+                        {selected.osuId}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* 参加过的赛季 banner */}
+                  <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3">
+                    <p className="text-xs text-(--pc-faint)">参加过的赛季</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      {(selected.season ?? []).length > 0 ? (
+                        (selected.season ?? []).map((s) => (
+                          <SeasonBadge
+                            key={s}
+                            season={s}
+                            label={seasonLabel(settings, s) || s}
+                          />
+                        ))
+                      ) : (
+                        <span className="text-sm text-(--pc-faint)">—</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {String(settings?.use_gv0 ?? false) === "true" && (
+                    <div className="w-full rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3">
+                      <p className="text-xs text-(--pc-faint)">g0v0 服务器玩家</p>
+                      {selected.guServerUserId || selected.guServerUsername ? (
+                        <div className="mt-1 flex items-center gap-2">
+                          {selected.guServerUserId && (
+                            <img
+                              src={site.urls.g0v0Avatar(selected.guServerUserId)}
+                              alt=""
+                              className="h-8 w-8 rounded-full border-2 border-(--pc-border) object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = "none";
+                              }}
+                            />
+                          )}
+                          <span className="font-bold text-pc-teal">
+                            {selected.guServerUsername || `#${selected.guServerUserId}`}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="mt-1 font-bold text-(--pc-faint)">未绑定</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-center rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3 md:self-start">
+                  <RadarChart skills={radarSkills(selected)} size={230} />
                 </div>
               </div>
             </DialogContent>
