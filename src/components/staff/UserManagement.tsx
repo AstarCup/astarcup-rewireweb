@@ -24,14 +24,15 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatDate, osuAvatarUrl } from "@/lib/utils";
 import {
   REG_STATUS_OPTIONS,
@@ -315,27 +316,29 @@ export default function UserManagement() {
                       删除
                     </ContextMenuItem>
                   </ContextMenuContent>
-                  <Dialog
+                  <AlertDialog
                     open={deleteTarget?.osuId === u.osuId}
                     onOpenChange={(o) => !o && setDeleteTarget(null)}
                   >
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>删除用户</DialogTitle>
-                        <DialogDescription>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>删除用户</AlertDialogTitle>
+                        <AlertDialogDescription>
                           确定删除用户「{u.username}」吗？此操作不可撤销。
-                        </DialogDescription>
-                      </DialogHeader>
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button variant="outline">取消</Button>
-                        </DialogClose>
-                        <Button variant="destructive" onClick={confirmDelete} disabled={delBusy}>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                          variant="destructive"
+                          onClick={confirmDelete}
+                          disabled={delBusy}
+                        >
                           {delBusy ? "删除中…" : "确认删除"}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </ContextMenu>
               );
             })}

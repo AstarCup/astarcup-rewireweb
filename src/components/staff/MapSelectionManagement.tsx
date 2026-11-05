@@ -40,6 +40,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ContextMenu,
   ContextMenuTrigger,
   ContextMenuContent,
@@ -1862,7 +1872,7 @@ export default function MapSelectionManagement() {
                   );
                 })()}
               </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 min-[600px]:grid-cols-2 min-[1400px]:grid-cols-3 2xl:grid-cols-4">
                 {g.items.map((m) => {
                   const comments = commentsByMap[String(m.id)] ?? [];
                   const modColor = MOD_COLORS[modBase(m)] ?? "#666";
@@ -2169,36 +2179,33 @@ export default function MapSelectionManagement() {
         busy={busy === "bulk"}
       />
 
-      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>删除选图</DialogTitle>
-            <DialogDescription>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      >
+        <AlertDialogContent size="sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除选图</AlertDialogTitle>
+            <AlertDialogDescription>
               确定删除「
               {[deleteTarget?.artist, deleteTarget?.title].filter(Boolean).join(" - ") ||
                 deleteTarget?.version ||
                 "该选图"}
               」吗？此操作不可撤销。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDeleteTarget(null)}
-              disabled={busy.startsWith("delete-")}
-            >
-              取消
-            </Button>
-            <Button
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy.startsWith("delete-")}>取消</AlertDialogCancel>
+            <AlertDialogAction
               variant="destructive"
               onClick={() => deleteTarget && void removeMap(deleteTarget)}
               disabled={busy.startsWith("delete-")}
             >
               {busy.startsWith("delete-") ? "删除中…" : "确认删除"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <CommentDialog
         open={!!commentTarget}

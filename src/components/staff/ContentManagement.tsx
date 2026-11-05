@@ -17,6 +17,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import MarkdownEditor from "@/components/staff/MarkdownEditor";
 import { cn, formatDateTime } from "@/lib/utils";
 import type { NewsDetail, NewsInput, NewsItem, SeasonRule } from "@/lib/types";
@@ -376,24 +386,29 @@ export default function ContentManagement() {
       </Dialog>
 
       {/* 删除资讯确认 */}
-      <Dialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>删除资讯</DialogTitle>
-            <DialogDescription>
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除资讯</AlertDialogTitle>
+            <AlertDialogDescription>
               确定删除「{deleteTarget?.title}」吗？此操作不可撤销。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              取消
-            </Button>
-            <Button variant="destructive" onClick={() => void confirmDelete()} disabled={delBusy}>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => void confirmDelete()}
+              disabled={delBusy}
+            >
               {delBusy ? "删除中…" : "确认删除"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ============ 赛季规则 ============ */}
       <div className="mt-10 border-t-2 border-(--pc-border) pt-6">
@@ -551,32 +566,29 @@ export default function ContentManagement() {
       </Dialog>
 
       {/* 删除规则确认 */}
-      <Dialog
+      <AlertDialog
         open={deleteRuleSeason !== null}
         onOpenChange={(o) => !o && setDeleteRuleSeason(null)}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>删除赛季规则</DialogTitle>
-            <DialogDescription>
-              确定删除赛季「{deleteRuleSeason}」的规则吗？删除后 Bot 会回退读取 rules/
-              目录下的同名文件。
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteRuleSeason(null)}>
-              取消
-            </Button>
-            <Button
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除赛季规则</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定删除赛季「{deleteRuleSeason}」的规则吗？此操作不可撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
               variant="destructive"
               onClick={() => void confirmDeleteRule()}
               disabled={ruleBusy}
             >
               {ruleBusy ? "删除中…" : "确认删除"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

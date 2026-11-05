@@ -31,6 +31,16 @@ import {
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { MatchRoom } from "@/lib/types";
 import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
 import SeasonSelect from "@/components/staff/SeasonSelect";
@@ -729,36 +739,36 @@ export default function RoomManagement() {
                       {scheduleCount > 0 ? scheduleCount : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <Dialog
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeleteTarget(room)}
+                      >
+                        删除
+                      </Button>
+                      <AlertDialog
                         open={deleteTarget?.id === room.id}
                         onOpenChange={(o) => !o && setDeleteTarget(null)}
                       >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => setDeleteTarget(room)}
-                          >
-                            删除
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>删除房间</DialogTitle>
-                            <DialogDescription>
-                              确定要删除「{room.roomName}」吗？此操作不可撤销。
-                            </DialogDescription>
-                          </DialogHeader>
-                          <DialogFooter>
-                            <DialogClose asChild>
-                              <Button variant="outline">取消</Button>
-                            </DialogClose>
-                            <Button variant="destructive" onClick={confirmDelete} disabled={delBusy}>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>删除房间</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              确定要删除「{room.roomName}」吗？此操作不可撤销，房间下的赛程、比分、对战与人员安排会一并删除。
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>取消</AlertDialogCancel>
+                            <AlertDialogAction
+                              variant="destructive"
+                              onClick={confirmDelete}
+                              disabled={delBusy}
+                            >
                               {delBusy ? "删除中…" : "确认删除"}
-                            </Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </td>
                   </tr>
                 );

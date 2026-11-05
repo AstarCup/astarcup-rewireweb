@@ -1,5 +1,5 @@
 import { Routes, Route, Outlet } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/toast";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -34,15 +34,15 @@ function PublicLayout() {
 
 export default function App() {
   return (
-    <>
-      <Toaster />
+    <Toaster>
       <Routes>
+      {/* 管理后台：不显示站点导航栏与页脚 */}
+      <Route path="/staff-dashboard" element={<StaffDashboardPage />} />
       <Route element={<PublicLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/bind" element={<BotBindPage />} />
         <Route path="/player-info" element={<PlayerInfoPage />} />
-        <Route path="/staff-dashboard" element={<StaffDashboardPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/news/:slug" element={<NewsDetailPage />} />
         <Route path="/guide" element={<GuidePage />} />
@@ -55,6 +55,6 @@ export default function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
-    </>
+    </Toaster>
   );
 }

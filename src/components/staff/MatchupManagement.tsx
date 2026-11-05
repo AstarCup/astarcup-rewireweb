@@ -25,6 +25,16 @@ import {
   DialogClose,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { PlayerMatchup, PlayerStub } from "@/lib/types";
 import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
 import SeasonSelect from "@/components/staff/SeasonSelect";
@@ -265,29 +275,37 @@ export default function MatchupManagement() {
                   options={seasonOptions}
                   className="h-9 w-24"
                 />
-                <Dialog open={deleteTarget?.id === m.id} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-                  <DialogTrigger asChild>
-                    <Button variant="destructive" size="sm" className="ml-auto" onClick={() => setDeleteTarget(m)}>
-                      删除
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>删除对战</DialogTitle>
-                      <DialogDescription>
-                        确定删除「{m.player1Username} vs {m.player2Username}」？
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="outline">取消</Button>
-                      </DialogClose>
-                      <Button variant="destructive" onClick={confirmDelete} disabled={delBusy}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={() => setDeleteTarget(m)}
+                >
+                  删除
+                </Button>
+                <AlertDialog
+                  open={deleteTarget?.id === m.id}
+                  onOpenChange={(o) => !o && setDeleteTarget(null)}
+                >
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>删除对战</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        确定删除「{m.player1Username} vs {m.player2Username}」？此操作不可撤销。
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>取消</AlertDialogCancel>
+                      <AlertDialogAction
+                        variant="destructive"
+                        onClick={confirmDelete}
+                        disabled={delBusy}
+                      >
                         {delBusy ? "删除中…" : "确认删除"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </Card>
           ))}

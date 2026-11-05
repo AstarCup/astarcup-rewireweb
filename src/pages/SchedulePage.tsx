@@ -4,14 +4,13 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/paper/paper";
 import { LoadingBlock, ErrorBlock, useFetch } from "@/hooks/useFetch";
 import { api } from "@/lib/api";
-import { osuAvatarUrl } from "@/lib/utils";
+import { cn, osuAvatarUrl } from "@/lib/utils";
+import { stageLabelOf } from "@/lib/rooms";
 import type { MatchSchedule } from "@/lib/types";
 
 interface ScheduleRow {
   item: MatchSchedule;
-  roomName: string;
   timeText: string;
-  scoreText: string | null;
   links: { label: string; href: string }[];
   winner: 1 | 2 | null;
 }
@@ -58,15 +57,6 @@ function statusBadge(status: string) {
   }
 }
 
-/** 胜者标记 */
-function WinTag() {
-  return (
-    <span className="rounded bg-pc-teal px-1 py-0.5 text-[10px] font-bold leading-none text-pc-cream">
-      WIN
-    </span>
-  );
-}
-
 function toRow(item: MatchSchedule): ScheduleRow {
   const room = item.room ?? null;
   const red = item.redScore;
@@ -80,9 +70,7 @@ function toRow(item: MatchSchedule): ScheduleRow {
 
   return {
     item,
-    roomName: room?.roomName || "未分配房间",
     timeText: wallClock(room?.matchTime ?? room?.matchDate),
-    scoreText: hasScore ? `${red} : ${blue}` : null,
     links,
     winner: hasScore ? (red > blue ? 1 : blue > red ? 2 : null) : null,
   };
@@ -153,83 +141,108 @@ export default function SchedulePage() {
         )}
 
         {!loading && !error && rows.length > 0 && (
-          <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <table className="w-full min-w-[880px] text-left text-sm">
-              <thead>
-                <tr className="border-b-2 border-(--pc-border) text-xs text-(--pc-faint)">
-                  <th className="whitespace-nowrap px-4 py-3 font-bold">时间</th>
-                  <th className="px-4 py-3 font-bold">房间</th>
-                  <th className="px-4 py-3 text-center font-bold">对阵</th>
-                  <th className="whitespace-nowrap px-4 py-3 font-bold">链接</th>
-                  <th className="whitespace-nowrap px-4 py-3 font-bold">状态</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(({ item, roomName, timeText, scoreText, links, winner }) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-(--pc-border)/60 last:border-0 hover:bg-(--pc-paper)"
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 font-sans text-(--pc-slate)">
-                      {timeText}
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-bold text-(--pc-ink)">{roomName}</p>
-                      {item.season && (
-                        <p className="mt-0.5 text-xs text-(--pc-faint)">
-                          {item.season.toUpperCase()}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center justify-center gap-1.5">
+          <div className="overflow-hidden rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
+            {rows.map(({ item, timeText, links, winner }, index) => {
+              const stage = item.room ? stageLabelOf(item.room) : "—";
+              const season = seasonOf(item).toUpperCase();
+              const hasScore = item.redScore != null && item.blueScore != null;
+              return (
+                <article
+                  key={item.id}
+                  className={cn(
+                    "grid gap-6 px-6 py-7 md:grid-cols-[150px_minmax(0,1fr)] md:items-center",
+                    index > 0 && "border-t border-(--pc-border)/50",
+                  )}
+                >
+                  {/* 左：赛季 / 阶段 / 时间 / 状态 */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wide text-(--pc-faint)">
+                      {season || "—"}
+                    </span>
+                    <span className="font-display text-4xl font-black leading-none text-(--pc-ink)">
+                      {stage}
+                    </span>
+                    <span className="font-sans text-sm text-(--pc-slate)">{timeText}</span>
+                    <div className="w-fit">{statusBadge(item.status)}</div>
+                  </div>
+
+                  {/* 右：对阵 + 链接 */}
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-wrap items-center justify-center gap-5">
+                      <div className="flex items-center gap-3">
                         <img
                           src={osuAvatarUrl(item.player1OsuId)}
                           alt=""
-                          className="h-5 w-5 rounded-full object-cover"
+                          className="h-14 w-14 rounded-full border-2 border-(--pc-border) object-cover"
                         />
-                        <span className="font-bold text-pc-primary">
-                          {item.player1Username ?? `#${item.player1OsuId ?? "-"}`}
-                        </span>
-                        {winner === 1 && <WinTag />}
-                        <span className="whitespace-nowrap px-1 font-sans text-sm font-bold text-(--pc-ink)">
-                          {scoreText ?? "vs"}
-                        </span>
-                        {winner === 2 && <WinTag />}
-                        <span className="font-bold text-pc-blue">
-                          {item.player2Username ?? `#${item.player2OsuId ?? "-"}`}
-                        </span>
+                        <div className="flex flex-col items-start">
+                          {winner === 1 && (
+                            <span className="text-xs font-black tracking-wide text-pc-yellow">
+                              WIN
+                            </span>
+                          )}
+                          <span className="text-lg font-bold leading-tight text-pc-primary">
+                            {item.player1Username ?? `#${item.player1OsuId ?? "-"}`}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        {hasScore ? (
+                          <>
+                            <span className="font-display text-5xl font-black leading-none text-pc-primary">
+                              {item.redScore}
+                            </span>
+                            <span className="text-sm font-bold text-(--pc-faint)">vs</span>
+                            <span className="font-display text-5xl font-black leading-none text-pc-blue">
+                              {item.blueScore}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-sm font-bold text-(--pc-faint)">vs</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col items-end">
+                          {winner === 2 && (
+                            <span className="text-xs font-black tracking-wide text-pc-yellow">
+                              WIN
+                            </span>
+                          )}
+                          <span className="text-lg font-bold leading-tight text-pc-blue">
+                            {item.player2Username ?? `#${item.player2OsuId ?? "-"}`}
+                          </span>
+                        </div>
                         <img
                           src={osuAvatarUrl(item.player2OsuId)}
                           alt=""
-                          className="h-5 w-5 rounded-full object-cover"
+                          className="h-14 w-14 rounded-full border-2 border-(--pc-border) object-cover"
                         />
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </div>
+
+                    <div className="flex items-center justify-end gap-4">
                       {links.length > 0 ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                          {links.map((l) => (
-                            <a
-                              key={l.label}
-                              href={l.href}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-xs font-bold text-pc-primary underline underline-offset-2 hover:no-underline"
-                            >
-                              {l.label}
-                            </a>
-                          ))}
-                        </div>
+                        links.map((l) => (
+                          <a
+                            key={l.label}
+                            href={l.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-bold text-(--pc-slate) underline underline-offset-4 transition-colors hover:text-pc-primary"
+                          >
+                            {l.label}
+                          </a>
+                        ))
                       ) : (
                         <span className="text-xs text-(--pc-faint)">—</span>
                       )}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3">{statusBadge(item.status)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </div>
