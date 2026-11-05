@@ -1,14 +1,18 @@
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowUpRight,
   BookOpen,
   CalendarDays,
-  Map,
+  History,
+  Map as MapIcon,
   MessageCircle,
+  Users,
 } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { site } from "@/lib/site";
-import { osuAvatarUrl } from "@/lib/utils";
-import { SectionTitle, PaperStack } from "@/components/paper/paper";
+import { cn, osuAvatarUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import AnimatedLogo from "@/components/layout/AnimatedLogo";
@@ -16,7 +20,6 @@ import winners from "@/data/winners.json";
 import RegisterDialog from "@/components/RegisterDialog";
 import { REG_STATUS_LABEL } from "@/lib/types";
 import type { NewsItem } from "@/lib/types";
-import { useState } from "react";
 import { useFetch } from "@/hooks/useFetch";
 import { api } from "@/lib/api";
 
@@ -31,255 +34,565 @@ interface WinnerCard {
 }
 interface WinnersData {
   cards: WinnerCard[];
-  photos: { id: string; imageUrl: string; caption: string }[];
 }
 
 const winnersData = winners as WinnersData;
 
-const quickLinks = [
-  { to: "/guide", label: "比赛手册", desc: "规则 · 分组 · 赛制详解", icon: BookOpen },
-  { to: "/schedule", label: "赛程安排", desc: "对阵表 · 比分 · 回放", icon: CalendarDays },
-  { to: "/mappool", label: "图池", desc: "选图 · 定制 · 难度", icon: Map },
-  { to: "/contact", label: "联系我们", desc: "STAFF · 报名 · 疑问", icon: MessageCircle },
+/** 画布逻辑尺寸（所有元素都用这个坐标系里的绝对像素定位） */
+const BOARD_W = 1600;
+const BOARD_H = 900;
+
+/** 拖拽限位：左右 300px、上下 400px；超出部分做阻尼，松手后缓回 */
+const LIMIT_X = 300;
+const LIMIT_Y = 400;
+
+const clampX = (v: number) => Math.max(-LIMIT_X, Math.min(LIMIT_X, v));
+const clampY = (v: number) => Math.max(-LIMIT_Y, Math.min(LIMIT_Y, v));
+
+/** 到达限位后继续拖会越来越沉（橡皮筋） */
+function rubberBand(v: number, limit: number) {
+  const abs = Math.abs(v);
+  if (abs <= limit) return v;
+  const over = Math.min((abs - limit) * 0.3, limit * 0.3);
+  return Math.sign(v) * (limit + over);
+}
+
+const eventCards = [
+  { to: "/guide", label: "比赛手册", Icon: BookOpen, color: "var(--pc-primary)", x: 696, y: 153 },
+  { to: "/schedule", label: "赛程安排", Icon: CalendarDays, color: "var(--pc-teal)", x: 861, y: 125 },
+  { to: "/mappool", label: "图池", Icon: MapIcon, color: "var(--pc-blue)", x: 1013, y: 146 },
+  { to: "/registrations", label: "参赛选手", Icon: Users, color: "var(--pc-yellow)", x: 522, y: 178 },
+  { to: "/contact", label: "联系我们", Icon: MessageCircle, color: "var(--pc-primary)", x: 1110, y: 186 },
+];
+
+const community = [
+  { label: "QQ群", href: site.contact.qqGroup, color: "var(--pc-teal)", x: 498, y: 300 },
+  { label: "bilibili", href: site.contact.bilibili, color: "var(--pc-blue)", x: 419, y: 383 },
+  { label: "bilibili live", href: site.contact.bilibiliLive, color: "var(--pc-primary)", x: 440, y: 464 },
 ];
 
 const projectLinks = [
-  {
-    label: "osu! Plus Plus",
-    desc: "OPP工具箱",
-    to: "/tools",
-  },
-  {
-    label: "Ez2Lazer",
-    desc: "支持asio、强化mania的第三方客户端",
-    to: "/tools",
-  },
-  {
-    label: "g0v0 lazer",
-    desc: "咕服专用客户端，支持asio",
-    to: "/tools",
-  },
+  { label: "osu! Plus Plus", desc: "OPP 工具箱", to: "/tools" },
+  { label: "Ez2Lazer", desc: "支持 ASIO 的客户端", to: "/tools" },
+  { label: "g0v0 lazer", desc: "咕服专用客户端", to: "/tools" },
 ];
 
-const medalColors = ["bg-pc-yellow", "bg-[#cfd3c9]", "bg-[#e0a47e]"];
-const rankLabel = (rank: number) =>
-  rank === 1 ? "Winner" : rank === 2 ? "2nd" : rank === 3 ? "3rd" : `${rank} 名`;
+const cardBase =
+  "flex items-center gap-2.5 rounded-[22px] border-2 border-(--pc-border) bg-(--pc-white)/95 px-4 py-2.5 " +
+  "shadow-[3px_3px_0px_rgba(0,0,0,0.1)] backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5";
+
+const DECOR_COLORS = [
+  "var(--pc-primary)",
+  "var(--pc-teal)",
+  "var(--pc-blue)",
+  "var(--pc-yellow)",
+];
+
+const panelBase =
+  "rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-4 shadow-[4px_4px_0px_rgba(0,0,0,0.1)]";
+
+/** 画布上一块：绝对像素定位 */
+function Piece({
+  x,
+  y,
+  rotate = 0,
+  width,
+  className,
+  children,
+}: {
+  x: number;
+  y: number;
+  rotate?: number;
+  width?: number;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn("absolute", className)}
+      style={
+        {
+          left: x,
+          top: y,
+          width,
+          transform: `rotate(${rotate}deg)`,
+        } as CSSProperties
+      }
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { user, permissions } = useApp();
-  // 最新资讯（后端 news 表）
   const { data: newsData } = useFetch<NewsItem[]>(() => api.get("/api/news"));
-  const news = newsData ?? [];
+  const news = (newsData ?? []).slice(0, 3);
 
   const [registerOpen, setRegisterOpen] = useState(false);
   const isAdmin = !!permissions?.isadmin;
+  const regStatus = user?.registrationStatus ?? "not_registered";
 
-  const sortedWinners = [...winnersData.cards].sort((a, b) => a.rank - b.rank);
+  const champion = [...winnersData.cards].sort((a, b) => a.rank - b.rank)[0];
+
+  // 每次刷新随机点亮 6 个字符（每行一个），用品牌色实心填充
+  const [litChars] = useState(() =>
+    Array.from({ length: 6 }, (_, line) => ({
+      line,
+      index: Math.floor(Math.random() * 8),
+      color: DECOR_COLORS[Math.floor(Math.random() * DECOR_COLORS.length)],
+    })),
+  );
+
+  // 画布整体缩放，保证固定坐标系的元素始终完整可见
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      setScale(Math.min(width / BOARD_W, height / BOARD_H));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+
+
+
+
+  // 整块场地一起拖动
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ id: number; sx: number; sy: number; ox: number; oy: number } | null>(null);
+  const moved = useRef(false);
+  // 松手后回弹中（用于切换弹簧缓动）
+  const [settling, setSettling] = useState(false);
+  /** 超出限位时，松手弹回边界 */
+  const settleBack = () => {
+    setOffset((prev) => {
+      const next = { x: clampX(prev.x), y: clampY(prev.y) };
+      if (next.x !== prev.x || next.y !== prev.y) {
+        setSettling(true);
+        window.setTimeout(() => setSettling(false), 440);
+      }
+      return next;
+    });
+  };
+
+  // 滚轮先带动画布；画布到边界后，才把滚动交还给页面
+  const [wheeling, setWheeling] = useState(false);
+  const wheelTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const nextX = clampX(offset.x - e.deltaX);
+      const nextY = clampY(offset.y - e.deltaY);
+      if (nextX === offset.x && nextY === offset.y) return; // 到边界了，交给页面滚动
+      e.preventDefault();
+      setOffset({ x: nextX, y: nextY });
+      setWheeling(true);
+      if (wheelTimer.current) window.clearTimeout(wheelTimer.current);
+      wheelTimer.current = window.setTimeout(() => setWheeling(false), 160);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      if (wheelTimer.current) window.clearTimeout(wheelTimer.current);
+    };
+  }, [offset.x, offset.y]);
 
   return (
-    <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden px-4 pt-12 pb-4 md:px-8">
-        <span
-          aria-hidden
-          className="absolute -left-8 top-4 h-28 w-28 rotate-[-8deg] rounded-3xl bg-pc-teal/30"
-        />
-        <span
-          aria-hidden
-          className="absolute right-10 top-20 h-16 w-16 rotate-12 rounded-2xl bg-pc-yellow/40"
-        />
-        <span
-          aria-hidden
-          className="absolute right-1/3 top-2 h-8 w-8 rotate-[30deg] rounded-lg bg-pc-primary/20"
-        />
-        <div className="relative mx-auto max-w-6xl">
-            <div className="flex flex-col items-start gap-6">
-              <AnimatedLogo />
-              <div className="flex w-full flex-wrap items-center justify-center gap-3 pt-2">
-                {!user ? (
-                  <Button asChild size="lg" variant="primary">
-                    <Link to="/register">登录 / 报名</Link>
-                  </Button>
-                ) : (
-                  <>
-                    {(() => {
-                      const regStatus = user.registrationStatus ?? "not_registered";
-                      return regStatus === "not_registered" ? (
-                        <Button size="lg" variant="yellow" onClick={() => setRegisterOpen(true)}>
-                          快速报名
-                        </Button>
-                      ) : (
-                        <Button size="lg" variant="yellow" disabled>
-                          {REG_STATUS_LABEL[regStatus] ?? regStatus}
-                        </Button>
+    <div className="relative bg-(--pc-paper)">
+      {/* ================= 桌面：固定尺寸画布，整块一起拖 ================= */}
+      <section
+        ref={stageRef}
+        className="relative -mt-[4.125rem] hidden h-[100svh] touch-none overflow-hidden select-none xl:block"
+        onPointerDown={(e) => {
+          drag.current = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: offset.x, oy: offset.y };
+          moved.current = false;
+          setDragging(true);
+          // 先不 capture，否则 click 会落在 section 上，按钮/链接点了没反应
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          if (!d || d.id !== e.pointerId) return;
+          const dx = (e.clientX - d.sx) / scale;
+          const dy = (e.clientY - d.sy) / scale;
+          if (!moved.current) {
+            if (Math.abs(dx) <= 3 && Math.abs(dy) <= 3) return; // 还在点击范围内
+            moved.current = true;
+            (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+          }
+          setOffset({ x: rubberBand(d.ox + dx, LIMIT_X), y: rubberBand(d.oy + dy, LIMIT_Y) });
+        }}
+        onPointerUp={() => {
+          drag.current = null;
+          setDragging(false);
+          settleBack();
+        }}
+        onPointerCancel={() => {
+          drag.current = null;
+          setDragging(false);
+          settleBack();
+        }}
+        onClickCapture={(e) => {
+          if (moved.current) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+      >
+        {/* 缩放容器：把 1600×900 的画布等比缩放到视口里 */}
+        <div
+          className="absolute top-1/2 left-1/2"
+          style={{
+            width: BOARD_W,
+            height: BOARD_H,
+            transform: `translate(-50%, -50%) scale(${scale})`,
+            transformOrigin: "center center",
+          }}
+        >
+          {/* 拖动层：画布里的所有东西一起位移 */}
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: `translate3d(${offset.x}px, ${offset.y}px, 0)`,
+              transition: dragging
+                ? "none"
+                : settling
+                  ? "transform 420ms cubic-bezier(0.34, 1.56, 0.64, 1)"
+                  : wheeling
+                    ? "transform 140ms linear"
+                    : "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+              cursor: dragging ? "grabbing" : "grab",
+            }}
+          >
+            {/* 最底层背景图 */}
+            <img
+              src="/assets/banner.png"
+              alt=""
+              decoding="async"
+              className="pointer-events-none absolute -top-[700px] -left-[700px] h-[2300px] w-[3000px] max-w-none object-cover select-none"
+              draggable={false}
+            />
+
+            {/* 背景装饰：六行超大描边字，每次刷新随机点亮 6 个实心字符 */}
+            <div aria-hidden className="pointer-events-none absolute inset-0">
+              <svg
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+                width={2000}
+                height={2400}
+                viewBox="0 0 2000 2400"
+                fill="none"
+              >
+                {[0.05, 0.08, 0.1, 0.12, 0.14, 0.16].map((lineOpacity, line) => (
+                  <g key={line}>
+                    {"ASTARCUP".split("").map((ch, i) => {
+                      const lit = litChars.find((c) => c.line === line && c.index === i);
+                      return (
+                        <text
+                          key={i}
+                          x={1000 + (i - 3.5) * 245}
+                          y={200 + line * 360}
+                          textAnchor="middle"
+                          fontSize={380}
+                          fontWeight={900}
+                          className="font-display"
+                          fill={lit ? lit.color : "none"}
+                          stroke={lit ? "none" : "var(--pc-ink)"}
+                          strokeWidth={lit ? 0 : 1}
+                          opacity={lit ? 1 : lineOpacity}
+                        >
+                          {ch}
+                        </text>
                       );
-                    })()}
-                    <Button asChild size="lg" variant="primary">
-                      <Link to="/player-info">个人中心</Link>
-                    </Button>
-                    {isAdmin && (
-                      <Button asChild size="lg" variant="teal">
-                        <Link to="/staff-dashboard">管理后台</Link>
-                      </Button>
-                    )}
-                  </>
-                )}
-              </div>
+                    })}
+                  </g>
+                ))}
+              </svg>
             </div>
-        </div>
-      </section>
+            {/* 中心 Logo */}
+            <Piece x={440} y={114} width={1000} className="pointer-events-none">
+              <AnimatedLogo />
+            </Piece>
 
-      {/* Project quick links */}
-      <section className="mx-auto max-w-6xl px-4 py-6 md:px-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {projectLinks.map((l) => (
-            <Link
-              key={l.label}
-              to={l.to}
-              className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
-            >
-              <p className="font-bold text-xl text-(--pc-ink)">{l.label}</p>
-              <p className="mt-1 text-xs text-(--pc-faint)">{l.desc}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Community links */}
-      {user && (
-        <section className="mx-auto max-w-6xl px-4 py-6 md:px-8">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <a
-              href={site.contact.qqGroup}
-              target="_blank"
-              rel="noreferrer"
-              className="group relative flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
-            >
-              <p className="font-bold text-xl text-(--pc-ink)">QQ Group</p>
-              <img
-                src="/assets/QQGroupQRcode.png"
-                alt="QQ 群二维码"
-                className="absolute right-3 top-3 w-32 rounded-xl bg-(--pc-white) p-2 shadow-[3px_3px_0px_rgba(0,0,0,0.1)] opacity-0 transition group-hover:opacity-100"
-              />
-            </a>
-            <a
-              href={site.contact.bilibili}
-              target="_blank"
-              rel="noreferrer"
-              className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
-            >
-              <p className="font-bold text-xl text-(--pc-ink)">Bilibili</p>
-              <p className="mt-1 text-xs text-(--pc-faint)">比赛录像与精彩集锦</p>
-            </a>
-            <a
-              href={site.contact.bilibiliLive}
-              target="_blank"
-              rel="noreferrer"
-              className="flex flex-col justify-end rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-5 shadow-[3px_3px_0px_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.1)]"
-            >
-              <p className="font-bold text-xl text-(--pc-ink)">Live</p>
-              <p className="mt-1 text-xs text-(--pc-faint)">赛事直播频道</p>
-            </a>
-          </div>
-        </section>
-      )}
-
-      {/* Quick Links */}
-      <section className="mx-auto max-w-6xl px-4 py-12 md:px-8">
-        <SectionTitle tag="快速导航">赛事模块</SectionTitle>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {quickLinks.map((item, i) => {
-            const Icon = item.icon;
-            const color = ["var(--pc-primary)", "var(--pc-teal)", "var(--pc-yellow)", "var(--pc-blue)"][i % 4];
-            return (
-              <Link key={item.to} to={item.to} className="block">
-                <PaperStack className="h-full" layers={i % 2 === 0 ? 2 : 3}>
-                  <div className="flex h-full flex-col gap-3 p-6">
-                    <span
-                      className="inline-flex h-12 w-12 rotate-[-2deg] items-center justify-center rounded-xl text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
-                      style={{ backgroundColor: color }}
-                    >
-                      <Icon className="h-6 w-6" />
-                    </span>
-                    <div>
-                      <h3 className="font-bold text-lg text-(--pc-ink)">{item.label}</h3>
-                      <p className="mt-1 text-xs text-(--pc-faint)">{item.desc}</p>
-                    </div>
-                  </div>
-                </PaperStack>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Winners */}
-      <section className="mx-auto max-w-6xl px-4 py-12 md:px-8">
-        <SectionTitle tag="荣耀殿堂" accent="var(--pc-yellow)">
-          历届冠军
-        </SectionTitle>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {sortedWinners.map((w, i) => {
-            const medal = medalColors[Math.min(Math.max(w.rank - 1, 0), 2)] ?? "bg-pc-yellow";
-            return (
-              <PaperStack key={w.id} className="h-full" layers={w.rank % 2 === 0 ? 2 : 3}>
-                <div
-                  className={`flex h-full items-center gap-4 p-6 ${
-                    i % 2 === 0 ? "-rotate-1" : "rotate-1"
-                  }`}
-                >
+            {/* 赛事板块 */}
+            {[
+              { key: "guide", x: 696, y: 93, rotate: -3, color: eventCards[0].color, label: "比赛手册", to: "/guide", Icon: BookOpen },
+              { key: "schedule", x: 861, y: 125, rotate: 2, color: eventCards[1].color, label: "赛程安排", to: "/schedule", Icon: CalendarDays },
+              { key: "mappool", x: 1013, y: 146, rotate: -2, color: eventCards[2].color, label: "图池", to: "/mappool", Icon: MapIcon },
+              { key: "contact", x: 1310, y: 126, rotate: 3, color: eventCards[4].color, label: "联系我们", to: "/contact", Icon: MessageCircle },
+              { key: "players", x: 522, y: 178, rotate: -4, color: eventCards[3].color, label: "参赛选手", to: "/registrations", Icon: Users },
+            ].map((c) => (
+              <Piece key={c.key} x={c.x} y={c.y} rotate={c.rotate}>
+                <div className="relative">
+                  {/* 吊线：4px 宽、1000px 高，压在按钮下面 */}
                   <span
-                    className={`grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.1)] ${medal}`}
+                    aria-hidden
+                    className="absolute -top-[1000px] left-[26px] h-[1000px] w-[4px] rounded-full opacity-60"
+                    style={{ backgroundColor: c.color }}
+                  />
+                  <Link to={c.to} className={cn(cardBase, "relative")}>
+                    <c.Icon className="h-6 w-6 shrink-0" style={{ color: c.color }} />
+                    <span className="text-base font-bold whitespace-nowrap text-(--pc-ink)">{c.label}</span>
+                  </Link>
+                </div>
+              </Piece>
+            ))}
+
+            {/* 左侧社群 */}
+            {community.map((c, i) => (
+              <Piece key={c.label} x={c.x} y={c.y} rotate={i % 2 ? 2 : -2}>
+                <a href={c.href} target="_blank" rel="noreferrer" className="flex items-center gap-3">
+                  <span className="text-xs font-bold whitespace-nowrap text-(--pc-slate)">{c.label}</span>
+                  <span
+                    className="grid h-12 w-12 place-items-center rounded-full border-2 border-(--pc-border) text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-transform hover:scale-110"
+                    style={{ backgroundColor: c.color }}
                   >
-                    <img
-                      src={w.avatarUrl || osuAvatarUrl(w.osuId)}
-                      alt={w.playerName}
-                      className="h-full w-full object-cover"
-                    />
+                    <ArrowUpRight className="h-5 w-5" />
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate font-bold text-(--pc-ink)">{w.playerName}</span>
-                      <Badge variant="outline">{rankLabel(w.rank)}</Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-(--pc-faint)">
-                      {w.season?.toUpperCase() ?? "Season"}
-                    </p>
+                </a>
+              </Piece>
+            ))}
+
+            {/* 卫冕冠军 */}
+            {champion && (
+              <Piece x={298} y={585} rotate={-2}>
+                <div className="relative">
+                  {/* 左右两根吊线 */}
+                  <span
+                    aria-hidden
+                    className="absolute -top-[1000px] left-[24px] h-[1000px] w-[4px] rounded-full bg-(--pc-ink) opacity-25"
+                  />
+                  <span
+                    aria-hidden
+                    className="absolute -top-[1000px] right-[24px] h-[1000px] w-[4px] rounded-full bg-(--pc-ink) opacity-25"
+                  />
+                  <div className="relative flex items-center gap-2 rounded-2xl border-2 border-(--pc-border) bg-(--pc-white)/95 px-3 py-2 shadow-[3px_3px_0px_rgba(0,0,0,0.1)] backdrop-blur-sm">
+                  <img
+                    src={champion.avatarUrl || osuAvatarUrl(champion.osuId)}
+                    alt={champion.playerName}
+                    className="h-8 w-8 rounded-lg border-2 border-(--pc-border) object-cover"
+                  />
+                  <span>
+                    <span className="block text-xs font-bold text-(--pc-ink)">{champion.playerName}</span>
+                    <span className="flex items-center gap-1 text-[10px] text-(--pc-faint)">
+                      <History className="h-3 w-3" /> 卫冕冠军
+                    </span>
+                  </span>
+                    <Badge variant="yellow" className="text-[10px]">
+                      S1
+                    </Badge>
                   </div>
                 </div>
-              </PaperStack>
-            );
-          })}
-        </div>
-      </section>
+              </Piece>
+            )}
 
-      {/* News */}
-      <section className="mx-auto max-w-6xl px-4 py-12 md:px-8">
-        <SectionTitle tag="最新资讯">News</SectionTitle>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {news.map((n, i) => (
-            <Link key={n.slug} to={`/news/${n.slug}`} className="block">
-              <PaperStack className="h-full" layers={i % 2 === 0 ? 2 : 3}>
-                <div className="flex h-full flex-col gap-2 p-6">
-                  <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-bold text-lg text-(--pc-ink)">
-                      {n.title || "未命名资讯"}
-                    </h3>
-                    {n.date && (
-                      <Badge variant="yellow" className="shrink-0">
-                        {n.date}
-                      </Badge>
-                    )}
-                  </div>
-                  {n.description && (
-                    <p className="text-xs leading-relaxed text-(--pc-slate)">
-                      {n.description}
-                    </p>
+            {/* 项目与工具 */}
+            <Piece x={350} y={744} width={250} rotate={-1.5}>
+              <div className={panelBase}>
+                <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">Tools</p>
+                <p className="mt-0.5 text-base font-black text-(--pc-ink)">项目与工具</p>
+                <div className="mt-2 grid gap-1">
+                  {projectLinks.map((l) => (
+                    <Link
+                      key={l.label}
+                      to={l.to}
+                      className="flex items-center justify-between gap-2 rounded-lg px-1.5 py-1.5 text-xs transition hover:bg-pc-primary/10"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-bold text-(--pc-ink)">{l.label}</span>
+                        <span className="block text-[10px] text-(--pc-faint)">{l.desc}</span>
+                      </span>
+                      <ArrowUpRight className="h-3 w-3 shrink-0 text-(--pc-faint)" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </Piece>
+
+            {/* 最新资讯 */}
+            <Piece x={634} y={730} width={740} rotate={1.5}>
+              <div className={panelBase}>
+                <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">News</p>
+                <p className="mt-0.5 text-base font-black text-(--pc-ink)">最新资讯</p>
+                <div className="mt-2 grid gap-1">
+                  {news.length > 0 ? (
+                    news.map((n) => (
+                      <Link
+                        key={n.slug}
+                        to={`/news/${n.slug}`}
+                        className="block rounded-lg px-1.5 py-1.5 transition hover:bg-pc-yellow/15"
+                      >
+                        <span className="line-clamp-1 text-xs font-bold text-(--pc-ink)">
+                          {n.title || "未命名资讯"}
+                        </span>
+                        {n.date && <span className="text-[10px] text-(--pc-faint)">{n.date}</span>}
+                      </Link>
+                    ))
+                  ) : (
+                    <p className="px-1.5 py-1.5 text-xs text-(--pc-faint)">暂无资讯</p>
                   )}
                 </div>
-              </PaperStack>
-            </Link>
-          ))}
+              </div>
+            </Piece>
+
+            {/* 操作 */}
+            <Piece x={795} y={690} rotate={-2}>
+              {!user ? (
+                <Button
+                  asChild
+                  variant="yellow"
+                  size="lg"
+                  className="h-14 px-10 text-lg shadow-[4px_4px_0px_rgba(0,0,0,0.14)]"
+                >
+                  <Link to="/register">登录 / 报名</Link>
+                </Button>
+              ) : regStatus === "not_registered" ? (
+                <Button
+                  variant="yellow"
+                  size="lg"
+                  className="h-14 px-10 text-lg shadow-[4px_4px_0px_rgba(0,0,0,0.14)]"
+                  onClick={() => setRegisterOpen(true)}
+                >
+                  快速报名
+                </Button>
+              ) : (
+                <Button
+                  variant="yellow"
+                  size="lg"
+                  disabled
+                  className="h-14 px-10 text-lg shadow-[4px_4px_0px_rgba(0,0,0,0.14)]"
+                >
+                  {REG_STATUS_LABEL[regStatus] ?? regStatus}
+                </Button>
+              )}
+            </Piece>
+
+            {user && (
+              <Piece x={1000} y={686} rotate={2}>
+                <Button asChild variant="primary" size="lg" className="shadow-[4px_4px_0px_rgba(0,0,0,0.14)]">
+                  <Link to="/player-info">个人中心</Link>
+                </Button>
+              </Piece>
+            )}
+
+            {user && isAdmin && (
+              <Piece x={1184} y={712} rotate={-3}>
+                <Button asChild variant="teal" size="lg" className="shadow-[4px_4px_0px_rgba(0,0,0,0.14)]">
+                  <Link to="/staff-dashboard">管理后台</Link>
+                </Button>
+              </Piece>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= 窄屏：竖排 ================= */}
+      <section className="xl:hidden">
+        <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 px-4 py-10">
+          <div className="-mb-8 w-full max-w-[320px] [&_svg]:h-auto [&_svg]:w-full sm:max-w-[380px]">
+            <AnimatedLogo />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {!user ? (
+              <Button asChild size="lg" variant="primary">
+                <Link to="/register">登录 / 报名</Link>
+              </Button>
+            ) : (
+              <>
+                {regStatus === "not_registered" ? (
+                  <Button size="lg" variant="yellow" onClick={() => setRegisterOpen(true)}>
+                    快速报名
+                  </Button>
+                ) : (
+                  <Button size="lg" variant="yellow" disabled>
+                    {REG_STATUS_LABEL[regStatus] ?? regStatus}
+                  </Button>
+                )}
+                <Button asChild size="lg" variant="primary">
+                  <Link to="/player-info">个人中心</Link>
+                </Button>
+                {isAdmin && (
+                  <Button asChild size="lg" variant="teal">
+                    <Link to="/staff-dashboard">管理后台</Link>
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="grid w-full grid-cols-2 gap-3">
+            {eventCards.map((c) => (
+              <Link key={c.to} to={c.to} className={cardBase}>
+                <c.Icon className="h-6 w-6 shrink-0" style={{ color: c.color }} />
+                <span className="text-base font-bold text-(--pc-ink)">{c.label}</span>
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {community.map((c) => (
+              <a
+                key={c.label}
+                href={c.href}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-3 py-1 text-xs font-bold text-(--pc-slate)"
+              >
+                {c.label}
+              </a>
+            ))}
+          </div>
+
+          <div className={cn(panelBase, "w-full")}>
+            <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">Tools</p>
+            <p className="mt-0.5 text-base font-black text-(--pc-ink)">项目与工具</p>
+            <div className="mt-2 grid gap-1">
+              {projectLinks.map((l) => (
+                <Link
+                  key={l.label}
+                  to={l.to}
+                  className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-xs transition hover:bg-pc-primary/10"
+                >
+                  <span>
+                    <span className="block font-bold text-(--pc-ink)">{l.label}</span>
+                    <span className="block text-[10px] text-(--pc-faint)">{l.desc}</span>
+                  </span>
+                  <ArrowUpRight className="h-3 w-3 text-(--pc-faint)" />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className={cn(panelBase, "w-full")}>
+            <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">News</p>
+            <p className="mt-0.5 text-base font-black text-(--pc-ink)">最新资讯</p>
+            <div className="mt-2 grid gap-2">
+              {news.length > 0 ? (
+                news.map((n) => (
+                  <Link
+                    key={n.slug}
+                    to={`/news/${n.slug}`}
+                    className="block rounded-lg px-2 py-2 hover:bg-pc-yellow/15"
+                  >
+                    <span className="block text-sm font-bold text-(--pc-ink)">{n.title || "未命名资讯"}</span>
+                    {n.date && <span className="text-[10px] text-(--pc-faint)">{n.date}</span>}
+                  </Link>
+                ))
+              ) : (
+                <p className="px-2 py-2 text-xs text-(--pc-faint)">暂无资讯</p>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 

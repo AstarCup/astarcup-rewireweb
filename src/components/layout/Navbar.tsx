@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { LogOut, Menu, User, ShieldCheck } from "lucide-react";
 import Logo from "./Logo";
 import MessageCenter from "./MessageCenter";
@@ -38,6 +38,9 @@ const LINKS = [
 export default function Navbar() {
   const { user, permissions, logout } = useApp();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // 首页的画布是全屏铺开的，导航栏透出背景图
+  const isHome = pathname === "/";
   const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -46,7 +49,12 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-40 border-b-2 border-(--pc-border) bg-(--pc-paper)/95 px-3 sm:px-4 md:px-6 lg:px-8 backdrop-blur-sm relative paper-texture">
+    <nav
+      className={cn(
+        "relative sticky top-0 z-40 border-b-2 border-(--pc-border) bg-(--pc-paper)/95 px-3 backdrop-blur-sm sm:px-4 md:px-6 lg:px-8 paper-texture",
+        isHome && "xl:border-transparent xl:bg-transparent xl:backdrop-blur-none xl:paper-none",
+      )}
+    >
       <div className="flex h-16 items-center justify-between gap-3 sm:gap-4 md:gap-6">
         <div className="flex items-center gap-2">
           {/* 移动端：图标改为菜单按钮，点击打开 Drawer */}
