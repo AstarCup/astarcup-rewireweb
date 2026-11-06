@@ -1,6 +1,7 @@
 import { Routes, Route, Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toast";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import BackToTop from "@/components/layout/BackToTop";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import HomePage from "@/pages/HomePage";
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>
+    <BackToTop />
     </Toaster>
   );
 }
