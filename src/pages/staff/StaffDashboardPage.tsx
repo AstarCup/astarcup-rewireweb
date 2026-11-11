@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   CalendarClock,
   DoorOpen,
+  Gavel,
   History,
   LayoutDashboard,
   Map as MapIcon,
@@ -48,6 +49,7 @@ import MatchupManagement from "@/components/staff/MatchupManagement";
 import UserManagement from "@/components/staff/UserManagement";
 import SettingsManagement from "@/components/staff/SettingsManagement";
 import ContentManagement from "@/components/staff/ContentManagement";
+import RefereeConsole from "@/components/staff/RefereeConsole";
 
 const TABS = [
   { key: "overview", label: "概览", Icon: LayoutDashboard, Comp: OverviewManagement },
@@ -56,6 +58,7 @@ const TABS = [
   { key: "users", label: "用户管理", Icon: Users, Comp: UserManagement },
   { key: "matchups", label: "对战列表", Icon: Swords, Comp: MatchupManagement },
   { key: "rooms", label: "房间管理", Icon: DoorOpen, Comp: RoomManagement },
+  { key: "referee", label: "裁判控制台", Icon: Gavel, Comp: RefereeConsole },
   { key: "schedules", label: "比赛预约管理", Icon: CalendarClock, Comp: MatchScheduleManagement },
   { key: "streaming", label: "房间加入", Icon: Radio, Comp: StreamingManagement },
   { key: "content", label: "内容管理", Icon: Newspaper, Comp: ContentManagement },
@@ -80,7 +83,7 @@ const NAV: {
     key: "g-match",
     label: "比赛管理",
     Icon: Swords,
-    items: ["schedules", "matchups", "rooms", "users"],
+    items: ["schedules", "matchups", "rooms", "referee", "users"],
   },
   { key: "streaming", label: "房间加入", Icon: Radio },
   { key: "content", label: "内容管理", Icon: Newspaper },
@@ -90,7 +93,7 @@ const NAV: {
 /** 桌面端侧边栏分组 */
 const SIDEBAR_SECTIONS: { label?: string; items: TabKey[] }[] = [
   { items: ["overview", "mappool", "replays"] },
-  { label: "比赛管理", items: ["schedules", "matchups", "rooms", "users"] },
+  { label: "比赛管理", items: ["schedules", "matchups", "rooms", "referee", "users"] },
   { items: ["streaming", "content", "settings"] },
 ];
 
