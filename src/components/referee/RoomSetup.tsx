@@ -11,6 +11,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const RULESET_OPTIONS = [
+  { value: "0", label: "osu!（标准）" },
+  { value: "1", label: "taiko（太鼓）" },
+  { value: "2", label: "catch（接水果）" },
+  { value: "3", label: "mania（下落式）" },
+];
 
 interface RoomSetupProps {
   /** MakeRoom / JoinRoom 成功后回传 RoomJoinedResponse */
@@ -103,16 +117,19 @@ export default function RoomSetup({ onRoomJoined }: RoomSetupProps) {
           <p className="text-sm font-bold text-(--pc-ink)">创建房间</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="ref-make-ruleset">规则集 ID</Label>
-              <Input
-                id="ref-make-ruleset"
-                type="number"
-                min={0}
-                max={3}
-                value={rulesetId}
-                onChange={(e) => setRulesetId(e.target.value)}
-                placeholder="0=osu! 1=taiko 2=catch 3=mania"
-              />
+              <Label htmlFor="ref-make-ruleset">规则集</Label>
+              <Select value={rulesetId} onValueChange={setRulesetId}>
+                <SelectTrigger id="ref-make-ruleset" className="w-full">
+                  <SelectValue placeholder="选择模式" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RULESET_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="ref-make-beatmap">Beatmap ID</Label>

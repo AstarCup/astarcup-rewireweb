@@ -26,6 +26,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const RULESET_NAMES = ["osu!", "taiko", "catch", "mania"];
 
@@ -153,15 +160,19 @@ function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogPro
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="ref-pl-ruleset">规则集 ID（0=osu! 1=taiko 2=catch 3=mania）</Label>
-            <Input
-              id="ref-pl-ruleset"
-              type="number"
-              min={0}
-              max={3}
-              value={rulesetId}
-              onChange={(e) => setRulesetId(e.target.value)}
-            />
+            <Label htmlFor="ref-pl-ruleset">规则集</Label>
+            <Select value={rulesetId} onValueChange={setRulesetId}>
+              <SelectTrigger id="ref-pl-ruleset" className="w-full">
+                <SelectValue placeholder="选择模式" />
+              </SelectTrigger>
+              <SelectContent>
+                {RULESET_NAMES.map((name, i) => (
+                  <SelectItem key={i} value={String(i)}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="ref-pl-required">必选 mod（空格分隔）</Label>
