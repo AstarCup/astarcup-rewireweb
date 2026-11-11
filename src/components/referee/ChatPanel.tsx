@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import type { ChatLine, RefRoomState } from "@/lib/ref";
-import { osuAvatarUrl } from "@/lib/utils";
+import { cn, osuAvatarUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+  MessageGroup,
+  MessageHeader,
+} from "@/components/ui/message";
 
 const matchStatusMeta: Record<RefRoomState["status"], { label: string; variant: "teal" | "yellow" | "primary" }> = {
   Idle: { label: "空闲", variant: "teal" },
@@ -16,12 +23,14 @@ const matchStatusMeta: Record<RefRoomState["status"], { label: string; variant: 
 interface ChatPanelProps {
   lines: ChatLine[];
   matchStatus: RefRoomState["status"];
+  /** 当前裁判的 osu! id：自己的消息靠右显示 */
+  meId?: string | null;
   disabled?: boolean;
   onSend: (text: string) => void;
 }
 
 /** 中栏上半：聊天（用户消息 + 系统消息）+ 发送框（支持 /roll、!mp 本地命令） */
-export default function ChatPanel({ lines, matchStatus, disabled, onSend }: ChatPanelProps) {
+export default function ChatPanel({ lines, matchStatus, meId, disabled, onSend }: ChatPanelProps) {
   const [text, setText] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -60,38 +69,50 @@ export default function ChatPanel({ lines, matchStatus, disabled, onSend }: Chat
           {lines.length === 0 && (
             <p className="py-8 text-center text-sm text-(--pc-faint)">暂无消息…</p>
           )}
-          <div className="flex flex-col gap-2">
-            {lines.map((line) =>
-              line.kind === "system" ? (
-                <div
-                  key={line.id}
-                  className="border-b border-dashed border-(--pc-border) px-1 pb-1 font-mono text-xs italic text-(--pc-slate)"
-                >
-                  {line.content}
-                </div>
-              ) : (
-                <div key={line.id} className="flex items-start gap-2">
-                  <img
-                    src={line.avatarUrl ?? osuAvatarUrl(line.userId) ?? undefined}
-                    alt=""
-                    className="h-8 w-8 rounded-full border-2 border-(--pc-border) bg-(--pc-white)"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-(--pc-ink)">{line.username}</div>
+          <MessageGroup className="gap-2">
+            {lines.map((line) => {
+              if (line.kind === "system") {
+                return (
+                  <div
+                    key={line.id}
+                    className="border-b border-dashed border-(--pc-border) px-1 pb-1 font-mono text-xs italic text-(--pc-slate)"
+                  >
+                    {line.content}
+                  </div>
+                );
+              }
+              const isMe = meId != null && String(line.userId) === meId;
+              return (
+                <Message key={line.id} align={isMe ? "end" : "start"}>
+                  <MessageAvatar className="h-8 w-8 border-2 border-(--pc-border) bg-(--pc-white)">
+                    <img
+                      src={line.avatarUrl ?? osuAvatarUrl(line.userId) ?? undefined}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  </MessageAvatar>
+                  <MessageContent>
+                    <MessageHeader>
+                      {line.username}
+                      {isMe && <span className="font-normal text-(--pc-faint)">（你）</span>}
+                    </MessageHeader>
                     <div
-                      className={
-                        line.isAction
-                          ? "break-words text-sm italic text-(--pc-slate)"
-                          : "break-words text-sm text-(--pc-ink)"
-                      }
+                      data-slot="bubble"
+                      className={cn(
+                        "w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-2xl border-2 px-3 py-1.5 text-sm",
+                        isMe
+                          ? "border-pc-primary/30 bg-pc-primary/10 text-(--pc-ink)"
+                          : "border-(--pc-border) bg-(--pc-white) text-(--pc-ink)",
+                        line.isAction && "italic text-(--pc-slate)",
+                      )}
                     >
                       {line.isAction ? `* ${line.username} ${line.content}` : line.content}
                     </div>
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
+                  </MessageContent>
+                </Message>
+              );
+            })}
+          </MessageGroup>
         </div>
         <div className="flex gap-2">
           <Input

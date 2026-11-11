@@ -159,9 +159,15 @@ export interface OsuBeatmap {
   [key: string]: any;
 }
 
+/**
+ * osu! API v2 的 ChatMessage。
+ * 注意：官方字段是 `message_id`（发送接口也是），`id` 只是历史兼容。
+ */
 export interface OsuChatMessage {
-  id: number;
-  user_id: number;
+  /** 兼容字段（部分接口/旧版返回 id） */
+  id?: number;
+  message_id?: number;
+  user_id?: number;
   sender_id?: number;
   timestamp: string;
   content: string;
@@ -170,6 +176,21 @@ export interface OsuChatMessage {
   sender?: OsuUserLite;
   // biome-ignore lint/suspicious/noExplicitAny: osu 原始响应
   [key: string]: any;
+}
+
+/** 取聊天消息 id（osu 官方是 message_id） */
+export function chatMessageId(msg: OsuChatMessage | null | undefined): number | null {
+  return asNum(msg?.message_id) ?? asNum(msg?.id);
+}
+
+/** 取发送者 id（osu 官方是 sender_id） */
+export function chatMessageUserId(msg: OsuChatMessage | null | undefined): number {
+  return (
+    asNum(msg?.sender_id) ??
+    asNum(msg?.user_id) ??
+    asNum(msg?.sender?.id) ??
+    0
+  );
 }
 
 // ============ hub 命令构造 + 执行 ============
@@ -293,6 +314,10 @@ export const refApi = {
   clearBind: () => api.post<{ bound: boolean }>("/api/ref/bind/clear"),
   connect: () => api.post<RefStatus>("/api/ref/connect"),
   getStatus: () => api.get<RefStatus>("/api/ref/status"),
+  /** 后端记住的当前房间快照（刷新后恢复界面用） */
+  getRoom: () => api.get<{ room: RoomJoinedResponse | null }>("/api/ref/room"),
+  /** 关闭 / 被踢后清掉后端快照 */
+  clearRoom: () => api.post<{ room: null }>("/api/ref/room/clear"),
   sendChat: (channelId: number | null, message: string) =>
     api
       .post<{ message: OsuChatMessage }>("/api/ref/chat/send", { channelId, message })
@@ -679,7 +704,13 @@ const INCOMPATIBLE: Record<string, string[]> = {
   SO: ["SD", "PF"],
 };
 
-const SPECIAL_MODS = new Set(["FM", "NM"]);
+/** Difficulty Adjust 的参数顺序：CS / AR / OD / HP */
+export const DIFFICULTY_KEYS = [
+  "circle_size",
+  "approach_rate",
+  "overall_difficulty",
+  "drain_rate",
+] as const;
 
 export interface ExpandedMods {
   required: RefMod[];
@@ -688,40 +719,107 @@ export interface ExpandedMods {
   error?: string;
 }
 
+/** 按空白 / `+` / `,` 切分，但括号内的逗号保留（如 DA[4,4,4,4]） */
+function splitModTokens(text: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cur = "";
+  for (const ch of text) {
+    if (ch === "[" || ch === "{") depth += 1;
+    else if (ch === "]" || ch === "}") depth = Math.max(0, depth - 1);
+    if (depth === 0 && /[\s+,]/.test(ch)) {
+      if (cur) out.push(cur);
+      cur = "";
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+/** 解析单个 mod 的参数：JSON 对象 / DA 数组 / DT·HT 倍率数字 */
+function parseModSettings(
+  acronym: string,
+  rest: string,
+): { settings?: Record<string, unknown>; error?: string } {
+  if (rest.startsWith("{")) {
+    try {
+      const obj: unknown = JSON.parse(rest);
+      if (obj && typeof obj === "object" && !Array.isArray(obj)) {
+        return { settings: obj as Record<string, unknown> };
+      }
+    } catch {
+      /* 落到下面的错误提示 */
+    }
+    return { error: `${acronym} 的参数不是合法 JSON 对象：${rest}` };
+  }
+
+  if (rest.startsWith("[")) {
+    try {
+      const arr: unknown = JSON.parse(rest);
+      if (Array.isArray(arr)) {
+        if (acronym === "DA") {
+          if (arr.length === 0 || arr.length > DIFFICULTY_KEYS.length) {
+            return { error: "DA 的参数格式：DA[cs,ar,od,hp]" };
+          }
+          return {
+            settings: Object.fromEntries(
+              arr.map((v, i) => [DIFFICULTY_KEYS[i], Number(v)]),
+            ) as Record<string, unknown>,
+          };
+        }
+        return { error: `${acronym} 不支持数组参数，请写成 ${acronym}{"key":value}` };
+      }
+    } catch {
+      /* 落到下面的错误提示 */
+    }
+    return { error: `${acronym} 的参数不是合法 JSON 数组：${rest}` };
+  }
+
+  const rate = Number(rest);
+  if (Number.isFinite(rate) && rate > 0) {
+    if (acronym === "DT" || acronym === "HT") return { settings: { speed_change: rate } };
+    return { error: `${acronym} 不支持数字参数` };
+  }
+  return { error: `无法解析的 mod 参数：${acronym}${rest}` };
+}
+
 /**
- * `!mp mods HD HR` / `!mp mods FM` / `!mp mods HD FM` → required + allowed。
- * 与 apl-ref 一致：FM 展开成 freemod 白名单，并与 required 中互斥的 mod 做差集；
- * 不接受带参数的写法（如 DA3,4），mod 参数请在「图池队列 → 编辑」里设置。
+ * `HD HR` / `FM` / `HD FM` / `DT1.15` / `DA[4,4,4,4]` → required + allowed。
+ *
+ * - `NM` 清空、`FM` 展开成 freemod 白名单（与 required 中互斥的 mod 做差集）；
+ * - 带参数的写法：`DT1.15` / `HT0.8`（speed_change）、`DA[cs,ar,od,hp]`、
+ *   `HD{"key":value}`（任意 mod settings）。
  */
 export function expandModsText(text: string, rulesetId: number): ExpandedMods {
-  const tokens = text
-    .split(/[\s+,]+/)
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean);
+  const tokens = splitModTokens(text);
   if (tokens.length === 0) return { required: [], allowed: [] };
 
   const required: RefMod[] = [];
   let freeMod = false;
   for (const token of tokens) {
-    if (token.length < 2) {
-      return { required, allowed: [], error: `无效的 mod 缩写：${token}` };
+    const matched = /^([A-Za-z]{2})(.*)$/.exec(token);
+    if (!matched) {
+      return { required: [], allowed: [], error: `无效的 mod 缩写：${token}` };
     }
-    const acronym = token.slice(0, 2);
-    if (token.length > 2) {
-      return {
-        required,
-        allowed: [],
-        error: `暂不解析带参数的 mod（${token}），请在「图池队列 → 编辑」里设置 mod 参数`,
-      };
-    }
+    const acronym = matched[1].toUpperCase();
+    const rest = matched[2].trim();
     if (acronym === "NM") continue;
     if (acronym === "FM") {
       freeMod = true;
       continue;
     }
-    if (!SPECIAL_MODS.has(acronym) && !required.some((m) => m.acronym === acronym)) {
-      required.push({ acronym });
+    if (!rest) {
+      if (!required.some((m) => m.acronym === acronym)) required.push({ acronym });
+      continue;
     }
+    const parsed = parseModSettings(acronym, rest);
+    if (parsed.error) return { required: [], allowed: [], error: parsed.error };
+    const settings = parsed.settings ?? {};
+    const existing = required.find((m) => m.acronym === acronym);
+    if (existing) existing.settings = settings;
+    else required.push({ acronym, settings });
   }
 
   const blocked = new Set<string>(required.map((m) => m.acronym));

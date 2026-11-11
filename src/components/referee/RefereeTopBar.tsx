@@ -66,6 +66,8 @@ export default function RefereeTopBar({
   const [type, setType] = useState<"head_to_head" | "team_versus">(room.type);
   const [slotsError, setSlotsError] = useState<string | null>(null);
   const [settingsBusy, setSettingsBusy] = useState(false);
+  /** 房间密码默认打码，点「显示」才明文 */
+  const [showPassword, setShowPassword] = useState(false);
 
   const openSettings = () => {
     setName(room.name);
@@ -74,6 +76,7 @@ export default function RefereeTopBar({
     setMaxParticipants(room.maxParticipants != null ? String(room.maxParticipants) : "");
     setType(room.type);
     setSlotsError(null);
+    setShowPassword(false);
     setSettingsOpen(true);
   };
 
@@ -189,9 +192,21 @@ export default function RefereeTopBar({
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="ref-settings-password">房间密码</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="ref-settings-password">房间密码</Label>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      aria-pressed={showPassword}
+                      className="text-[11px] font-bold text-pc-primary hover:underline focus-visible:underline focus:outline-none"
+                    >
+                      {showPassword ? "隐藏" : "显示"}
+                    </button>
+                  </div>
                   <Input
                     id="ref-settings-password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="off"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="不修改请留空"

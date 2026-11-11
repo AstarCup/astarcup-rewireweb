@@ -7,7 +7,11 @@ import { LoadingBlock } from "@/hooks/useFetch";
 import {
   applyHubEvent,
   asNum,
+  chatMessageId,
+  chatMessageUserId,
   createRoomState,
+  hub,
+  invokeHub,
   mergeUser,
   refApi,
   subscribeRefEvents,
@@ -44,6 +48,29 @@ function PlaceholderCard({ text }: { text: string }) {
       </CardContent>
     </Card>
   );
+}
+
+/** 上次加入的房间 id：刷新页面 / 切换 staff Tab 后用来恢复房间 */
+const LAST_ROOM_KEY = "ref:lastRoom";
+/** 房间状态快照（sessionStorage）：刷新后先恢复界面，再靠后端快照判断还能不能 JoinRoom */
+const ROOM_STATE_KEY = "ref:roomState";
+
+function loadSavedRoomState(): RefRoomState | null {
+  try {
+    const raw = sessionStorage.getItem(ROOM_STATE_KEY);
+    return raw ? (JSON.parse(raw) as RefRoomState) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveRoomState(state: RefRoomState | null) {
+  try {
+    if (state) sessionStorage.setItem(ROOM_STATE_KEY, JSON.stringify(state));
+    else sessionStorage.removeItem(ROOM_STATE_KEY);
+  } catch {
+    /* 隐私模式忽略 */
+  }
 }
 
 export default function RefereePage() {
@@ -94,6 +121,8 @@ export default function RefereePage() {
   const [connState, setConnState] = useState<RefConnectionState>("disconnected");
   const [lastError, setLastError] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  /** 首次 /status 是否已经回来（避免把「还没查」当成「未连接」） */
+  const [statusLoaded, setStatusLoaded] = useState(false);
   useEffect(() => {
     if (!bindStatus?.bound) return;
     void (async () => {
@@ -102,6 +131,7 @@ export default function RefereePage() {
         setConnState(res.data.state);
         setLastError(res.data.lastError ?? null);
       }
+      setStatusLoaded(true);
     })();
   }, [bindStatus?.bound]);
 
@@ -125,6 +155,8 @@ export default function RefereePage() {
   const [room, setRoom] = useState<RefRoomState | null>(null);
   const roomRef = useRef<RefRoomState | null>(null);
   roomRef.current = room;
+  /** 刷新前的房间快照（只在挂载时读一次，避免被空状态覆盖） */
+  const savedStateRef = useRef<RefRoomState | null>(loadSavedRoomState());
   const meIdRef = useRef<string | null>(null);
   meIdRef.current = user?.osuId ?? null;
 
@@ -224,20 +256,20 @@ export default function RefereePage() {
       const meId = meIdRef.current;
       const prevMax = lastChatIdRef.current;
       const fresh = msgs.filter((m) => {
-        const id = asNum(m.id);
+        const id = chatMessageId(m);
         return id != null && id > prevMax;
       });
       if (fresh.length === 0) return;
       // 先推进游标再做 await，避免轮询与"发送后回显"并发时重复插入
       lastChatIdRef.current = Math.max(
         prevMax,
-        ...fresh.map((m) => asNum(m.id) ?? 0),
+        ...fresh.map((m) => chatMessageId(m) ?? 0),
       );
 
       // 发送者资料：本地没有的先补一次（照 apl-ref 的 Room.GetUser）
       const resolved = new Map<number, OsuUserLite>();
       for (const m of fresh) {
-        const uid = asNum(m.user_id) ?? asNum(m.sender_id) ?? 0;
+        const uid = chatMessageUserId(m);
         if (uid <= 0 || m.sender || resolved.has(uid)) continue;
         const known = roomRef.current?.players[uid] ?? roomRef.current?.refs[uid];
         if (known?.user) continue;
@@ -249,8 +281,8 @@ export default function RefereePage() {
       const roomNow = roomRef.current;
       const additions: ChatLine[] = [];
       for (const msg of fresh) {
-        const id = asNum(msg.id) ?? ++lineIdRef.current + 1000000;
-        const uid = asNum(msg.user_id) ?? asNum(msg.sender_id) ?? 0;
+        const id = chatMessageId(msg) ?? ++lineIdRef.current + 1000000;
+        const uid = chatMessageUserId(msg);
         const known = roomNow?.players[uid] ?? roomNow?.refs[uid];
         const sender = msg.sender;
         const fetched = resolved.get(uid);
@@ -327,6 +359,15 @@ export default function RefereePage() {
     setScores(null);
     setChatLines([]);
     lastChatIdRef.current = 0;
+    saveRoomState(null);
+    try {
+      localStorage.removeItem(LAST_ROOM_KEY);
+    } catch {
+      /* 隐私模式忽略 */
+    }
+    // 同步清掉后端的房间快照，避免下次刷新又恢复一个已经不存在的房间
+    void refApi.clearRoom();
+    timerRef.current.stop(false);
   }, []);
 
   const handleRoomJoined = useCallback(
@@ -337,6 +378,12 @@ export default function RefereePage() {
       setScores(null);
       setChatLines([]);
       lastChatIdRef.current = 0;
+      // 记住房间，刷新页面 / 切 Tab 回来时可以自动重新加入
+      try {
+        localStorage.setItem(LAST_ROOM_KEY, String(state.id));
+      } catch {
+        /* 忽略 */
+      }
       // 房间快照里只有 ID，补全玩家/裁判资料（照 apl-ref 构造 Room 时的 GetUser）
       ensureUsers([
         ...(resp.players ?? []).map((p) => p.user_id),
@@ -345,6 +392,90 @@ export default function RefereePage() {
     },
     [ensureUsers],
   );
+
+  // ---- 刷新/切 Tab 后自动恢复：先重连 hub，再恢复房间 ----
+  const autoConnectRef = useRef(false);
+  useEffect(() => {
+    if (loading || !user || !bindStatus?.bound || !statusLoaded) return;
+    if (connState !== "disconnected" || autoConnectRef.current) return;
+    autoConnectRef.current = true;
+    void (async () => {
+      const res = await refApi.connect();
+      if (res.ok) {
+        setConnState(res.data.state);
+        setLastError(res.data.lastError ?? null);
+      }
+    })();
+  }, [loading, user, bindStatus?.bound, statusLoaded, connState]);
+
+  // 房间状态快照：每条事件后写 sessionStorage，刷新后可以原地恢复
+  useEffect(() => {
+    if (room) saveRoomState(room);
+  }, [room]);
+
+  const restoreRef = useRef(false);
+  useEffect(() => {
+    if (!statusLoaded || connState !== "connected" || room || restoreRef.current) return;
+    restoreRef.current = true;
+    void (async () => {
+      // 1) 后端还记着房间 → 服务端仍认为我们在房间里，此时 JoinRoom 会报
+      //    "An unexpected error occurred invoking 'JoinRoom'"；直接恢复快照。
+      const cached = await refApi.getRoom();
+      const backendRoom = cached.ok ? (cached.data?.room ?? null) : null;
+      if (backendRoom) {
+        const local = savedStateRef.current;
+        if (local && local.id === backendRoom.room_id) {
+          roomRef.current = local;
+          setRoom(local);
+          ensureUsers([
+            ...Object.keys(local.players).map(Number),
+            ...Object.keys(local.refs).map(Number),
+          ]);
+          toast({ title: "已恢复房间", description: local.name || `#${local.id}` });
+        } else {
+          handleRoomJoined(backendRoom);
+          toast({ title: "已恢复房间", description: backendRoom.name || `#${backendRoom.room_id}` });
+        }
+        return;
+      }
+
+      // 2) 后端没有房间快照（例如后端重启过）→ 用 JoinRoom 重新加入
+      let saved: number | null = null;
+      try {
+        const raw = localStorage.getItem(LAST_ROOM_KEY);
+        saved = raw ? Number(raw) : null;
+      } catch {
+        /* 忽略 */
+      }
+      if (saved == null || !Number.isFinite(saved) || saved <= 0) return;
+
+      const res = await invokeHub<RoomJoinedResponse>(hub.joinRoom(saved));
+      if (res.ok && res.data) {
+        handleRoomJoined(res.data);
+        toast({ title: "已重新加入房间", description: res.data.name || `#${saved}` });
+        return;
+      }
+      // 再查一次后端：可能别的标签页刚把手房间恢复了
+      const again = await refApi.getRoom();
+      const room2 = again.ok ? (again.data?.room ?? null) : null;
+      if (room2) {
+        handleRoomJoined(room2);
+        return;
+      }
+      try {
+        localStorage.removeItem(LAST_ROOM_KEY);
+      } catch {
+        /* 忽略 */
+      }
+      saveRoomState(null);
+      toast({
+        title: "上次的房间已不可用",
+        description: res.ok
+          ? `房间 #${saved} 可能已关闭，请重新创建/加入`
+          : `房间可能已关闭或你已被移出（${res.error.message}）`,
+      });
+    })();
+  }, [statusLoaded, connState, room, handleRoomJoined, ensureUsers]);
 
   // ---- 聊天轮询（5s，页面隐藏时暂停）与发送 ----
   useEffect(() => {
@@ -521,9 +652,21 @@ export default function RefereePage() {
             创建/加入 osu! 多人游戏房间并进行执裁：玩家管理、图池队列、比赛控制与实时事件。
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {bindStatus?.bound && (
             <>
+              <Badge
+                variant={
+                  connState === "connected" ? "teal" : connState === "connecting" ? "yellow" : "primary"
+                }
+                title={lastError ?? undefined}
+              >
+                {connState === "connected"
+                  ? "裁判服务器已连接"
+                  : connState === "connecting"
+                    ? "正在连接…"
+                    : "未连接"}
+              </Badge>
               <Badge variant="teal">
                 <ShieldCheck className="mr-1 h-3 w-3" />
                 {bindStatus.username || bindStatus.osuId || "已绑定"}
@@ -604,6 +747,7 @@ export default function RefereePage() {
                   <ChatPanel
                     lines={chatLines}
                     matchStatus={room.status}
+                    meId={user?.osuId ?? null}
                     disabled={room.chatChannelId == null}
                     onSend={(text) => void handleSend(text)}
                   />

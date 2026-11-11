@@ -30,7 +30,7 @@ export interface ChatCommandContext {
 const HELP_TEXT =
   "!mp 可用指令：start [秒] / timer <秒> / aborttimer / abort / invite <用户名|#ID> / kick <用户> / ban <用户> / " +
   "lock / unlock / size <人数|0=不限> / set <0|1> [人数] / team <用户> <red|blue> / move <用户> <槽位> / " +
-  "map <beatmap> [ruleset] / mods <NM|FM|缩写...> / allowed_mods <缩写...> / name <房名> / password <密码> / " +
+  "map <beatmap> [ruleset] / mods <NM|FM|缩写...>（支持 DT1.15 / DA[4,4,4,4]） / allowed_mods <缩写...> / name <房名> / password <密码> / " +
   "settings / listrefs / addref <用户|#ID> / removeref <用户|#ID> / close；/roll（或 !roll）[上限] 掷点";
 
 function fail(text: string) {

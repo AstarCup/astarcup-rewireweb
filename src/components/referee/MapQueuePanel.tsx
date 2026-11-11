@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   getBeatmapCached,
@@ -33,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import MappoolPicker from "@/components/referee/MappoolPicker";
 
 const RULESET_NAMES = ["osu!", "taiko", "catch", "mania"];
 
@@ -266,22 +267,28 @@ interface MapQueuePanelProps {
 export default function MapQueuePanel({ room }: MapQueuePanelProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<RefPlaylistItem | null>(null);
+  const [pickOpen, setPickOpen] = useState(false);
   const items = sortedPlaylistItems(room);
 
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
         <CardTitle className="text-base md:text-lg">图池队列</CardTitle>
-        <Button
-          variant="teal"
-          size="sm"
-          onClick={() => {
-            setEditing(null);
-            setDialogOpen(true);
-          }}
-        >
-          <Plus className="h-3.5 w-3.5" /> 添加
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="primary" size="sm" onClick={() => setPickOpen(true)}>
+            <Sparkles className="h-3.5 w-3.5" /> 一键 pick
+          </Button>
+          <Button
+            variant="teal"
+            size="sm"
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" /> 添加
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="max-h-[340px] overflow-y-auto">
         <div className="flex flex-col gap-2">
@@ -323,7 +330,9 @@ export default function MapQueuePanel({ room }: MapQueuePanelProps) {
             </div>
           ))}
           {items.length === 0 && (
-            <p className="py-6 text-center text-sm text-(--pc-faint)">图池为空，点右上角添加</p>
+            <p className="py-6 text-center text-sm text-(--pc-faint)">
+              图池为空，点右上角「一键 pick」或「添加」
+            </p>
           )}
         </div>
       </CardContent>
@@ -334,6 +343,7 @@ export default function MapQueuePanel({ room }: MapQueuePanelProps) {
         room={room}
         editing={editing}
       />
+      <MappoolPicker open={pickOpen} onOpenChange={setPickOpen} room={room} />
     </Card>
   );
 }

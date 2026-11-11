@@ -26,6 +26,9 @@ const RULESET_OPTIONS = [
   { value: "3", label: "mania（下落式）" },
 ];
 
+/** 首图 Beatmap ID 的默认值：留空即用它 */
+const DEFAULT_BEATMAP_ID = 5228817;
+
 interface RoomSetupProps {
   /** MakeRoom / JoinRoom 成功后回传 RoomJoinedResponse */
   onRoomJoined: (resp: RoomJoinedResponse) => void;
@@ -35,7 +38,7 @@ interface RoomSetupProps {
 export default function RoomSetup({ onRoomJoined }: RoomSetupProps) {
   // MakeRoom
   const [rulesetId, setRulesetId] = useState("0");
-  const [beatmapId, setBeatmapId] = useState("");
+  const [beatmapId, setBeatmapId] = useState(String(DEFAULT_BEATMAP_ID));
   const [roomName, setRoomName] = useState("");
   const [unlimited, setUnlimited] = useState(true);
   const [maxParticipants, setMaxParticipants] = useState("");
@@ -48,7 +51,9 @@ export default function RoomSetup({ onRoomJoined }: RoomSetupProps) {
 
   const makeRoom = async () => {
     const ruleset = parseInt(rulesetId, 10);
-    const beatmap = parseInt(beatmapId, 10);
+    // Beatmap ID 留空时用默认首图
+    const beatmapRaw = beatmapId.trim();
+    const beatmap = beatmapRaw === "" ? DEFAULT_BEATMAP_ID : Number(beatmapRaw);
     const name = roomName.trim();
     if (!Number.isFinite(ruleset) || ruleset < 0) {
       toast({ variant: "destructive", title: "请输入有效的规则集 ID（0=osu! 1=taiko 2=catch 3=mania）" });
@@ -138,7 +143,7 @@ export default function RoomSetup({ onRoomJoined }: RoomSetupProps) {
                 type="number"
                 value={beatmapId}
                 onChange={(e) => setBeatmapId(e.target.value)}
-                placeholder="首图的谱面 ID"
+                placeholder={`留空默认 ${DEFAULT_BEATMAP_ID}`}
               />
             </div>
             <div className="grid gap-1.5">
