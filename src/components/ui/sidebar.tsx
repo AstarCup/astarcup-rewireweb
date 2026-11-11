@@ -68,6 +68,7 @@ function Sidebar({
   children,
   ...props
 }: React.ComponentProps<"aside"> & { side?: "left" | "right" }) {
+  const { open } = useSidebar();
   return (
     <aside
       data-slot="sidebar"
@@ -77,7 +78,7 @@ function Sidebar({
         "bg-(--pc-white)",
         side === "right" ? "border-l-2" : "border-r-2",
         "border-(--pc-border)",
-        "lg:flex",
+        open && "lg:flex",
         className,
       )}
       {...props}

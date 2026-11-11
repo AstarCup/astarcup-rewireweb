@@ -4,8 +4,9 @@ import { useApp } from "@/lib/app-context";
 import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { cn, fmt } from "@/lib/utils";
-import { expandModsText, hub, invokeHub, type RefRoomState } from "@/lib/ref";
-import { modsToText, poolMapMods } from "@/lib/mappool";
+import { hub, invokeHub, type RefMod, type RefRoomState } from "@/lib/ref";
+import { poolMapMods } from "@/lib/mappool";
+import ModPicker from "@/components/referee/ModPicker";
 import { MOD_COLORS, MOD_DISPLAY, modBase } from "@/lib/mods";
 import {
   CATEGORY_LABEL,
@@ -126,8 +127,8 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<MapSelection | null>(null);
-  const [requiredText, setRequiredText] = useState("");
-  const [allowedText, setAllowedText] = useState("");
+  const [requiredMods, setRequiredMods] = useState<RefMod[]>([]);
+  const [allowedMods, setAllowedMods] = useState<RefMod[]>([]);
   const [busy, setBusy] = useState(false);
   /** 空图池时自动换到有图的赛季（每次打开只做一次） */
   const autoSwitchRef = useRef(false);
@@ -206,31 +207,28 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
   const selectMap = (m: MapSelection) => {
     setSelected(m);
     const mods = poolMapMods(m);
-    setRequiredText(modsToText(mods.required));
-    setAllowedText(modsToText(mods.allowed));
+    setRequiredMods(mods.required);
+    setAllowedMods(mods.allowed);
   };
 
   const submit = async () => {
     if (!selected) return;
     // 站点图池目前都是 osu! 标准谱面
     const rulesetId = 0;
-    const required = expandModsText(requiredText, rulesetId);
-    if (required.error) {
-      toast({ variant: "destructive", title: "必选 mod 解析失败", description: required.error });
-      return;
-    }
-    const allowed = expandModsText(allowedText, rulesetId);
-    if (allowed.error) {
-      toast({ variant: "destructive", title: "允许 mod 解析失败", description: allowed.error });
-      return;
-    }
+    // 赛事特殊 mod 规则：选中的 mod 除 HD 外都附带 Approach Different(style=0)；
+    // HD 图则单独附带 Deflate(start_size=1)
+    const pickedMods = requiredMods;
+    const hasHD = pickedMods.some((m) => m.acronym === "HD");
+    const extraMods = hasHD
+      ? [{ acronym: "DF", settings: { start_size: 1 } }]
+      : [{ acronym: "AD", settings: { style: 0 } }];
     setBusy(true);
     const res = await invokeHub(
       hub.addPlaylistItem(room.id, {
         beatmap_id: Number(selected.beatmapId),
         ruleset_id: rulesetId,
-        required_mods: required.required,
-        allowed_mods: allowed.required,
+        required_mods: [...pickedMods, ...extraMods],
+        allowed_mods: allowedMods,
         freestyle: false,
       }),
     );
@@ -245,7 +243,7 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl gap-3">
+      <DialogContent className="max-w-5xl gap-3 rotate-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="h-5 w-5 text-pc-primary" /> 从公开图池 pick
@@ -346,6 +344,16 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
                             : "hover:bg-(--pc-paper)",
                         )}
                       >
+                        {m.coverUrl ? (
+                          <img
+                            src={m.coverUrl}
+                            alt=""
+                            loading="lazy"
+                            className="h-9 w-16 shrink-0 rounded-md border border-(--pc-border) object-cover"
+                          />
+                        ) : (
+                          <span className="h-9 w-16 shrink-0 rounded-md border-2 border-dashed border-(--pc-border) bg-(--pc-paper)" />
+                        )}
                         <span
                           className="w-14 shrink-0 rounded px-1 py-0.5 text-center text-[10px] font-bold text-white"
                           style={{ backgroundColor: MOD_COLORS[modBase(m)] ?? "#666" }}
@@ -398,34 +406,16 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
                 </div>
 
                 <div className="mt-1 grid gap-1.5">
-                  <Label htmlFor="ref-pick-required" className="text-xs">
-                    必选 mod
-                  </Label>
-                  <Input
-                    id="ref-pick-required"
-                    value={requiredText}
-                    onChange={(e) => setRequiredText(e.target.value)}
-                    placeholder="如 HD HR / DT1.15 / DA[4,4,4,4]"
-                    className="h-9"
-                  />
+                  <Label className="text-xs">必选 mod</Label>
+                  <ModPicker value={requiredMods} onChange={setRequiredMods} />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="ref-pick-allowed" className="text-xs">
-                    允许 mod
-                  </Label>
-                  <Input
-                    id="ref-pick-allowed"
-                    value={allowedText}
-                    onChange={(e) => setAllowedText(e.target.value)}
-                    placeholder="留空 = 不允许自选"
-                    className="h-9"
-                  />
+                  <Label className="text-xs">允许 mod</Label>
+                  <ModPicker value={allowedMods} onChange={setAllowedMods} />
                 </div>
                 <p className="text-[10px] leading-relaxed text-(--pc-faint)">
-                  支持 <code className="font-bold">DT1.15</code>（自定义倍率）、
-                  <code className="font-bold">DA[4,4,4,4]</code>、
-                  <code className="font-bold">{'HD{"key":value}'}</code>；
-                  <code className="font-bold">FM</code> 会展开成 freemod 白名单。
+                  点选 mod；带参数的 mod 选中后可在下方调整参数。加入图池时 HD
+                  图会附带 Deflate、其他图附带 Approach Different。
                 </p>
                 <Button variant="ghost" size="sm" onClick={() => selectMap(selected)}>
                   <RotateCcw className="h-3.5 w-3.5" /> 恢复图池配置

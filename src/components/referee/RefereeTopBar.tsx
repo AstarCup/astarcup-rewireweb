@@ -155,7 +155,7 @@ export default function RefereeTopBar({
   const meta = connMeta[connState];
 
   return (
-    <div className="sticky top-16 z-30 border-b-2 border-(--pc-border) bg-(--pc-paper)/95 px-3 backdrop-blur-sm sm:px-4 md:px-6">
+    <div className="border-b-2 border-(--pc-border) bg-(--pc-paper) px-3 sm:px-4 md:px-6">
       <div className="flex flex-wrap items-center gap-2 py-3">
         <h2 className="flex items-center gap-2 text-lg font-bold text-(--pc-ink)">
           <Gavel className="h-5 w-5 text-pc-primary" />

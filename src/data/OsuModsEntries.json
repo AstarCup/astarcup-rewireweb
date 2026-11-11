@@ -1,0 +1,1026 @@
+[
+    {
+        "Acronym": "EZ",
+        "Name": "Easy",
+        "Description": "Larger circles, more forgiving HP drain, less accuracy required, and extra lives!",
+        "Type": "DifficultyReduction",
+        "Settings": [
+            {
+                "Name": "retries",
+                "Type": "number",
+                "Label": "Extra Lives",
+                "Description": "Number of extra lives",
+                "UnderlyingValue": 2,
+                "Default": 2,
+                "IsInteger": true,
+                "DefaultPrecision": 1,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "NF",
+        "Name": "No Fail",
+        "Description": "You can't fail, no matter what.",
+        "Type": "DifficultyReduction",
+        "Settings": []
+    },
+    {
+        "Acronym": "HT",
+        "Name": "Half Time",
+        "Description": "Less zoom...",
+        "Type": "DifficultyReduction",
+        "Settings": [
+            {
+                "Name": "speed_change",
+                "Type": "number",
+                "Label": "Speed decrease",
+                "Description": "The actual decrease to apply",
+                "UnderlyingValue": 0.75,
+                "Default": 0.75,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "DC",
+        "Name": "Daycore",
+        "Description": "Whoaaaaa...",
+        "Type": "DifficultyReduction",
+        "Settings": [
+            {
+                "Name": "speed_change",
+                "Type": "number",
+                "Label": "Speed decrease",
+                "Description": "The actual decrease to apply",
+                "UnderlyingValue": 0.75,
+                "Default": 0.75,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "HR",
+        "Name": "Hard Rock",
+        "Description": "Everything just got a bit harder...",
+        "Type": "DifficultyIncrease",
+        "Settings": []
+    },
+    {
+        "Acronym": "SD",
+        "Name": "Sudden Death",
+        "Description": "Miss and fail.",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "fail_on_slider_tail",
+                "Type": "boolean",
+                "Label": "Also fail when missing a slider tail",
+                "Description": "",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "restart",
+                "Type": "boolean",
+                "Label": "Restart on fail",
+                "Description": "Automatically restarts when failed.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "PF",
+        "Name": "Perfect",
+        "Description": "SS or quit.",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "restart",
+                "Type": "boolean",
+                "Label": "Restart on fail",
+                "Description": "Automatically restarts when failed.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "DT",
+        "Name": "Double Time",
+        "Description": "Zoooooooooom...",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "speed_change",
+                "Type": "number",
+                "Label": "Speed increase",
+                "Description": "The actual increase to apply",
+                "UnderlyingValue": 1.5,
+                "Default": 1.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "NC",
+        "Name": "Nightcore",
+        "Description": "Uguuuuuuuu...",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "speed_change",
+                "Type": "number",
+                "Label": "Speed increase",
+                "Description": "The actual increase to apply",
+                "UnderlyingValue": 1.5,
+                "Default": 1.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "HD",
+        "Name": "Hidden",
+        "Description": "Play with no approach circles and fading circles/sliders.",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "only_fade_approach_circles",
+                "Type": "boolean",
+                "Label": "Only fade approach circles",
+                "Description": "The main object body will not fade when enabled.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "TC",
+        "Name": "Traceable",
+        "Description": "Put your faith in the approach circles...",
+        "Type": "DifficultyIncrease",
+        "Settings": []
+    },
+    {
+        "Acronym": "FL",
+        "Name": "Flashlight",
+        "Description": "Restricted view area.",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "follow_delay",
+                "Type": "number",
+                "Label": "Follow delay",
+                "Description": "Milliseconds until the flashlight reaches the cursor",
+                "UnderlyingValue": 120.0,
+                "Default": 120.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "size_multiplier",
+                "Type": "number",
+                "Label": "Flashlight size",
+                "Description": "Multiplier applied to the default flashlight size.",
+                "UnderlyingValue": 1.0,
+                "Default": 1.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "combo_based_size",
+                "Type": "boolean",
+                "Label": "Change size based on combo",
+                "Description": "Decrease the flashlight size as combo increases.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "BL",
+        "Name": "Blinds",
+        "Description": "Play with blinds on your screen.",
+        "Type": "DifficultyIncrease",
+        "Settings": []
+    },
+    {
+        "Acronym": "ST",
+        "Name": "Strict Tracking",
+        "Description": "Once you start a slider, follow precisely or get a miss.",
+        "Type": "DifficultyIncrease",
+        "Settings": []
+    },
+    {
+        "Acronym": "AC",
+        "Name": "Accuracy Challenge",
+        "Description": "Fail if your accuracy drops too low!",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "minimum_accuracy",
+                "Type": "number",
+                "Label": "Minimum accuracy",
+                "Description": "Trigger a failure if your accuracy goes below this value.",
+                "UnderlyingValue": 0.9,
+                "Default": 0.9,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "accuracy_judge_mode",
+                "Type": "enum",
+                "Label": "Accuracy mode",
+                "Description": "The mode of accuracy that will trigger failure.",
+                "UnderlyingValue": "MaximumAchievable",
+                "Default": "MaximumAchievable",
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": [
+                    "MaximumAchievable",
+                    "Standard"
+                ]
+            },
+            {
+                "Name": "restart",
+                "Type": "boolean",
+                "Label": "Restart on fail",
+                "Description": "Automatically restarts when failed.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "TP",
+        "Name": "Target Practice",
+        "Description": "Practice keeping up with the beat of the song.",
+        "Type": "Conversion",
+        "Settings": [
+            {
+                "Name": "seed",
+                "Type": "number",
+                "Label": "Seed",
+                "Description": "Use a custom seed instead of a random one",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "metronome",
+                "Type": "boolean",
+                "Label": "Metronome ticks",
+                "Description": "Whether a metronome beat should play in the background",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "DA",
+        "Name": "Difficulty Adjust",
+        "Description": "Override a beatmap's difficulty settings.",
+        "Type": "Conversion",
+        "Settings": [
+            {
+                "Name": "circle_size",
+                "Type": "number",
+                "Label": "Circle Size",
+                "Description": "Override a beatmap's set CS.",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "approach_rate",
+                "Type": "number",
+                "Label": "Approach Rate",
+                "Description": "Override a beatmap's set AR.",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "drain_rate",
+                "Type": "number",
+                "Label": "HP Drain",
+                "Description": "Override a beatmap's set HP.",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "overall_difficulty",
+                "Type": "number",
+                "Label": "Accuracy",
+                "Description": "Override a beatmap's set OD.",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "extended_limits",
+                "Type": "boolean",
+                "Label": "Extended Limits",
+                "Description": "Adjust difficulty beyond sane limits.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "CL",
+        "Name": "Classic",
+        "Description": "Feeling nostalgic?",
+        "Type": "Conversion",
+        "Settings": [
+            {
+                "Name": "no_slider_head_accuracy",
+                "Type": "boolean",
+                "Label": "No slider head accuracy requirement",
+                "Description": "Scores sliders proportionally to the number of ticks hit.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "classic_note_lock",
+                "Type": "boolean",
+                "Label": "Apply classic note lock",
+                "Description": "Applies note lock to the full hit window.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "always_play_tail_sample",
+                "Type": "boolean",
+                "Label": "Always play a slider's tail sample",
+                "Description": "Always plays a slider's tail sample regardless of whether it was hit or not.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "fade_hit_circle_early",
+                "Type": "boolean",
+                "Label": "Fade out hit circles earlier",
+                "Description": "Make hit circles fade out into a miss, rather than after it.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "classic_health",
+                "Type": "boolean",
+                "Label": "Classic health",
+                "Description": "More closely resembles the original HP drain mechanics.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "RD",
+        "Name": "Random",
+        "Description": "It never gets boring!",
+        "Type": "Conversion",
+        "Settings": [
+            {
+                "Name": "angle_sharpness",
+                "Type": "number",
+                "Label": "Angle sharpness",
+                "Description": "How sharp angles should be",
+                "UnderlyingValue": 7.0,
+                "Default": 7.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "seed",
+                "Type": "number",
+                "Label": "Seed",
+                "Description": "Use a custom seed instead of a random one",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "MR",
+        "Name": "Mirror",
+        "Description": "Flip objects on the chosen axes.",
+        "Type": "Conversion",
+        "Settings": [
+            {
+                "Name": "reflection",
+                "Type": "enum",
+                "Label": "Flipped axes",
+                "Description": "",
+                "UnderlyingValue": "Horizontal",
+                "Default": "Horizontal",
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": [
+                    "Horizontal",
+                    "Vertical",
+                    "Both"
+                ]
+            }
+        ]
+    },
+    {
+        "Acronym": "AL",
+        "Name": "Alternate",
+        "Description": "Don't use the same key twice in a row!",
+        "Type": "Conversion",
+        "Settings": []
+    },
+    {
+        "Acronym": "SG",
+        "Name": "Single Tap",
+        "Description": "You must only use one key!",
+        "Type": "Conversion",
+        "Settings": []
+    },
+    {
+        "Acronym": "AT",
+        "Name": "Autoplay",
+        "Description": "Watch a perfect automated play through the song.",
+        "Type": "Automation",
+        "Settings": []
+    },
+    {
+        "Acronym": "CN",
+        "Name": "Cinema",
+        "Description": "Watch the video without visual distractions.",
+        "Type": "Automation",
+        "Settings": []
+    },
+    {
+        "Acronym": "RX",
+        "Name": "Relax",
+        "Description": "You don't need to click. Give your clicking/tapping fingers a break from the heat of things.",
+        "Type": "Automation",
+        "Settings": []
+    },
+    {
+        "Acronym": "AP",
+        "Name": "Autopilot",
+        "Description": "Automatic cursor movement - just follow the rhythm.",
+        "Type": "Automation",
+        "Settings": []
+    },
+    {
+        "Acronym": "SO",
+        "Name": "Spun Out",
+        "Description": "Spinners will be automatically completed.",
+        "Type": "Automation",
+        "Settings": []
+    },
+    {
+        "Acronym": "TR",
+        "Name": "Transform",
+        "Description": "Everything rotates. EVERYTHING.",
+        "Type": "Fun",
+        "Settings": []
+    },
+    {
+        "Acronym": "WG",
+        "Name": "Wiggle",
+        "Description": "They just won't stay still...",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "strength",
+                "Type": "number",
+                "Label": "Strength",
+                "Description": "Multiplier applied to the wiggling strength.",
+                "UnderlyingValue": 1.00000001490116,
+                "Default": 1.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "SI",
+        "Name": "Spin In",
+        "Description": "Circles spin in. No approach circles.",
+        "Type": "Fun",
+        "Settings": []
+    },
+    {
+        "Acronym": "GR",
+        "Name": "Grow",
+        "Description": "Hit them at the right size!",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "start_scale",
+                "Type": "number",
+                "Label": "Starting Size",
+                "Description": "The initial size multiplier applied to all objects.",
+                "UnderlyingValue": 0.5,
+                "Default": 0.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "DF",
+        "Name": "Deflate",
+        "Description": "Hit them at the right size!",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "start_scale",
+                "Type": "number",
+                "Label": "Starting Size",
+                "Description": "The initial size multiplier applied to all objects.",
+                "UnderlyingValue": 2.0,
+                "Default": 2.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "WU",
+        "Name": "Wind Up",
+        "Description": "Can you keep up?",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "initial_rate",
+                "Type": "number",
+                "Label": "Initial rate",
+                "Description": "The starting speed of the track",
+                "UnderlyingValue": 1.0,
+                "Default": 1.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "final_rate",
+                "Type": "number",
+                "Label": "Final rate",
+                "Description": "The final speed to ramp to",
+                "UnderlyingValue": 1.5,
+                "Default": 1.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "WD",
+        "Name": "Wind Down",
+        "Description": "Sloooow doooown...",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "initial_rate",
+                "Type": "number",
+                "Label": "Initial rate",
+                "Description": "The starting speed of the track",
+                "UnderlyingValue": 1.0,
+                "Default": 1.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "final_rate",
+                "Type": "number",
+                "Label": "Final rate",
+                "Description": "The final speed to ramp to",
+                "UnderlyingValue": 0.75,
+                "Default": 0.75,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "BR",
+        "Name": "Barrel Roll",
+        "Description": "The whole playfield is on a wheel!",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "spin_speed",
+                "Type": "number",
+                "Label": "Roll speed",
+                "Description": "Rotations per minute",
+                "UnderlyingValue": 0.5,
+                "Default": 0.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "direction",
+                "Type": "enum",
+                "Label": "Direction",
+                "Description": "The direction of rotation",
+                "UnderlyingValue": "Clockwise",
+                "Default": "Clockwise",
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": [
+                    "Clockwise",
+                    "Counterclockwise"
+                ]
+            }
+        ]
+    },
+    {
+        "Acronym": "AD",
+        "Name": "Approach Different",
+        "Description": "Never trust the approach circles...",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "scale",
+                "Type": "number",
+                "Label": "Initial size",
+                "Description": "Change the initial size of the approach circle, relative to hit circles.",
+                "UnderlyingValue": 4.0,
+                "Default": 4.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "style",
+                "Type": "enum",
+                "Label": "Style",
+                "Description": "Change the animation style of the approach circles.",
+                "UnderlyingValue": "Gravity",
+                "Default": "Gravity",
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": [
+                    "Linear",
+                    "Gravity",
+                    "InOut1",
+                    "InOut2",
+                    "Accelerate1",
+                    "Accelerate2",
+                    "Accelerate3",
+                    "Decelerate1",
+                    "Decelerate2",
+                    "Decelerate3"
+                ]
+            }
+        ]
+    },
+    {
+        "Acronym": "MU",
+        "Name": "Muted",
+        "Description": "Can you still feel the rhythm without music?",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "inverse_muting",
+                "Type": "boolean",
+                "Label": "Start muted",
+                "Description": "Increase volume as combo builds.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "enable_metronome",
+                "Type": "boolean",
+                "Label": "Enable metronome",
+                "Description": "Add a metronome beat to help you keep track of the rhythm.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "mute_combo_count",
+                "Type": "number",
+                "Label": "Final volume at combo",
+                "Description": "The combo count at which point the track reaches its final volume.",
+                "UnderlyingValue": 100,
+                "Default": 100,
+                "IsInteger": true,
+                "DefaultPrecision": 1,
+                "EnumValues": null
+            },
+            {
+                "Name": "affects_hit_sounds",
+                "Type": "boolean",
+                "Label": "Mute hit sounds",
+                "Description": "Hit sounds are also muted alongside the track.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "NS",
+        "Name": "No Scope",
+        "Description": "Where's the cursor?",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "hidden_combo_count",
+                "Type": "number",
+                "Label": "Hidden at combo",
+                "Description": "The combo count at which the cursor becomes completely hidden",
+                "UnderlyingValue": 10,
+                "Default": 10,
+                "IsInteger": true,
+                "DefaultPrecision": 1,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "MG",
+        "Name": "Magnetised",
+        "Description": "No need to chase the circles – your cursor is a magnet!",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "attraction_strength",
+                "Type": "number",
+                "Label": "Attraction strength",
+                "Description": "How strong the pull is.",
+                "UnderlyingValue": 0.5,
+                "Default": 0.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "RP",
+        "Name": "Repel",
+        "Description": "Hit objects run away!",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "repulsion_strength",
+                "Type": "number",
+                "Label": "Repulsion strength",
+                "Description": "How strong the repulsion is.",
+                "UnderlyingValue": 0.5,
+                "Default": 0.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "AS",
+        "Name": "Adaptive Speed",
+        "Description": "Let track speed adapt to you.",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "initial_rate",
+                "Type": "number",
+                "Label": "Initial rate",
+                "Description": "The starting speed of the track",
+                "UnderlyingValue": 1.0,
+                "Default": 1.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "FR",
+        "Name": "Freeze Frame",
+        "Description": "Burn the notes into your memory.",
+        "Type": "Fun",
+        "Settings": []
+    },
+    {
+        "Acronym": "BU",
+        "Name": "Bubbles",
+        "Description": "Don't let their popping distract you!",
+        "Type": "Fun",
+        "Settings": []
+    },
+    {
+        "Acronym": "SY",
+        "Name": "Synesthesia",
+        "Description": "Colours hit objects based on the rhythm.",
+        "Type": "Fun",
+        "Settings": []
+    },
+    {
+        "Acronym": "DP",
+        "Name": "Depth",
+        "Description": "3D. Almost.",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "max_depth",
+                "Type": "number",
+                "Label": "Maximum depth",
+                "Description": "How far away objects appear.",
+                "UnderlyingValue": 100.0,
+                "Default": 100.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "show_approach_circles",
+                "Type": "boolean",
+                "Label": "Show Approach Circles",
+                "Description": "Whether approach circles should be visible.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "BM",
+        "Name": "Bloom",
+        "Description": "The cursor blooms into.. a larger cursor!",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "max_size_combo_count",
+                "Type": "number",
+                "Label": "Max size at combo",
+                "Description": "The combo count at which the cursor reaches its maximum size",
+                "UnderlyingValue": 50,
+                "Default": 50,
+                "IsInteger": true,
+                "DefaultPrecision": 1,
+                "EnumValues": null
+            },
+            {
+                "Name": "max_cursor_size",
+                "Type": "number",
+                "Label": "Final size multiplier",
+                "Description": "The multiplier applied to cursor size when combo reaches maximum",
+                "UnderlyingValue": 10.0,
+                "Default": 10.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "TD",
+        "Name": "Touch Device",
+        "Description": "Automatically applied to plays on devices with a touchscreen.",
+        "Type": "System",
+        "Settings": []
+    },
+    {
+        "Acronym": "SV2",
+        "Name": "Score V2",
+        "Description": "Score set on earlier osu! versions with the V2 scoring algorithm active.",
+        "Type": "System",
+        "Settings": []
+    }
+]

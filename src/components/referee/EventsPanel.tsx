@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Loader2, Radio } from "lucide-react";
+import { Download, Loader2, Radio, Trash2 } from "lucide-react";
+import { downloadBlob } from "@/lib/api";
 import { hub, invokeHub, type EventLogEntry } from "@/lib/ref";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,13 +40,34 @@ const KEY_EVENTS = new Set([
 
 interface EventsPanelProps {
   events: EventLogEntry[];
+  /** 清空事件日志（含本地持久化） */
+  onClear?: () => void;
 }
 
 /** 右栏下半：Events 事件日志（倒序）+ Debug（Ping） */
-export default function EventsPanel({ events }: EventsPanelProps) {
+export default function EventsPanel({ events, onClear }: EventsPanelProps) {
   const [pingBusy, setPingBusy] = useState(false);
   const [pingResult, setPingResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [onlyKey, setOnlyKey] = useState(false);
+
+  /** 导出全部事件日志（JSON，含完整数据） */
+  const exportLog = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      count: events.length,
+      events: events.map((e) => ({ at: e.at.toISOString(), name: e.name, data: e.data })),
+    };
+    const ts = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 19);
+    downloadBlob(
+      new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }),
+      `ref-events-${ts}.json`,
+    );
+  };
+
+  const clearLog = () => {
+    if (!window.confirm("确定清空事件日志吗？此操作不可恢复。")) return;
+    onClear?.();
+  };
   const list = onlyKey ? events.filter((ev) => KEY_EVENTS.has(ev.name)) : events;
 
   const sendPing = async () => {
@@ -111,11 +133,31 @@ export default function EventsPanel({ events }: EventsPanelProps) {
             )}
             发送 Ping
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportLog}
+            disabled={events.length === 0}
+            title="导出事件日志（JSON）"
+          >
+            <Download className="h-3.5 w-3.5" /> 导出
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearLog}
+            disabled={events.length === 0}
+            title="清空事件日志"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> 清空
+          </Button>
           {pingResult && (
             <span
-              className={
-                pingResult.ok ? "text-xs font-bold text-pc-teal" : "text-xs font-bold text-pc-primary"
-              }
+              className={`ml-auto truncate text-right ${
+                pingResult.ok
+                  ? "text-xs font-bold text-pc-teal"
+                  : "text-xs font-bold text-pc-primary"
+              }`}
             >
               {pingResult.text}
             </span>

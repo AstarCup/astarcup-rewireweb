@@ -24,7 +24,7 @@ import {
   type RefRoomState,
   type RoomJoinedResponse,
 } from "@/lib/ref";
-import type { DisplayScore } from "@/lib/types";
+import type { DisplayScore, MatchSchedule } from "@/lib/types";
 import { runChatInput } from "@/components/referee/chatCommands";
 import { useMatchTimer } from "@/components/referee/useMatchTimer";
 import RefereeTopBar from "@/components/referee/RefereeTopBar";
@@ -48,6 +48,28 @@ function PlaceholderCard({ text }: { text: string }) {
       </CardContent>
     </Card>
   );
+}
+
+/** 事件日志持久化（localStorage）：刷新后不丢，保留最近 200 条 */
+const EVENT_LOG_KEY = "ref:eventLog";
+const EVENT_LOG_MAX = 200;
+
+function loadSavedEvents(): EventLogEntry[] {
+  try {
+    const raw = localStorage.getItem(EVENT_LOG_KEY);
+    const list = raw ? (JSON.parse(raw) as EventLogEntry[]) : [];
+    return list.map((e) => ({ ...e, at: new Date(e.at) }));
+  } catch {
+    return [];
+  }
+}
+
+function saveEvents(events: EventLogEntry[]) {
+  try {
+    localStorage.setItem(EVENT_LOG_KEY, JSON.stringify(events.slice(0, EVENT_LOG_MAX)));
+  } catch {
+    /* 隐私模式忽略 */
+  }
 }
 
 /** 上次加入的房间 id：刷新页面 / 切换 staff Tab 后用来恢复房间 */
@@ -209,6 +231,9 @@ export default function RefereePage() {
     [getUserCached],
   );
 
+  // ---- 对战列表选中的对战（玩家面板一键邀请选手用） ----
+  const [pickedMatchup, setPickedMatchup] = useState<MatchSchedule | null>(null);
+
   // ---- 房间倒计时播报（!mp timer / 开始比赛带倒计时） ----
   const timer = useMatchTimer(async (text) => {
     const channel = roomRef.current?.chatChannelId;
@@ -236,8 +261,17 @@ export default function RefereePage() {
     }
   }, [connState]);
 
-  const [events, setEvents] = useState<EventLogEntry[]>([]);
+  const [events, setEvents] = useState<EventLogEntry[]>(loadSavedEvents);
   const eventIdRef = useRef(0);
+  // 恢复的日志 id 从已有最大值继续，避免刷新后 React key 冲突
+  useEffect(() => {
+    eventIdRef.current = events.reduce((mx, e) => Math.max(mx, e.id), 0) + 1;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // 事件日志落本地：刷新后不丢
+  useEffect(() => {
+    saveEvents(events);
+  }, [events]);
   const [scores, setScores] = useState<DisplayScore[] | null>(null);
   const [chatLines, setChatLines] = useState<ChatLine[]>([]);
   const lineIdRef = useRef(0);
@@ -732,7 +766,7 @@ export default function RefereePage() {
             <div className="flex flex-col gap-4">
               {room ? (
                 <>
-                  <PlayersPanel room={room} />
+                  <PlayersPanel room={room} matchup={pickedMatchup} />
                   <MatchControlPanel room={room} timer={timer} />
                 </>
               ) : (
@@ -760,7 +794,10 @@ export default function RefereePage() {
                   />
                 </>
               ) : (
-                <RoomSetup onRoomJoined={handleRoomJoined} />
+                <RoomSetup
+                  onRoomJoined={handleRoomJoined}
+                  onSelectMatchup={setPickedMatchup}
+                />
               )}
             </div>
 
@@ -772,7 +809,7 @@ export default function RefereePage() {
                   <ModSettingsPanel room={room} />
                 </>
               )}
-              <EventsPanel events={events} />
+              <EventsPanel events={events} onClear={() => setEvents([])} />
             </div>
           </div>
         </>

@@ -2,11 +2,11 @@ import {
   currentPlaylistItem,
   displayName,
   hasModSettings,
-  modsText,
   modSettingsText,
   type RefMod,
   type RefRoomState,
 } from "@/lib/ref";
+import { ModIcon } from "@/components/referee/ModPicker";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -15,7 +15,10 @@ function ModList({ mods }: { mods: RefMod[] }) {
     <div className="flex flex-col gap-1">
       {mods.map((m) => (
         <div key={m.acronym} className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline">{m.acronym}</Badge>
+          <Badge variant="outline" className="flex items-center gap-1">
+            <ModIcon acronym={m.acronym} className="h-2.5 w-auto" />
+            {m.acronym}
+          </Badge>
           {hasModSettings(m) && (
             <span className="font-mono text-xs text-(--pc-faint)">{modSettingsText(m)}</span>
           )}
@@ -57,9 +60,15 @@ export default function ModSettingsPanel({ room }: ModSettingsPanelProps) {
                 key={p.id}
                 className="rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-3"
               >
-                <div className="mb-1.5 text-xs font-bold text-(--pc-slate)">
+                <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs font-bold text-(--pc-slate)">
                   {displayName(p.user, p.id)}
-                  <span className="ml-2 font-normal text-(--pc-faint)">{modsText(p.mods)}</span>
+                  <span className="inline-flex items-center gap-1">
+                    {p.mods.map((m) => (
+                      <span key={m.acronym} title={m.acronym}>
+                        <ModIcon acronym={m.acronym} className="h-3 w-auto" />
+                      </span>
+                    ))}
+                  </span>
                 </div>
                 <ModList mods={p.mods.filter(hasModSettings)} />
               </div>

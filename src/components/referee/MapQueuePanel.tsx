@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { Loader2, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Check, Loader2, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import ModPicker, { ModIcon } from "@/components/referee/ModPicker";
 import { toast } from "@/hooks/use-toast";
 import {
   getBeatmapCached,
   hub,
   invokeHub,
-  modsText,
-  parseModText,
   sortedPlaylistItems,
   type OsuBeatmap,
+  type RefMod,
   type RefPlaylistItem,
   type RefRoomState,
 } from "@/lib/ref";
@@ -54,7 +54,7 @@ function BeatmapTitle({ beatmapId }: { beatmapId: number }) {
   }, [beatmapId]);
 
   return (
-    <span className="truncate">
+    <span className="break-words">
       {map
         ? `${map.beatmapset.artist} - ${map.beatmapset.title} [${map.version}]`
         : `谱面 #${beatmapId}`}
@@ -64,6 +64,31 @@ function BeatmapTitle({ beatmapId }: { beatmapId: number }) {
 
 function mmss(total: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** 卡片背景封面（osu beatmapset cover，加载后淡入） */
+function BeatmapCover({ beatmapId }: { beatmapId: number }) {
+  const [map, setMap] = useState<OsuBeatmap | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void getBeatmapCached(beatmapId).then((m) => {
+      if (alive) setMap(m);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [beatmapId]);
+  const covers = map?.beatmapset?.covers as Record<string, string> | undefined;
+  const url = covers?.["cover@2x"] ?? covers?.cover;
+  if (!url) return null;
+  return (
+    <img
+      src={url}
+      alt=""
+      loading="lazy"
+      className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-25"
+    />
+  );
 }
 
 /** 当前图的关键谱面信息（时长/BPM/星数/CS AR OD HP），照 apl-ref TODO 的 Map Stats */
@@ -82,14 +107,19 @@ function BeatmapStats({ beatmapId }: { beatmapId: number }) {
 
   const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
   const length = num(map.total_length);
+  const cs = num(map.cs);
+  const ar = num(map.ar);
+  // osu! API v2 里 OD=accuracy、HP=drain，兼容旧字段名
+  const od = num(map.accuracy) ?? num(map.od);
+  const hp = num(map.drain) ?? num(map.hp);
   const items = [
     length != null ? mmss(length) : null,
     num(map.bpm) != null ? `${num(map.bpm)!.toFixed(0)} BPM` : null,
     num(map.difficulty_rating) != null ? `★${num(map.difficulty_rating)!.toFixed(2)}` : null,
-    num(map.cs) != null ? `CS${num(map.cs)}` : null,
-    num(map.ar) != null ? `AR${num(map.ar)}` : null,
-    num(map.od) != null ? `OD${num(map.od)}` : null,
-    num(map.hp) != null ? `HP${num(map.hp)}` : null,
+    cs != null ? `CS${cs}` : null,
+    ar != null ? `AR${ar}` : null,
+    od != null ? `OD${od}` : null,
+    hp != null ? `HP${hp}` : null,
   ].filter((x): x is string => !!x);
 
   if (items.length === 0) return null;
@@ -115,8 +145,8 @@ interface PlaylistDialogProps {
 function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogProps) {
   const [beatmapId, setBeatmapId] = useState("");
   const [rulesetId, setRulesetId] = useState("");
-  const [requiredMods, setRequiredMods] = useState("");
-  const [allowedMods, setAllowedMods] = useState("");
+  const [requiredMods, setRequiredMods] = useState<RefMod[]>([]);
+  const [allowedMods, setAllowedMods] = useState<RefMod[]>([]);
   const [freestyle, setFreestyle] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -126,14 +156,14 @@ function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogPro
     if (editing) {
       setBeatmapId(String(editing.beatmap_id));
       setRulesetId(String(editing.ruleset_id));
-      setRequiredMods(modsText(editing.required_mods));
-      setAllowedMods(modsText(editing.allowed_mods));
+      setRequiredMods(editing.required_mods ?? []);
+      setAllowedMods(editing.allowed_mods ?? []);
       setFreestyle(!!editing.freestyle);
     } else {
       setBeatmapId("");
       setRulesetId("0");
-      setRequiredMods("");
-      setAllowedMods("");
+      setRequiredMods([]);
+      setAllowedMods([]);
       setFreestyle(false);
     }
   }, [open, editing]);
@@ -148,8 +178,8 @@ function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogPro
     const params = {
       beatmap_id: bId,
       ruleset_id: Number.isFinite(rId) ? rId : 0,
-      required_mods: parseModText(requiredMods),
-      allowed_mods: parseModText(allowedMods),
+      required_mods: requiredMods,
+      allowed_mods: allowedMods,
       freestyle,
     };
     setBusy(true);
@@ -189,7 +219,7 @@ function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogPro
         <DialogHeader>
           <DialogTitle>{editing ? "编辑图池项" : "添加图池项"}</DialogTitle>
           <DialogDescription>
-            mod 直接写缩写并以空格分隔，例如 HD HR（NM / FM 表示不限必选 mod）。
+            点选 mod 并可调整参数；没有选中的 mod 即为不限。
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
@@ -218,22 +248,12 @@ function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogPro
             </Select>
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="ref-pl-required">必选 mod（空格分隔）</Label>
-            <Input
-              id="ref-pl-required"
-              value={requiredMods}
-              onChange={(e) => setRequiredMods(e.target.value)}
-              placeholder="例如 HD HR"
-            />
+            <Label className="text-xs">必选 mod</Label>
+            <ModPicker value={requiredMods} onChange={setRequiredMods} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="ref-pl-allowed">允许 mod（空格分隔）</Label>
-            <Input
-              id="ref-pl-allowed"
-              value={allowedMods}
-              onChange={(e) => setAllowedMods(e.target.value)}
-              placeholder="例如 HD HR DT"
-            />
+            <Label className="text-xs">允许 mod</Label>
+            <ModPicker value={allowedMods} onChange={setAllowedMods} />
           </div>
           <label className="flex items-center gap-2 text-sm text-(--pc-slate)">
             <Checkbox checked={freestyle} onCheckedChange={(v) => setFreestyle(v === true)} />
@@ -295,9 +315,10 @@ export default function MapQueuePanel({ room }: MapQueuePanelProps) {
           {items.map((item) => (
             <div
               key={item.id}
-              className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-3 shadow-[2px_2px_0px_rgba(0,0,0,0.06)]"
+              className="relative overflow-hidden rounded-xl border-2 border-(--pc-border) bg-(--pc-white) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]"
             >
-              <div className="flex items-start justify-between gap-2">
+              <BeatmapCover beatmapId={Number(item.beatmap_id)} />
+              <div className="relative flex items-start justify-between gap-2 p-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <Badge variant={Number(item.order) === 0 ? "primary" : "outline"}>
@@ -305,15 +326,42 @@ export default function MapQueuePanel({ room }: MapQueuePanelProps) {
                     </Badge>
                     {Number(item.order) === 0 && <Badge variant="yellow">当前图</Badge>}
                   </div>
-                  <div className="mt-1 truncate text-sm font-bold text-(--pc-ink)">
+                  <div className="mt-1 text-sm font-bold break-words text-(--pc-ink)">
                     <BeatmapTitle beatmapId={Number(item.beatmap_id)} />
                   </div>
-                  {Number(item.order) === 0 && (
-                    <BeatmapStats beatmapId={Number(item.beatmap_id)} />
-                  )}
-                  <div className="mt-1 text-xs text-(--pc-faint)">
-                    ID {item.beatmap_id} · 必选 {modsText(item.required_mods) || "无"} · 允许{" "}
-                    {modsText(item.allowed_mods) || "无"} · Freestyle {item.freestyle ? "是" : "否"}
+                  <BeatmapStats beatmapId={Number(item.beatmap_id)} />
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs font-medium text-(--pc-slate)">
+                    <span className="rounded bg-(--pc-paper) px-1.5 py-0.5">
+                      ID {item.beatmap_id}
+                    </span>
+                    <span className="flex items-center gap-1 rounded bg-(--pc-paper) px-1.5 py-0.5">
+                      必选
+                      {item.required_mods.length > 0 ? (
+                        item.required_mods.map((m) => (
+                          <ModIcon key={m.acronym} acronym={m.acronym} className="h-3.5 w-auto" />
+                        ))
+                      ) : (
+                        <span>无</span>
+                      )}
+                    </span>
+                    <span className="flex items-center gap-1 rounded bg-(--pc-paper) px-1.5 py-0.5">
+                      允许
+                      {item.allowed_mods.length > 0 ? (
+                        item.allowed_mods.map((m) => (
+                          <ModIcon key={m.acronym} acronym={m.acronym} className="h-3.5 w-auto" />
+                        ))
+                      ) : (
+                        <span>无</span>
+                      )}
+                    </span>
+                    <span className="flex items-center gap-1 rounded bg-(--pc-paper) px-1.5 py-0.5">
+                      Freestyle
+                      {item.freestyle ? (
+                        <Check className="h-3.5 w-3.5 text-pc-teal" />
+                      ) : (
+                        <X className="h-3.5 w-3.5 text-pc-primary" />
+                      )}
+                    </span>
                   </div>
                 </div>
                 <Button

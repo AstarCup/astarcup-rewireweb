@@ -110,6 +110,26 @@ export default function MatchControlPanel({ room, timer }: MatchControlPanelProp
             倒计时会在房间聊天里播报（开始 / 30·15·10·5 秒 / 整分钟 / 结束）。
           </p>
         </div>
+        <div className="grid gap-1.5">
+          <Label>快速计时</Label>
+          <div className="flex gap-2">
+            {[120, 60, 30].map((n) => (
+              <Button
+                key={n}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={() => {
+                  setSecondsText(String(n));
+                  timer.start(n);
+                }}
+                title={`立即开始 ${n} 秒倒计时播报，并填入秒数`}
+              >
+                {n}s
+              </Button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="teal" size="sm" onClick={startMatch} disabled={busy === "start"}>
             {busy === "start" ? (

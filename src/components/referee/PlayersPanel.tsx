@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ban, Loader2, Lock, LockOpen, Search, UserPlus, UserRoundX } from "lucide-react";
+import { Ban, Loader2, Lock, LockOpen, Search, UserPlus, UserRoundX, Users } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   displayName,
@@ -12,6 +12,7 @@ import {
   type RefUserStatus,
   type Team,
 } from "@/lib/ref";
+import type { MatchSchedule } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,13 +52,16 @@ function teamBarClass(team: RefUser["team"]) {
 
 interface PlayersPanelProps {
   room: RefRoomState;
+  /** 对战列表选中的对战：有值时显示“一键邀请”两个选手 */
+  matchup?: MatchSchedule | null;
 }
 
-/** 左栏上半：玩家槽位列表（队伍色条 / 状态徽章 / mods / 分队 / 踢出 / 封禁）+ 邀请 + 锁位 */
-export default function PlayersPanel({ room }: PlayersPanelProps) {
+/** 左栏上半：玩家槽位列表（队伍色条 / 状态徽章 / mods / Kick）+ 邀请 + 锁位 */
+export default function PlayersPanel({ room, matchup }: PlayersPanelProps) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteInput, setInviteInput] = useState("");
   const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteAllBusy, setInviteAllBusy] = useState(false);
   const [lockBusy, setLockBusy] = useState(false);
   /** 最近一次邀请成功的人（弹窗不关，方便连续邀请） */
   const [invited, setInvited] = useState<string[]>([]);
@@ -69,6 +73,43 @@ export default function PlayersPanel({ room }: PlayersPanelProps) {
     if (!res.ok) {
       toast({ variant: "destructive", title: "修改锁位失败", description: res.error.message });
     }
+  };
+
+  /** 对战双方中还没进房的选手（已在房里的不再重复邀请） */
+  const matchupTargets = matchup
+    ? [
+        { id: matchup.player1OsuId, name: matchup.player1Username },
+        { id: matchup.player2OsuId, name: matchup.player2Username },
+      ]
+    : [];
+  const pendingTargets = matchupTargets.filter((t) => {
+    const uid = Number(t.id);
+    const inRoom =
+      Number.isFinite(uid) && (room.players[uid] != null || room.refs[uid] != null);
+    return !inRoom;
+  });
+
+  /** 一键邀请对战双方选手（来自对战列表选中的对战；已在房里的自动跳过） */
+  const inviteMatchupPlayers = async () => {
+    if (pendingTargets.length === 0) return;
+    setInviteAllBusy(true);
+    const results: string[] = [];
+    for (const t of pendingTargets) {
+      const userId = Number(t.id);
+      if (!Number.isFinite(userId) || userId <= 0) {
+        results.push(`${t.name}：无效的用户 ID`);
+        continue;
+      }
+      const res = await invokeHub(hub.invitePlayer(room.id, userId));
+      results.push(res.ok ? `${t.name}：已邀请` : `${t.name}：${res.error.message}`);
+    }
+    setInviteAllBusy(false);
+    const failed = results.some((r) => !r.includes("已邀请"));
+    toast({
+      ...(failed ? { variant: "destructive" as const } : {}),
+      title: "一键邀请对战选手",
+      description: results.join("；"),
+    });
   };
 
   const submitInvite = async () => {
@@ -128,9 +169,24 @@ export default function PlayersPanel({ room }: PlayersPanelProps) {
 
   return (
     <Card>
-      <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="text-base md:text-lg">玩家</CardTitle>
-        <div className="flex items-center gap-2">
+      <CardHeader className="space-y-3 pb-3">
+        <CardTitle className="text-base whitespace-nowrap md:text-lg">玩家</CardTitle>
+        <div className="flex flex-wrap items-center gap-2">
+          {pendingTargets.length > 0 && (
+            <Button
+              size="sm"
+              onClick={() => void inviteMatchupPlayers()}
+              disabled={inviteAllBusy}
+              title={`邀请 ${pendingTargets.map((t) => t.name).join(" 与 ")} 加入房间`}
+            >
+              {inviteAllBusy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Users className="h-3.5 w-3.5" />
+              )}
+              一键邀请
+            </Button>
+          )}
           <Button variant="teal" size="sm" onClick={() => setInviteOpen(true)}>
             <UserPlus className="h-3.5 w-3.5" /> 邀请
           </Button>
