@@ -1,0 +1,542 @@
+[
+    {
+        "Acronym": "EZ",
+        "Name": "Easy",
+        "Description": "Larger fruits, more forgiving HP drain, less accuracy required, and extra lives!",
+        "Type": "DifficultyReduction",
+        "Settings": [
+            {
+                "Name": "retries",
+                "Type": "number",
+                "Label": "Extra Lives",
+                "Description": "Number of extra lives",
+                "UnderlyingValue": 2,
+                "Default": 2,
+                "IsInteger": true,
+                "DefaultPrecision": 1,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "NF",
+        "Name": "No Fail",
+        "Description": "You can't fail, no matter what.",
+        "Type": "DifficultyReduction",
+        "Settings": []
+    },
+    {
+        "Acronym": "HT",
+        "Name": "Half Time",
+        "Description": "Less zoom...",
+        "Type": "DifficultyReduction",
+        "Settings": [
+            {
+                "Name": "speed_change",
+                "Type": "number",
+                "Label": "Speed decrease",
+                "Description": "The actual decrease to apply",
+                "UnderlyingValue": 0.75,
+                "Default": 0.75,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "DC",
+        "Name": "Daycore",
+        "Description": "Whoaaaaa...",
+        "Type": "DifficultyReduction",
+        "Settings": [
+            {
+                "Name": "speed_change",
+                "Type": "number",
+                "Label": "Speed decrease",
+                "Description": "The actual decrease to apply",
+                "UnderlyingValue": 0.75,
+                "Default": 0.75,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "HR",
+        "Name": "Hard Rock",
+        "Description": "Everything just got a bit harder...",
+        "Type": "DifficultyIncrease",
+        "Settings": []
+    },
+    {
+        "Acronym": "SD",
+        "Name": "Sudden Death",
+        "Description": "Miss and fail.",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "restart",
+                "Type": "boolean",
+                "Label": "Restart on fail",
+                "Description": "Automatically restarts when failed.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "PF",
+        "Name": "Perfect",
+        "Description": "SS or quit.",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "restart",
+                "Type": "boolean",
+                "Label": "Restart on fail",
+                "Description": "Automatically restarts when failed.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "DT",
+        "Name": "Double Time",
+        "Description": "Zoooooooooom...",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "speed_change",
+                "Type": "number",
+                "Label": "Speed increase",
+                "Description": "The actual increase to apply",
+                "UnderlyingValue": 1.5,
+                "Default": 1.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "NC",
+        "Name": "Nightcore",
+        "Description": "Uguuuuuuuu...",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "speed_change",
+                "Type": "number",
+                "Label": "Speed increase",
+                "Description": "The actual increase to apply",
+                "UnderlyingValue": 1.5,
+                "Default": 1.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "HD",
+        "Name": "Hidden",
+        "Description": "Play with fading fruits.",
+        "Type": "DifficultyIncrease",
+        "Settings": []
+    },
+    {
+        "Acronym": "FL",
+        "Name": "Flashlight",
+        "Description": "Restricted view area.",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "size_multiplier",
+                "Type": "number",
+                "Label": "Flashlight size",
+                "Description": "Multiplier applied to the default flashlight size.",
+                "UnderlyingValue": 1.0,
+                "Default": 1.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "combo_based_size",
+                "Type": "boolean",
+                "Label": "Change size based on combo",
+                "Description": "Decrease the flashlight size as combo increases.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "AC",
+        "Name": "Accuracy Challenge",
+        "Description": "Fail if your accuracy drops too low!",
+        "Type": "DifficultyIncrease",
+        "Settings": [
+            {
+                "Name": "minimum_accuracy",
+                "Type": "number",
+                "Label": "Minimum accuracy",
+                "Description": "Trigger a failure if your accuracy goes below this value.",
+                "UnderlyingValue": 0.9,
+                "Default": 0.9,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "accuracy_judge_mode",
+                "Type": "enum",
+                "Label": "Accuracy mode",
+                "Description": "The mode of accuracy that will trigger failure.",
+                "UnderlyingValue": "MaximumAchievable",
+                "Default": "MaximumAchievable",
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": [
+                    "MaximumAchievable",
+                    "Standard"
+                ]
+            },
+            {
+                "Name": "restart",
+                "Type": "boolean",
+                "Label": "Restart on fail",
+                "Description": "Automatically restarts when failed.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "DA",
+        "Name": "Difficulty Adjust",
+        "Description": "Override a beatmap's difficulty settings.",
+        "Type": "Conversion",
+        "Settings": [
+            {
+                "Name": "circle_size",
+                "Type": "number",
+                "Label": "Circle Size",
+                "Description": "Override a beatmap's set CS.",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "approach_rate",
+                "Type": "number",
+                "Label": "Approach Rate",
+                "Description": "Override a beatmap's set AR.",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "hard_rock_offsets",
+                "Type": "boolean",
+                "Label": "Spicy Patterns",
+                "Description": "Adjust the patterns as if Hard Rock is enabled.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "drain_rate",
+                "Type": "number",
+                "Label": "HP Drain",
+                "Description": "Override a beatmap's set HP.",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "overall_difficulty",
+                "Type": "number",
+                "Label": "Accuracy",
+                "Description": "Override a beatmap's set OD.",
+                "UnderlyingValue": null,
+                "Default": null,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "extended_limits",
+                "Type": "boolean",
+                "Label": "Extended Limits",
+                "Description": "Adjust difficulty beyond sane limits.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "CL",
+        "Name": "Classic",
+        "Description": "Feeling nostalgic?",
+        "Type": "Conversion",
+        "Settings": []
+    },
+    {
+        "Acronym": "MR",
+        "Name": "Mirror",
+        "Description": "Fruits are flipped horizontally.",
+        "Type": "Conversion",
+        "Settings": []
+    },
+    {
+        "Acronym": "AT",
+        "Name": "Autoplay",
+        "Description": "Watch a perfect automated play through the song.",
+        "Type": "Automation",
+        "Settings": []
+    },
+    {
+        "Acronym": "CN",
+        "Name": "Cinema",
+        "Description": "Watch the video without visual distractions.",
+        "Type": "Automation",
+        "Settings": []
+    },
+    {
+        "Acronym": "RX",
+        "Name": "Relax",
+        "Description": "Use the mouse to control the catcher.",
+        "Type": "Automation",
+        "Settings": []
+    },
+    {
+        "Acronym": "WU",
+        "Name": "Wind Up",
+        "Description": "Can you keep up?",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "initial_rate",
+                "Type": "number",
+                "Label": "Initial rate",
+                "Description": "The starting speed of the track",
+                "UnderlyingValue": 1.0,
+                "Default": 1.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "final_rate",
+                "Type": "number",
+                "Label": "Final rate",
+                "Description": "The final speed to ramp to",
+                "UnderlyingValue": 1.5,
+                "Default": 1.5,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "WD",
+        "Name": "Wind Down",
+        "Description": "Sloooow doooown...",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "initial_rate",
+                "Type": "number",
+                "Label": "Initial rate",
+                "Description": "The starting speed of the track",
+                "UnderlyingValue": 1.0,
+                "Default": 1.0,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "final_rate",
+                "Type": "number",
+                "Label": "Final rate",
+                "Description": "The final speed to ramp to",
+                "UnderlyingValue": 0.75,
+                "Default": 0.75,
+                "IsInteger": false,
+                "DefaultPrecision": 0.0,
+                "EnumValues": null
+            },
+            {
+                "Name": "adjust_pitch",
+                "Type": "boolean",
+                "Label": "Adjust pitch",
+                "Description": "Should pitch be adjusted with speed",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "FF",
+        "Name": "Floating Fruits",
+        "Description": "The fruits are... floating?",
+        "Type": "Fun",
+        "Settings": []
+    },
+    {
+        "Acronym": "MU",
+        "Name": "Muted",
+        "Description": "Can you still feel the rhythm without music?",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "inverse_muting",
+                "Type": "boolean",
+                "Label": "Start muted",
+                "Description": "Increase volume as combo builds.",
+                "UnderlyingValue": false,
+                "Default": false,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "enable_metronome",
+                "Type": "boolean",
+                "Label": "Enable metronome",
+                "Description": "Add a metronome beat to help you keep track of the rhythm.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            },
+            {
+                "Name": "mute_combo_count",
+                "Type": "number",
+                "Label": "Final volume at combo",
+                "Description": "The combo count at which point the track reaches its final volume.",
+                "UnderlyingValue": 100,
+                "Default": 100,
+                "IsInteger": true,
+                "DefaultPrecision": 1,
+                "EnumValues": null
+            },
+            {
+                "Name": "affects_hit_sounds",
+                "Type": "boolean",
+                "Label": "Mute hit sounds",
+                "Description": "Hit sounds are also muted alongside the track.",
+                "UnderlyingValue": true,
+                "Default": true,
+                "IsInteger": null,
+                "DefaultPrecision": null,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "NS",
+        "Name": "No Scope",
+        "Description": "Where's the catcher?",
+        "Type": "Fun",
+        "Settings": [
+            {
+                "Name": "hidden_combo_count",
+                "Type": "number",
+                "Label": "Hidden at combo",
+                "Description": "The combo count at which the cursor becomes completely hidden",
+                "UnderlyingValue": 10,
+                "Default": 10,
+                "IsInteger": true,
+                "DefaultPrecision": 1,
+                "EnumValues": null
+            }
+        ]
+    },
+    {
+        "Acronym": "MF",
+        "Name": "Moving Fast",
+        "Description": "Dashing by default, slow down!",
+        "Type": "Fun",
+        "Settings": []
+    },
+    {
+        "Acronym": "SY",
+        "Name": "Synesthesia",
+        "Description": "Colours hit objects based on the rhythm.",
+        "Type": "Fun",
+        "Settings": []
+    },
+    {
+        "Acronym": "SV2",
+        "Name": "Score V2",
+        "Description": "Score set on earlier osu! versions with the V2 scoring algorithm active.",
+        "Type": "System",
+        "Settings": []
+    }
+]

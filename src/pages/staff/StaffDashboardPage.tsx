@@ -3,10 +3,13 @@ import { Link } from "react-router-dom";
 import {
   CalendarClock,
   DoorOpen,
+  Gavel,
   History,
   LayoutDashboard,
   Map as MapIcon,
   Newspaper,
+  PanelLeftClose,
+  PanelLeftOpen,
   Radio,
   Settings,
   Swords,
@@ -37,7 +40,9 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import OverviewManagement from "@/components/staff/OverviewManagement";
 import MatchScheduleManagement from "@/components/staff/MatchScheduleManagement";
 import StreamingManagement from "@/components/staff/StreamingManagement";
@@ -48,6 +53,7 @@ import MatchupManagement from "@/components/staff/MatchupManagement";
 import UserManagement from "@/components/staff/UserManagement";
 import SettingsManagement from "@/components/staff/SettingsManagement";
 import ContentManagement from "@/components/staff/ContentManagement";
+import RefereeConsole from "@/components/staff/RefereeConsole";
 
 const TABS = [
   { key: "overview", label: "概览", Icon: LayoutDashboard, Comp: OverviewManagement },
@@ -56,6 +62,7 @@ const TABS = [
   { key: "users", label: "用户管理", Icon: Users, Comp: UserManagement },
   { key: "matchups", label: "对战列表", Icon: Swords, Comp: MatchupManagement },
   { key: "rooms", label: "房间管理", Icon: DoorOpen, Comp: RoomManagement },
+  { key: "referee", label: "裁判控制台", Icon: Gavel, Comp: RefereeConsole },
   { key: "schedules", label: "比赛预约管理", Icon: CalendarClock, Comp: MatchScheduleManagement },
   { key: "streaming", label: "房间加入", Icon: Radio, Comp: StreamingManagement },
   { key: "content", label: "内容管理", Icon: Newspaper, Comp: ContentManagement },
@@ -80,7 +87,7 @@ const NAV: {
     key: "g-match",
     label: "比赛管理",
     Icon: Swords,
-    items: ["schedules", "matchups", "rooms", "users"],
+    items: ["schedules", "matchups", "rooms", "referee", "users"],
   },
   { key: "streaming", label: "房间加入", Icon: Radio },
   { key: "content", label: "内容管理", Icon: Newspaper },
@@ -90,7 +97,7 @@ const NAV: {
 /** 桌面端侧边栏分组 */
 const SIDEBAR_SECTIONS: { label?: string; items: TabKey[] }[] = [
   { items: ["overview", "mappool", "replays"] },
-  { label: "比赛管理", items: ["schedules", "matchups", "rooms", "users"] },
+  { label: "比赛管理", items: ["schedules", "matchups", "rooms", "referee", "users"] },
   { items: ["streaming", "content", "settings"] },
 ];
 
@@ -100,6 +107,27 @@ const TRIGGER_ACTIVE = "border-pc-primary bg-pc-primary text-pc-cream shadow-[3p
 const TRIGGER_IDLE = "border-(--pc-border) bg-(--pc-white) text-(--pc-ink)";
 
 const STORAGE_KEY = "staff-dashboard-active-tab";
+
+/** 侧边栏收起/展开开关（侧边栏内与内容区标题前各一个） */
+function SidebarCollapseButton() {
+  const { open, toggleSidebar } = useSidebar();
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      className="h-9 w-9 shrink-0"
+      onClick={toggleSidebar}
+      title={open ? "收起侧边栏" : "展开侧边栏"}
+      aria-label={open ? "收起侧边栏" : "展开侧边栏"}
+    >
+      {open ? (
+        <PanelLeftClose className="h-4 w-4" />
+      ) : (
+        <PanelLeftOpen className="h-4 w-4" />
+      )}
+    </Button>
+  );
+}
 
 export default function StaffDashboardPage() {
   const { user, permissions, loading } = useApp();
@@ -159,7 +187,10 @@ export default function StaffDashboardPage() {
           <p className="text-xs font-bold tracking-wide text-(--pc-faint) uppercase">
             管理后台
           </p>
-          <p className="text-lg font-black text-(--pc-ink)">{active.label}</p>
+          <div className="flex items-center gap-2">
+            <SidebarCollapseButton />
+            <p className="text-lg font-black text-(--pc-ink)">{active.label}</p>
+          </div>
         </SidebarHeader>
 
         <SidebarContent>
@@ -204,6 +235,11 @@ export default function StaffDashboardPage() {
 
       <SidebarInset>
         <div className="w-full px-4 pt-8 pb-16 lg:px-8">
+          {/* 桌面端：页面标题栏（标题前含侧边栏开关，收起后可再展开） */}
+          <div className="mb-4 hidden items-center gap-2 lg:flex">
+            <SidebarCollapseButton />
+            <p className="text-lg font-black text-(--pc-ink)">{active.label}</p>
+          </div>
           {/* 移动端：顶栏（无站点导航时的返回入口） */}
           <div className="mb-4 flex items-center justify-between lg:hidden">
             <p className="text-sm font-black text-(--pc-ink)">管理后台</p>

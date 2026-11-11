@@ -515,6 +515,16 @@ export const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
   CATEGORY_OPTIONS.map((o) => [o.value, o.label]),
 );
 
+/** 设置里的当前阶段短码 → 图池类别（长值） */
+export const STAGE_TO_CATEGORY: Record<string, string> = {
+  qua: "qualification",
+  ro16: "ro16",
+  qf: "quarterfinals",
+  sf: "semifinals",
+  f: "finals",
+  gf: "grandfinals",
+};
+
 /** Return unique mods in the canonical front-of-mod order. */
 export function modCountByOrder(list: string[]): string[] {
   const order = MODS_ORDER as readonly string[];

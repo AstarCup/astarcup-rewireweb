@@ -20,22 +20,19 @@ import { api } from "@/lib/api";
 import { cn, fmt, osuAvatarUrl } from "@/lib/utils";
 import { getDifficultyColor } from "@/lib/difficultyColor";
 import { useApp } from "@/lib/app-context";
-import { MODS_ORDER, CATEGORY_OPTIONS, CATEGORY_LABEL, seasonOptions as buildSeasonOptions, type MapSelection } from "@/lib/types";
+import {
+  MODS_ORDER,
+  CATEGORY_OPTIONS,
+  CATEGORY_LABEL,
+  STAGE_TO_CATEGORY,
+  seasonOptions as buildSeasonOptions,
+  type MapSelection,
+} from "@/lib/types";
 import { MOD_COLORS, MOD_DISPLAY, modBase } from "@/lib/mods";
 import { site } from "@/lib/site";
 import { BulkDownload, OppPoolButton } from "@/components/mappool/MapPoolTools";
 
 type ViewMode = "card" | "table";
-
-/** 设置的当前阶段(短码) → 图池类别(长值) */
-const STAGE_TO_CATEGORY: Record<string, string> = {
-  qua: "qualification",
-  ro16: "ro16",
-  qf: "quarterfinals",
-  sf: "semifinals",
-  f: "finals",
-  gf: "grandfinals",
-};
 
 interface ModGroup {
   mod: string;
