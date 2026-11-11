@@ -46,7 +46,11 @@ export default function ScoresPanel({ matchType, teams, scores }: ScoresPanelPro
     (a, b) => (a.position ?? 0) - (b.position ?? 0) || b.totalScore - a.totalScore,
   );
   const red = sorted.filter((s) => teams[s.userId] === "red");
-  const blue = sorted.filter((s) => teams[s.userId] !== "red");
+  const blue = sorted.filter((s) => teams[s.userId] === "blue");
+  // 团队赛里没分队的玩家不能算进蓝队（否则总分虚高）
+  const unassigned = sorted.filter(
+    (s) => teams[s.userId] !== "red" && teams[s.userId] !== "blue",
+  );
   const sum = (arr: DisplayScore[]) => arr.reduce((acc, s) => acc + (s.totalScore || 0), 0);
 
   return (
@@ -68,31 +72,45 @@ export default function ScoresPanel({ matchType, teams, scores }: ScoresPanelPro
             ))}
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border-2 border-pc-primary/40 bg-pc-primary/5 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-bold text-pc-primary">红队</span>
-                <span className="font-mono text-lg font-bold text-(--pc-ink)">{fmtInt(sum(red))}</span>
+          <div className="grid gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border-2 border-pc-primary/40 bg-pc-primary/5 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-bold text-pc-primary">红队</span>
+                  <span className="font-mono text-lg font-bold text-(--pc-ink)">{fmtInt(sum(red))}</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {red.map((s) => (
+                    <ScoreRow key={`${s.userId}-${s.playlistId ?? 0}`} score={s} />
+                  ))}
+                  {red.length === 0 && <p className="text-xs text-(--pc-faint)">暂无队员成绩</p>}
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                {red.map((s) => (
-                  <ScoreRow key={`${s.userId}-${s.playlistId ?? 0}`} score={s} />
-                ))}
-                {red.length === 0 && <p className="text-xs text-(--pc-faint)">暂无队员成绩</p>}
+              <div className="rounded-xl border-2 border-pc-blue/40 bg-pc-blue/5 p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm font-bold text-pc-blue">蓝队</span>
+                  <span className="font-mono text-lg font-bold text-(--pc-ink)">{fmtInt(sum(blue))}</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {blue.map((s) => (
+                    <ScoreRow key={`${s.userId}-${s.playlistId ?? 0}`} score={s} />
+                  ))}
+                  {blue.length === 0 && <p className="text-xs text-(--pc-faint)">暂无队员成绩</p>}
+                </div>
               </div>
             </div>
-            <div className="rounded-xl border-2 border-pc-blue/40 bg-pc-blue/5 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-sm font-bold text-pc-blue">蓝队</span>
-                <span className="font-mono text-lg font-bold text-(--pc-ink)">{fmtInt(sum(blue))}</span>
+            {unassigned.length > 0 && (
+              <div className="rounded-xl border-2 border-dashed border-(--pc-border) bg-(--pc-paper) p-3">
+                <div className="mb-2 text-sm font-bold text-(--pc-slate)">
+                  未分队 <span className="font-normal text-(--pc-faint)">（不计入队伍总分）</span>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {unassigned.map((s) => (
+                    <ScoreRow key={`${s.userId}-${s.playlistId ?? 0}`} score={s} />
+                  ))}
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
-                {blue.map((s) => (
-                  <ScoreRow key={`${s.userId}-${s.playlistId ?? 0}`} score={s} />
-                ))}
-                {blue.length === 0 && <p className="text-xs text-(--pc-faint)">暂无队员成绩</p>}
-              </div>
-            </div>
+            )}
           </div>
         )}
       </CardContent>

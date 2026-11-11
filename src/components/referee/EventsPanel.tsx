@@ -15,6 +15,28 @@ function dataLines(name: string, data: unknown): string[] {
     .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
 }
 
+/** 关键事件（折叠高频的状态/资料刷新事件用） */
+const KEY_EVENTS = new Set([
+  "MatchStarted",
+  "MatchAborted",
+  "MatchCompleted",
+  "CountdownStarted",
+  "CountdownStopped",
+  "UserJoined",
+  "UserLeft",
+  "UserKicked",
+  "UserBanned",
+  "RefereeAdded",
+  "RefereeRemoved",
+  "RefereeInvited",
+  "RoomSettingsChanged",
+  "MatchStateChanged",
+  "PlaylistItemAdded",
+  "PlaylistItemChanged",
+  "PlaylistItemRemoved",
+  "RollCompleted",
+]);
+
 interface EventsPanelProps {
   events: EventLogEntry[];
 }
@@ -23,6 +45,8 @@ interface EventsPanelProps {
 export default function EventsPanel({ events }: EventsPanelProps) {
   const [pingBusy, setPingBusy] = useState(false);
   const [pingResult, setPingResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [onlyKey, setOnlyKey] = useState(false);
+  const list = onlyKey ? events.filter((ev) => KEY_EVENTS.has(ev.name)) : events;
 
   const sendPing = async () => {
     setPingBusy(true);
@@ -39,15 +63,26 @@ export default function EventsPanel({ events }: EventsPanelProps) {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0 pb-3">
         <CardTitle className="text-base md:text-lg">事件日志</CardTitle>
-        <Badge variant="outline">{events.length} 条</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">{list.length} 条</Badge>
+          <Button
+            variant={onlyKey ? "primary" : "outline"}
+            size="sm"
+            aria-pressed={onlyKey}
+            onClick={() => setOnlyKey((v) => !v)}
+            title="只显示比赛/玩家/图池等关键事件"
+          >
+            关键事件
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="grid gap-3">
         <div className="max-h-[300px] overflow-y-auto rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-2">
-          {events.length === 0 && (
+          {list.length === 0 && (
             <p className="py-6 text-center text-sm text-(--pc-faint)">暂无事件…</p>
           )}
           <div className="flex flex-col gap-2">
-            {events.map((ev) => (
+            {list.map((ev) => (
               <div key={ev.id} className="border-b border-dashed border-(--pc-border) pb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-(--pc-ink)">{ev.name}</span>

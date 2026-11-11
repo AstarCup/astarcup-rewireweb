@@ -14,6 +14,7 @@ import {
   type ChatLine,
   type EventLogEntry,
   type OsuChatMessage,
+  type OsuUserLite,
   type RefBindStatus,
   type RefConnectionState,
   type RefRoomState,
@@ -21,6 +22,7 @@ import {
 } from "@/lib/ref";
 import type { DisplayScore } from "@/lib/types";
 import { runChatInput } from "@/components/referee/chatCommands";
+import { useMatchTimer } from "@/components/referee/useMatchTimer";
 import RefereeTopBar from "@/components/referee/RefereeTopBar";
 import PlayersPanel from "@/components/referee/PlayersPanel";
 import MatchControlPanel from "@/components/referee/MatchControlPanel";
@@ -126,6 +128,82 @@ export default function RefereePage() {
   const meIdRef = useRef<string | null>(null);
   meIdRef.current = user?.osuId ?? null;
 
+  // ---- 用户资料缓存：房间模型的玩家/裁判只有 ID，资料靠 /api/ref/user 补（照 apl-ref 的 Room.GetUser） ----
+  const userCacheRef = useRef(new Map<number, OsuUserLite>());
+  const userPendingRef = useRef(new Map<number, Promise<OsuUserLite | null>>());
+
+  const getUserCached = useCallback(async (id: number): Promise<OsuUserLite | null> => {
+    if (!Number.isFinite(id) || id <= 0) return null;
+    const cached = userCacheRef.current.get(id);
+    if (cached) return cached;
+    const pending = userPendingRef.current.get(id);
+    if (pending) return pending;
+    const req = refApi
+      .user(id)
+      .then((res) => {
+        userPendingRef.current.delete(id);
+        if (!res.ok || !res.data?.id) return null;
+        userCacheRef.current.set(id, res.data);
+        return res.data;
+      })
+      .catch(() => {
+        userPendingRef.current.delete(id);
+        return null;
+      });
+    userPendingRef.current.set(id, req);
+    return req;
+  }, []);
+
+  /** 把缺失资料的用户补进房间状态 */
+  const ensureUsers = useCallback(
+    (ids: number[]) => {
+      const missing = ids.filter((id) => {
+        if (!Number.isFinite(id) || id <= 0) return false;
+        const r = roomRef.current;
+        if (!r) return false;
+        const u = r.players[id] ?? r.refs[id];
+        return !!u && !u.user;
+      });
+      for (const id of new Set(missing)) {
+        void getUserCached(id).then((u) => {
+          const r = roomRef.current;
+          if (!u || !r) return;
+          const next = mergeUser(r, u);
+          roomRef.current = next;
+          setRoom(next);
+        });
+      }
+    },
+    [getUserCached],
+  );
+
+  // ---- 房间倒计时播报（!mp timer / 开始比赛带倒计时） ----
+  const timer = useMatchTimer(async (text) => {
+    const channel = roomRef.current?.chatChannelId;
+    if (channel == null) return false;
+    const res = await refApi.sendChat(channel, text);
+    if (!res.ok) {
+      toast({ variant: "destructive", title: "倒计时播报失败", description: res.error.message });
+    }
+    return res.ok;
+  });
+  // 事件回调里只取当前 timer，避免把每秒变化的 remaining 带进 effect 依赖
+  const timerRef = useRef(timer);
+  timerRef.current = timer;
+
+  // ---- 断线重连提示：断线期间的事件收不到，提醒必要时重新加入 ----
+  const prevConnRef = useRef<RefConnectionState>("disconnected");
+  useEffect(() => {
+    const prev = prevConnRef.current;
+    prevConnRef.current = connState;
+    if (prev !== "connected" && connState === "connected" && roomRef.current) {
+      toast({
+        title: "已重新连接裁判服务器",
+        description: "断线期间的事件可能缺失，房间状态不对时请重新加入房间。",
+      });
+    }
+  }, [connState]);
+
   const [events, setEvents] = useState<EventLogEntry[]>([]);
   const eventIdRef = useRef(0);
   const [scores, setScores] = useState<DisplayScore[] | null>(null);
@@ -141,47 +219,78 @@ export default function RefereePage() {
     ]);
   }, []);
 
-  const appendUserMessages = useCallback((msgs: OsuChatMessage[]) => {
-    const roomNow = roomRef.current;
-    const meId = meIdRef.current;
-    const additions: ChatLine[] = [];
-    for (const msg of msgs) {
-      const id = asNum(msg.id) ?? ++lineIdRef.current + 1000000;
-      if (id <= lastChatIdRef.current) continue;
-      lastChatIdRef.current = Math.max(lastChatIdRef.current, id);
-      const uid = asNum(msg.user_id) ?? asNum(msg.sender_id) ?? 0;
-      const known = roomNow?.players[uid] ?? roomNow?.refs[uid];
-      const sender = msg.sender;
-      const username =
-        known?.user?.username ||
-        sender?.username ||
-        (meId != null && String(uid) === meId ? (user?.username ?? "") : "") ||
-        `玩家 #${uid}`;
-      const avatarUrl = known?.user?.avatar_url ?? sender?.avatar_url ?? null;
-      additions.push({
-        kind: "user",
-        id: `u-${id}`,
-        userId: uid,
-        username,
-        avatarUrl,
-        content: String(msg.content ?? ""),
-        isAction: !!msg.is_action,
-        at: String(msg.timestamp ?? ""),
+  const appendUserMessages = useCallback(
+    async (msgs: OsuChatMessage[]) => {
+      const meId = meIdRef.current;
+      const prevMax = lastChatIdRef.current;
+      const fresh = msgs.filter((m) => {
+        const id = asNum(m.id);
+        return id != null && id > prevMax;
       });
-    }
-    if (additions.length) setChatLines((prev) => [...prev, ...additions]);
-    // 顺手把消息里的 sender 资料并进用户缓存
-    const withSenders = msgs.filter((m) => m.sender && asNum(m.sender.id) != null);
-    if (withSenders.length) {
-      setRoom((prev) => {
-        if (!prev) return prev;
-        let r = prev;
-        for (const m of withSenders) r = mergeUser(r, m.sender as NonNullable<typeof m.sender>);
-        return r;
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      if (fresh.length === 0) return;
+      // 先推进游标再做 await，避免轮询与"发送后回显"并发时重复插入
+      lastChatIdRef.current = Math.max(
+        prevMax,
+        ...fresh.map((m) => asNum(m.id) ?? 0),
+      );
+
+      // 发送者资料：本地没有的先补一次（照 apl-ref 的 Room.GetUser）
+      const resolved = new Map<number, OsuUserLite>();
+      for (const m of fresh) {
+        const uid = asNum(m.user_id) ?? asNum(m.sender_id) ?? 0;
+        if (uid <= 0 || m.sender || resolved.has(uid)) continue;
+        const known = roomRef.current?.players[uid] ?? roomRef.current?.refs[uid];
+        if (known?.user) continue;
+        if (meId != null && String(uid) === meId) continue;
+        const u = await getUserCached(uid);
+        if (u) resolved.set(uid, u);
+      }
+
+      const roomNow = roomRef.current;
+      const additions: ChatLine[] = [];
+      for (const msg of fresh) {
+        const id = asNum(msg.id) ?? ++lineIdRef.current + 1000000;
+        const uid = asNum(msg.user_id) ?? asNum(msg.sender_id) ?? 0;
+        const known = roomNow?.players[uid] ?? roomNow?.refs[uid];
+        const sender = msg.sender;
+        const fetched = resolved.get(uid);
+        const username =
+          known?.user?.username ||
+          sender?.username ||
+          fetched?.username ||
+          (meId != null && String(uid) === meId ? (user?.username ?? "") : "") ||
+          `玩家 #${uid}`;
+        const avatarUrl =
+          known?.user?.avatar_url ?? sender?.avatar_url ?? fetched?.avatar_url ?? null;
+        additions.push({
+          kind: "user",
+          id: `u-${id}`,
+          userId: uid,
+          username,
+          avatarUrl,
+          content: String(msg.content ?? ""),
+          isAction: !!msg.is_action,
+          at: String(msg.timestamp ?? ""),
+        });
+      }
+      if (additions.length) setChatLines((prev) => [...prev, ...additions]);
+
+      // 顺手把消息里带的 / 刚补到的资料并进用户缓存
+      const withUsers: OsuUserLite[] = [];
+      for (const m of fresh) if (m.sender?.id != null) withUsers.push(m.sender);
+      withUsers.push(...resolved.values());
+      if (withUsers.length) {
+        const current = roomRef.current;
+        if (current) {
+          let r = current;
+          for (const u of withUsers) r = mergeUser(r, u);
+          roomRef.current = r;
+          setRoom(r);
+        }
+      }
+    },
+    [getUserCached, user?.username],
+  );
 
   // ---- 比分（MatchCompleted 后拉取） ----
   const loadScores = useCallback(async (roomId: number, playlistId: number) => {
@@ -220,30 +329,47 @@ export default function RefereePage() {
     lastChatIdRef.current = 0;
   }, []);
 
-  const handleRoomJoined = useCallback((resp: RoomJoinedResponse) => {
-    const state = createRoomState(resp);
-    roomRef.current = state;
-    setRoom(state);
-    setScores(null);
-    setChatLines([]);
-    lastChatIdRef.current = 0;
-  }, []);
+  const handleRoomJoined = useCallback(
+    (resp: RoomJoinedResponse) => {
+      const state = createRoomState(resp);
+      roomRef.current = state;
+      setRoom(state);
+      setScores(null);
+      setChatLines([]);
+      lastChatIdRef.current = 0;
+      // 房间快照里只有 ID，补全玩家/裁判资料（照 apl-ref 构造 Room 时的 GetUser）
+      ensureUsers([
+        ...(resp.players ?? []).map((p) => p.user_id),
+        ...(resp.referees ?? []).map((r) => r.user_id),
+      ]);
+    },
+    [ensureUsers],
+  );
 
-  // ---- 聊天轮询（5s）与发送 ----
+  // ---- 聊天轮询（5s，页面隐藏时暂停）与发送 ----
   useEffect(() => {
     const channel = room?.chatChannelId;
     if (!room || channel == null) return;
     let stopped = false;
+    let busy = false;
     const poll = async () => {
+      if (busy || document.hidden) return;
+      busy = true;
       const res = await refApi.getChatMessages(channel, lastChatIdRef.current || undefined);
+      busy = false;
       if (stopped || !res.ok || !Array.isArray(res.data)) return;
-      appendUserMessages(res.data);
+      void appendUserMessages(res.data);
     };
     void poll();
     const timer = window.setInterval(() => void poll(), 5000);
+    const onVisible = () => {
+      if (!document.hidden) void poll();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       stopped = true;
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [room, room?.chatChannelId, appendUserMessages]);
 
@@ -255,11 +381,20 @@ export default function RefereePage() {
         room: roomNow,
         system: appendSystem,
         closeRoom: handleCloseRoom,
+        timer: timerRef.current,
       });
       if (handled) return;
+      if (roomNow.chatChannelId == null) {
+        toast({
+          variant: "destructive",
+          title: "房间聊天频道未就绪",
+          description: "请等待房间加载完成后再发送消息",
+        });
+        return;
+      }
       const res = await refApi.sendChat(roomNow.chatChannelId, text);
       if (res.ok && res.data) {
-        appendUserMessages([res.data]);
+        void appendUserMessages([res.data]);
       } else if (!res.ok) {
         toast({ variant: "destructive", title: "发送失败", description: res.error.message });
       }
@@ -278,9 +413,21 @@ export default function RefereePage() {
             ...prev,
           ].slice(0, 200),
         );
+        const dataObj = (ev.data ?? {}) as Record<string, unknown>;
+        // 这些提示跟有没有进房间无关：被邀请当裁判 / 自己被移除裁判权限
+        if (ev.event === "RefereeInvited") {
+          const rid = asNum(dataObj.room_id);
+          toast({ title: "收到裁判邀请", description: rid ? `房间 #${rid}` : undefined });
+        }
+        if (
+          ev.event === "RefereeRemoved" &&
+          meIdRef.current != null &&
+          String(dataObj.user_id) === meIdRef.current
+        ) {
+          toast({ variant: "destructive", title: "你已被移除裁判权限" });
+        }
         const roomNow = roomRef.current;
         if (!roomNow) return;
-        const dataObj = (ev.data ?? {}) as Record<string, unknown>;
         const evRoomId = asNum(dataObj.room_id);
         // 只把当前房间的事件并入状态（照 models.js 的 room_id 比较）
         if (evRoomId != null && evRoomId !== roomNow.id) return;
@@ -288,6 +435,17 @@ export default function RefereePage() {
         roomRef.current = result.room;
         setRoom(result.room);
         result.systemMessages.forEach(appendSystem);
+        if (result.needUserIds.length) ensureUsers(result.needUserIds);
+        // 服务器端倒计时被停掉（含别的裁判操作）时，本地播报也停
+        if (ev.event === "CountdownStopped") timerRef.current.stop(false);
+        // 比赛开始/结束/中止后倒计时不再播报
+        if (
+          ev.event === "MatchStarted" ||
+          ev.event === "MatchAborted" ||
+          ev.event === "MatchCompleted"
+        ) {
+          timerRef.current.stop(false);
+        }
         if (result.kickedSelf) {
           toast({ variant: "destructive", title: "你已被移出房间" });
           handleCloseRoom();
@@ -301,7 +459,14 @@ export default function RefereePage() {
       },
     });
     return stop;
-  }, [user, bindStatus?.bound, appendSystem, handleCloseRoom, loadScores]);
+  }, [
+    user,
+    bindStatus?.bound,
+    appendSystem,
+    handleCloseRoom,
+    loadScores,
+    ensureUsers,
+  ]);
 
   // ---- 绑定 / 解绑 ----
   const [bindBusy, setBindBusy] = useState(false);
@@ -425,7 +590,7 @@ export default function RefereePage() {
               {room ? (
                 <>
                   <PlayersPanel room={room} />
-                  <MatchControlPanel room={room} />
+                  <MatchControlPanel room={room} timer={timer} />
                 </>
               ) : (
                 <PlaceholderCard text="创建或加入房间后，在此管理玩家与比赛控制" />
@@ -439,6 +604,7 @@ export default function RefereePage() {
                   <ChatPanel
                     lines={chatLines}
                     matchStatus={room.status}
+                    disabled={room.chatChannelId == null}
                     onSend={(text) => void handleSend(text)}
                   />
                   <ScoresPanel

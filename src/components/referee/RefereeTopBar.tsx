@@ -4,6 +4,7 @@ import { toast } from "@/hooks/use-toast";
 import {
   hub,
   invokeHub,
+  resolveUserId,
   roomLink,
   slotCountError,
   type ChangeRoomSettingsParams,
@@ -86,16 +87,22 @@ export default function RefereeTopBar({
   };
 
   const submitAddReferee = async () => {
-    const userId = Number(refUserId.trim());
-    if (!Number.isFinite(userId) || userId <= 0) {
-      toast({ variant: "destructive", title: "请输入有效的用户 ID" });
+    const raw = refUserId.trim();
+    if (!raw) {
+      toast({ variant: "destructive", title: "请输入用户名或 osu! ID" });
       return;
     }
     setRefBusy(true);
+    const userId = await resolveUserId(raw);
+    if (userId == null) {
+      setRefBusy(false);
+      toast({ variant: "destructive", title: "找不到该用户", description: raw });
+      return;
+    }
     const res = await invokeHub(hub.addReferee(room.id, userId));
     setRefBusy(false);
     if (res.ok) {
-      toast({ title: "已邀请裁判", description: `用户 #${userId}` });
+      toast({ title: "已添加裁判", description: `用户 #${userId}` });
       setRefOpen(false);
       setRefUserId("");
     } else {
@@ -278,16 +285,20 @@ export default function RefereeTopBar({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>添加裁判</DialogTitle>
-            <DialogDescription>输入对方的 osu! 用户 ID（数字）邀请其成为裁判。</DialogDescription>
+            <DialogDescription>
+              输入对方的 osu! 用户名或 ID（支持 #123456），添加后对方即可协助执裁。
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-1.5">
-            <Label htmlFor="ref-invite-userid">用户 ID</Label>
+            <Label htmlFor="ref-invite-userid">用户名 / 用户 ID</Label>
             <Input
               id="ref-invite-userid"
-              type="number"
               value={refUserId}
               onChange={(e) => setRefUserId(e.target.value)}
-              placeholder="例如 123456"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void submitAddReferee();
+              }}
+              placeholder="例如 applearon 或 123456"
             />
           </div>
           <DialogFooter>

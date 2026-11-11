@@ -133,6 +133,8 @@ export interface HubEventResult {
   kickedSelf: boolean;
   /** MatchCompleted 时需要刷新比分的 playlist item id */
   refreshScoresWith: number | null;
+  /** 事件里出现、但本地还没有资料的用户（照 apl-ref 的 GetUser 补全） */
+  needUserIds: number[];
 }
 
 export interface RefStatus {
@@ -438,6 +440,10 @@ export function applyHubEvent(
   const systemMessages: string[] = [];
   let kickedSelf = false;
   let refreshScoresWith: number | null = null;
+  const needUserIds: number[] = [];
+  const wantUser = (u: RefUser | undefined | null) => {
+    if (u && !u.user && !needUserIds.includes(u.id)) needUserIds.push(u.id);
+  };
   const data = ev.data ?? {};
   const next: RefRoomState = {
     ...room,
@@ -464,6 +470,7 @@ export function applyHubEvent(
       }
       next.players[id] = u;
       if (next.maxParticipants == null) next.playerSlots = [...next.playerSlots, id];
+      wantUser(u);
       break;
     }
     case "UserLeft": {
@@ -482,7 +489,8 @@ export function applyHubEvent(
       break;
     }
     case "UserBanned": {
-      const id = asNum(data.user_id);
+      // 源事件字段是 banned_user_id（apl-ref 这里漏了，删到 undefined）
+      const id = asNum(data.banned_user_id) ?? asNum(data.user_id);
       if (id == null) break;
       delete next.players[id];
       delete next.refs[id];
@@ -495,6 +503,7 @@ export function applyHubEvent(
       const u = next.refs[id] ?? next.players[id] ?? mkUser(id, "referee");
       u.status = "referee";
       next.refs[id] = u;
+      wantUser(u);
       break;
     }
     case "RefereeRemoved": {
@@ -576,19 +585,24 @@ export function applyHubEvent(
       break;
     case "MatchCompleted": {
       next.status = "Idle";
-      refreshScoresWith = currentPlaylistItem(next)?.id ?? null;
+      // 事件自带 playlist_item_id（照 apl-ref index.js 的 MatchCompleted）；
+      // 房间可能已自动切到下一张图，用当前图会取错比分。
+      const playedId = asNum(data.playlist_item_id);
+      refreshScoresWith = playedId ?? currentPlaylistItem(next)?.id ?? null;
       break;
     }
     case "RollCompleted": {
       const uid = asNum(data.user_id) ?? -1;
-      const name = displayName(next.players[uid]?.user ?? next.refs[uid]?.user ?? null, uid);
+      const rolled = next.players[uid] ?? next.refs[uid];
+      const name = displayName(rolled?.user ?? null, uid);
       systemMessages.push(`${name} rolled ${data.result}/${data.max}`);
+      if (rolled) wantUser(rolled);
       break;
     }
     default:
       break;
   }
-  return { room: next, systemMessages, kickedSelf, refreshScoresWith };
+  return { room: next, systemMessages, kickedSelf, refreshScoresWith, needUserIds };
 }
 
 // ============ 小工具 ============
@@ -638,6 +652,109 @@ export function modSettingsText(m: RefMod): string {
     .join(" ");
 }
 
+// ============ !mp mods 解析（照 apl-ref index.js 的 handleModChange） ============
+
+/**
+ * Freemod / Freestyle 可选 mod（对应 lazer 的 ValidForMultiplayerAsFreeMod）。
+ * apl-ref 从 mods.json 读；这里取各规则集通用的手动可选 mod 集合。
+ */
+const FREE_MOD_ACRONYMS: Record<number, string[]> = {
+  0: ["EZ", "HD", "HR", "DT", "HT", "FL", "SO", "NF"],
+  1: ["EZ", "HD", "HR", "DT", "HT", "FL", "SO", "NF"],
+  2: ["EZ", "HD", "HR", "DT", "HT", "FL", "SO", "NF"],
+  3: ["EZ", "HD", "HR", "DT", "HT", "FL", "SO", "NF"],
+};
+
+/** 互斥 mod（用于把 allowed_mods 里和 required_mods 冲突的项剔掉） */
+const INCOMPATIBLE: Record<string, string[]> = {
+  DT: ["HT"],
+  HT: ["DT"],
+  EZ: ["HR"],
+  HR: ["EZ"],
+  HD: ["FL"],
+  FL: ["HD"],
+  NF: ["SD", "PF"],
+  SD: ["NF", "PF"],
+  PF: ["NF", "SD"],
+  SO: ["SD", "PF"],
+};
+
+const SPECIAL_MODS = new Set(["FM", "NM"]);
+
+export interface ExpandedMods {
+  required: RefMod[];
+  allowed: RefMod[];
+  /** 解析失败的原因（不改动图池） */
+  error?: string;
+}
+
+/**
+ * `!mp mods HD HR` / `!mp mods FM` / `!mp mods HD FM` → required + allowed。
+ * 与 apl-ref 一致：FM 展开成 freemod 白名单，并与 required 中互斥的 mod 做差集；
+ * 不接受带参数的写法（如 DA3,4），mod 参数请在「图池队列 → 编辑」里设置。
+ */
+export function expandModsText(text: string, rulesetId: number): ExpandedMods {
+  const tokens = text
+    .split(/[\s+,]+/)
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+  if (tokens.length === 0) return { required: [], allowed: [] };
+
+  const required: RefMod[] = [];
+  let freeMod = false;
+  for (const token of tokens) {
+    if (token.length < 2) {
+      return { required, allowed: [], error: `无效的 mod 缩写：${token}` };
+    }
+    const acronym = token.slice(0, 2);
+    if (token.length > 2) {
+      return {
+        required,
+        allowed: [],
+        error: `暂不解析带参数的 mod（${token}），请在「图池队列 → 编辑」里设置 mod 参数`,
+      };
+    }
+    if (acronym === "NM") continue;
+    if (acronym === "FM") {
+      freeMod = true;
+      continue;
+    }
+    if (!SPECIAL_MODS.has(acronym) && !required.some((m) => m.acronym === acronym)) {
+      required.push({ acronym });
+    }
+  }
+
+  const blocked = new Set<string>(required.map((m) => m.acronym));
+  for (const m of required) for (const bad of INCOMPATIBLE[m.acronym] ?? []) blocked.add(bad);
+
+  const allowed = freeMod
+    ? (FREE_MOD_ACRONYMS[rulesetId] ?? FREE_MOD_ACRONYMS[0])
+        .filter((a) => !blocked.has(a))
+        .map((acronym) => ({ acronym }))
+    : [];
+
+  return { required, allowed };
+}
+
+/** 房间设置摘要（!mp settings / 顶栏提示用） */
+export function roomSettingsSummary(room: RefRoomState): string {
+  const type = room.type === "team_versus" ? "团队赛" : "个人赛";
+  const size = room.maxParticipants == null ? "不限人数" : `限 ${room.maxParticipants} 人`;
+  const players = Object.values(room.players).filter((p) => p.status !== "referee").length;
+  const refs = Object.keys(room.refs).length;
+  return [
+    `房间 #${room.id}「${room.name}」`,
+    type,
+    size,
+    room.locked ? "已锁定" : "未锁定",
+    `玩家 ${players}`,
+    refs > 0 ? `裁判 ${refs}` : null,
+    room.password ? "有密码" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 // ============ beatmap 缓存 ============
 
 const beatmapCache = new Map<number, Promise<OsuBeatmap | null>>();
@@ -645,15 +762,23 @@ const beatmapCache = new Map<number, Promise<OsuBeatmap | null>>();
 export function getBeatmapCached(beatmapId: number): Promise<OsuBeatmap | null> {
   let p = beatmapCache.get(beatmapId);
   if (!p) {
-    p = refApi.beatmap(beatmapId).then((res) => (res.ok ? res.data : null));
+    p = refApi.beatmap(beatmapId).then((res) => {
+      // 只缓存成功结果，失败下次还能重试（照 apl-ref 的 window.beatmaps 缓存）
+      if (!res.ok) {
+        beatmapCache.delete(beatmapId);
+        return null;
+      }
+      return res.data;
+    });
     beatmapCache.set(beatmapId, p);
   }
   return p;
 }
 
-/** 解析「用户名或 ID」→ 用户 ID（找不到返回 null） */
+/** 解析「用户名 / ID / #ID」→ 用户 ID（找不到返回 null） */
 export async function resolveUserId(nameOrId: string): Promise<number | null> {
-  const t = nameOrId.trim();
+  // 照 apl-ref 的 ircStyleUsername：`#123456` 直接当 osu! ID
+  const t = nameOrId.trim().replace(/^#/, "");
   if (!t) return null;
   const asId = asNum(t);
   if (asId != null) return asId;

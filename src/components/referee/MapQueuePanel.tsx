@@ -61,6 +61,48 @@ function BeatmapTitle({ beatmapId }: { beatmapId: number }) {
   );
 }
 
+function mmss(total: number): string {
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** 当前图的关键谱面信息（时长/BPM/星数/CS AR OD HP），照 apl-ref TODO 的 Map Stats */
+function BeatmapStats({ beatmapId }: { beatmapId: number }) {
+  const [map, setMap] = useState<OsuBeatmap | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void getBeatmapCached(beatmapId).then((m) => {
+      if (alive) setMap(m);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [beatmapId]);
+  if (!map) return null;
+
+  const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const length = num(map.total_length);
+  const items = [
+    length != null ? mmss(length) : null,
+    num(map.bpm) != null ? `${num(map.bpm)!.toFixed(0)} BPM` : null,
+    num(map.difficulty_rating) != null ? `★${num(map.difficulty_rating)!.toFixed(2)}` : null,
+    num(map.cs) != null ? `CS${num(map.cs)}` : null,
+    num(map.ar) != null ? `AR${num(map.ar)}` : null,
+    num(map.od) != null ? `OD${num(map.od)}` : null,
+    num(map.hp) != null ? `HP${num(map.hp)}` : null,
+  ].filter((x): x is string => !!x);
+
+  if (items.length === 0) return null;
+  return (
+    <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[10px] font-bold text-(--pc-slate)">
+      {items.map((t) => (
+        <span key={t} className="rounded bg-(--pc-paper) px-1.5 py-0.5">
+          {t}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 interface PlaylistDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -259,6 +301,9 @@ export default function MapQueuePanel({ room }: MapQueuePanelProps) {
                   <div className="mt-1 truncate text-sm font-bold text-(--pc-ink)">
                     <BeatmapTitle beatmapId={Number(item.beatmap_id)} />
                   </div>
+                  {Number(item.order) === 0 && (
+                    <BeatmapStats beatmapId={Number(item.beatmap_id)} />
+                  )}
                   <div className="mt-1 text-xs text-(--pc-faint)">
                     ID {item.beatmap_id} · 必选 {modsText(item.required_mods) || "无"} · 允许{" "}
                     {modsText(item.allowed_mods) || "无"} · Freestyle {item.freestyle ? "是" : "否"}
