@@ -8,6 +8,7 @@ import {
   History,
   Map as MapIcon,
   MessageCircle,
+  SmilePlus,
   Users,
 } from "lucide-react";
 import { useApp } from "@/lib/app-context";
@@ -16,11 +17,14 @@ import { cn, osuAvatarUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import AnimatedLogo from "@/components/layout/AnimatedLogo";
+import BoardStickers, { BOARD_W, BOARD_H } from "@/components/home/BoardStickers";
+import EmojiPicker from "@/components/emoji/EmojiPicker";
 import winners from "@/data/winners.json";
 import RegisterDialog from "@/components/RegisterDialog";
 import { REG_STATUS_LABEL } from "@/lib/types";
-import type { NewsItem } from "@/lib/types";
+import type { CanvasSticker, NewsItem } from "@/lib/types";
 import { useFetch } from "@/hooks/useFetch";
+import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 
 interface WinnerCard {
@@ -38,9 +42,7 @@ interface WinnersData {
 
 const winnersData = winners as WinnersData;
 
-/** 画布逻辑尺寸（所有元素都用这个坐标系里的绝对像素定位） */
-const BOARD_W = 1600;
-const BOARD_H = 900;
+/** 画布逻辑尺寸由 BoardStickers 导出（贴纸与画布共用同一坐标系） */
 
 /** 拖拽限位：左右 300px、上下 400px；超出部分做阻尼，松手后缓回 */
 const LIMIT_X = 300;
@@ -133,6 +135,76 @@ export default function HomePage() {
   const isAdmin = !!permissions?.isadmin;
   const regStatus = user?.registrationStatus ?? "not_registered";
 
+  // ---- 画布贴纸 ----
+  const [boardStickers, setBoardStickers] = useState<CanvasSticker[]>([]);
+  const [selectedSticker, setSelectedSticker] = useState<number | null>(null);
+  const [stickerPickerOpen, setStickerPickerOpen] = useState(false);
+  const stickersRef = useRef<CanvasSticker[]>([]);
+  stickersRef.current = boardStickers;
+
+  // 贴纸与其它数据并行加载，不阻塞画布
+  useEffect(() => {
+    let cancelled = false;
+    void api.get<CanvasSticker[]>("/api/canvas-stickers?page=home").then((res) => {
+      if (!cancelled && res.ok) setBoardStickers(res.data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const canEditSticker = (s: CanvasSticker) =>
+    !!user && (s.createdBy === user.osuId || isAdmin);
+
+  const draftSticker = (
+    id: number,
+    patch: Partial<Pick<CanvasSticker, "x" | "y" | "scale" | "rotation">>,
+  ) => {
+    setBoardStickers((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  };
+
+  // 拖动结束才落库，避免每帧请求
+  const commitSticker = async (id: number) => {
+    const s = stickersRef.current.find((it) => it.id === id);
+    if (!s) return;
+    const res = await api.patch(`/api/canvas-stickers/${id}`, {
+      x: s.x,
+      y: s.y,
+      scale: s.scale,
+      rotation: s.rotation,
+    });
+    if (!res.ok) {
+      toast({ variant: "destructive", title: "保存贴纸失败", description: res.error.message });
+    }
+  };
+
+  const deleteBoardSticker = async (s: CanvasSticker) => {
+    const res = await api.delete(`/api/canvas-stickers/${s.id}`);
+    if (!res.ok) {
+      toast({ variant: "destructive", title: "删除失败", description: res.error.message });
+      return;
+    }
+    setBoardStickers((prev) => prev.filter((it) => it.id !== s.id));
+    setSelectedSticker((cur) => (cur === s.id ? null : cur));
+  };
+
+  const addBoardSticker = async (token: string) => {
+    const res = await api.post<CanvasSticker>("/api/canvas-stickers", {
+      page: "home",
+      token,
+      x: BOARD_W / 2,
+      y: BOARD_H / 2,
+      scale: 1,
+      rotation: 0,
+    });
+    if (!res.ok) {
+      toast({ variant: "destructive", title: "贴表情失败", description: res.error.message });
+      return;
+    }
+    setBoardStickers((prev) => [...prev, res.data]);
+    setSelectedSticker(res.data.id);
+  };
+
   const champion = [...winnersData.cards].sort((a, b) => a.rank - b.rank)[0];
 
   // 每次刷新随机点亮 6 个字符（每行一个），用品牌色实心填充
@@ -215,6 +287,7 @@ export default function HomePage() {
         ref={stageRef}
         className="relative -mt-[4.125rem] hidden h-[100svh] touch-none overflow-hidden select-none xl:block"
         onPointerDown={(e) => {
+          setSelectedSticker(null);
           drag.current = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: offset.x, oy: offset.y };
           moved.current = false;
           setDragging(true);
@@ -246,6 +319,8 @@ export default function HomePage() {
           if (moved.current) {
             e.preventDefault();
             e.stopPropagation();
+            // 只吞掉拖动结束后的这一下，避免影响后续按钮点击
+            moved.current = false;
           }
         }}
       >
@@ -491,8 +566,39 @@ export default function HomePage() {
                 </Button>
               </Piece>
             )}
+
+            {/* 画布贴纸（可拖动 / 缩放 / 旋转） */}
+            <BoardStickers
+              stickers={boardStickers}
+              boardScale={scale}
+              selectedId={selectedSticker}
+              editable={canEditSticker}
+              onSelect={setSelectedSticker}
+              onDraft={draftSticker}
+              onCommit={commitSticker}
+              onDelete={deleteBoardSticker}
+            />
           </div>
         </div>
+
+        {/* 贴表情入口（登录后显示） */}
+        {user && (
+          <button
+            type="button"
+            title="在画布上贴一个表情"
+            onPointerDown={(e) => {
+              // 按钮不参与画布拖动；同时清掉「刚拖过画布」的标记，
+              // 否则 section 的 onClickCapture 会把这次点击吞掉
+              moved.current = false;
+              e.stopPropagation();
+            }}
+            onClick={() => setStickerPickerOpen(true)}
+            className="absolute bottom-20 left-6 z-40 flex items-center gap-2 rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-3.5 py-2 text-xs font-bold text-(--pc-slate) shadow-[3px_3px_0px_rgba(0,0,0,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-pc-primary hover:text-pc-primary"
+          >
+            <SmilePlus className="h-4 w-4" />
+            贴表情
+          </button>
+        )}
       </section>
 
       {/* ================= 窄屏：竖排 ================= */}
@@ -597,6 +703,15 @@ export default function HomePage() {
       </section>
 
       <RegisterDialog open={registerOpen} onOpenChange={setRegisterOpen} />
+
+      {/* 全局表情选择器：选完贴到画布中央，再拖动/缩放/旋转 */}
+      <EmojiPicker
+        open={stickerPickerOpen}
+        onOpenChange={setStickerPickerOpen}
+        onPick={(token) => {
+          void addBoardSticker(token);
+        }}
+      />
     </div>
   );
 }

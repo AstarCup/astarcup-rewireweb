@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type VditorInstance from "vditor";
 import "vditor/dist/index.css";
 import { EMOJI_MAP } from "@/lib/emoji-data";
-import EmojiPicker from "@/components/staff/EmojiPicker";
+import EmojiPicker from "@/components/emoji/EmojiPicker";
 
 interface MarkdownEditorProps {
   value: string;

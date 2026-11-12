@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -57,9 +56,6 @@ export default function EmojiPicker({ open, onOpenChange, onPick }: EmojiPickerP
               {currentPack ? currentPack.name : `全部（${EMOJI_PACKS.length} 包）`}
             </Badge>
           </div>
-          <DialogDescription className="text-xs">
-            点表情插入到光标处，Markdown 里写作 <code className="font-bold">:名称:</code>
-          </DialogDescription>
         </DialogHeader>
 
         {/* 表情网格 */}

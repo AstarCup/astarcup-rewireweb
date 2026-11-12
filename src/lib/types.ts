@@ -46,6 +46,30 @@ export interface Permissions {
   isadmin: boolean;
 }
 
+/** 选手卡片上的表情贴纸（x/y 为 0–1 的相对坐标） */
+export interface PlayerSticker {
+  id: number;
+  osuId: string;
+  token: string;
+  x: number;
+  y: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** 首页画布贴纸（x/y 为 1600×900 画布坐标，scale/rotation 可调） */
+export interface CanvasSticker {
+  id: number;
+  page: string;
+  token: string;
+  x: number;
+  y: number;
+  scale: number;
+  rotation: number;
+  createdBy: string;
+  createdAt: string;
+}
+
 /** 机器人平台身份绑定（QQ / openid 等 -> osu 账号） */
 export interface BotBinding {
   id: number;

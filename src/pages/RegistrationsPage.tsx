@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, ExternalLink } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import { Copy, ExternalLink, Globe, MapPin, SmilePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -24,15 +31,17 @@ import {
 } from "@/components/ui/dialog";
 import RadarChart from "@/components/ui/RadarChart";
 import SeasonBadge from "@/components/SeasonBadge";
+import EmojiPicker from "@/components/emoji/EmojiPicker";
 import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { EMOJI_MAP } from "@/lib/emoji-data";
 import { cn, fmtInt, osuAvatarUrl } from "@/lib/utils";
 import { useApp } from "@/lib/app-context";
 import { site } from "@/lib/site";
 import { seasonOptions as buildSeasonOptions } from "@/lib/types";
 import { seasonLabel } from "@/lib/types";
-import type { SessionUser, Settings } from "@/lib/types";
+import type { PlayerSticker, SessionUser, Settings } from "@/lib/types";
 
 type FilterKey = "all" | "approved" | "registered";
 
@@ -107,91 +116,286 @@ async function copyOsuId(osuId: string) {
   }
 }
 
+interface PlayerCardProps {
+  player: SessionUser;
+  settings: Settings | null;
+  stickers: PlayerSticker[];
+  /** 当前处于「放置表情」模式时，这里是待放置的 token */
+  placingToken: string | null;
+  /** 当前登录用户 osuId（未登录为空） */
+  viewerOsuId: string | null;
+  isAdmin: boolean;
+  onSelect: (p: SessionUser) => void;
+  onAddSticker: (p: SessionUser) => void;
+  onPlaceSticker: (p: SessionUser, token: string, x: number, y: number) => void;
+  onDeleteSticker: (s: PlayerSticker) => void;
+}
+
 function PlayerCard({
   player,
   settings,
+  stickers,
+  placingToken,
+  viewerOsuId,
+  isAdmin,
   onSelect,
-}: {
-  player: SessionUser;
-  settings: Settings | null;
-  onSelect: (p: SessionUser) => void;
-}) {
+  onAddSticker,
+  onPlaceSticker,
+  onDeleteSticker,
+}: PlayerCardProps) {
   const cover = coverUrl(player);
   // 只有「使用 g0v0 比赛」开启时才展示 g0v0 绑定信息
   const showGv0 = String(settings?.use_gv0 ?? false) === "true";
+  const cardRef = useRef<HTMLDivElement>(null);
+  // 放置模式下跟随鼠标的预览位置（0–1）
+  const [preview, setPreview] = useState<{ x: number; y: number } | null>(null);
+  const placingSrc = placingToken ? EMOJI_MAP[placingToken] : undefined;
+
+  // 移动端长按加表情：按住 480ms 触发，移动超过 12px 视为滚动
+  const longPressTimer = useRef<number | null>(null);
+  const longPressReady = useRef(false);
+  const pressStart = useRef<{ x: number; y: number } | null>(null);
+  const suppressClick = useRef(false);
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    longPressReady.current = false;
+    pressStart.current = null;
+  };
+
+  useEffect(() => cancelLongPress, []);
+
+  const onCardPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "touch" || placingToken) return;
+    cancelLongPress();
+    pressStart.current = { x: e.clientX, y: e.clientY };
+    longPressTimer.current = window.setTimeout(() => {
+      longPressTimer.current = null;
+      longPressReady.current = true;
+      navigator.vibrate?.(12);
+    }, 480);
+  };
+
+  const onCardPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (!pressStart.current) return;
+    const dx = e.clientX - pressStart.current.x;
+    const dy = e.clientY - pressStart.current.y;
+    if (dx * dx + dy * dy > 12 * 12) cancelLongPress();
+  };
+
+  const onCardPointerUp = () => {
+    const triggered = longPressReady.current;
+    cancelLongPress();
+    if (!triggered) return;
+    // 长按后紧跟的 click 不能再打开详情
+    suppressClick.current = true;
+    window.setTimeout(() => {
+      suppressClick.current = false;
+    }, 500);
+    onAddSticker(player);
+  };
+
+  const ratio = (e: { clientX: number; clientY: number }) => {
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0 || rect.height === 0) return { x: 0.5, y: 0.5 };
+    return {
+      x: Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width)),
+      y: Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height)),
+    };
+  };
+
   return (
-    <HoverCard openDelay={0} closeDelay={100}>
+    <HoverCard openDelay={250} closeDelay={100}>
       <HoverCardTrigger asChild>
-        <button
-          onClick={() => onSelect(player)}
-          className="flex flex-col overflow-hidden rounded-2xl bg-(--pc-white) text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
+        <div
+          ref={cardRef}
+          className="group relative h-full"
+          onPointerDown={onCardPointerDown}
+          onPointerMove={onCardPointerMove}
+          onPointerUp={onCardPointerUp}
+          onPointerCancel={cancelLongPress}
+          onPointerLeave={cancelLongPress}
         >
-          <div
-            className={cn(
-              "relative h-20 w-full overflow-hidden",
-              cover && "bg-gradient-to-br from-pc-teal/40 to-pc-blue/40",
-            )}
+          <button
+            onClick={() => {
+              if (suppressClick.current) {
+                suppressClick.current = false;
+                return;
+              }
+              onSelect(player);
+            }}
+            className="flex h-full w-full flex-col overflow-hidden rounded-2xl bg-(--pc-white) text-left shadow-[4px_4px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_rgba(0,0,0,0.12)]"
           >
-            {cover && (
-              <img src={cover} alt="" className="h-full w-full object-cover" />
-            )}
-            {player.registrationStatus && player.registrationStatus !== "not_registered" && (
-              <span className="absolute right-2 top-2">
-                {statusBadge(player.registrationStatus)}
-              </span>
-            )}
-          </div>
-          <div className="-mt-9 flex flex-col items-center gap-2 px-4 pb-4">
-            <Avatar className="h-16 w-16 rounded-2xl border-4 border-white bg-(--pc-paper)">
-              <AvatarImage src={player.avatarUrl || osuAvatarUrl(player.osuId)} alt={player.username} />
-              <AvatarFallback className="bg-pc-yellow/30 text-lg font-bold text-(--pc-ink)">
-                {player.username?.slice(0, 1).toUpperCase() ?? "?"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="truncate font-bold text-(--pc-ink)">{player.username}</p>
-              <p className="mt-0.5 text-xs text-(--pc-faint)">{player.country ?? "-"}</p>
-            </div>
-            {/* 统计：PP / 世界排名 */}
-            <div className="flex w-full items-center justify-around">
-              <div className="flex-1">
-                <p className="text-xs text-(--pc-faint)">PP</p>
-                <p className="font-sans text-sm font-bold text-pc-blue">{fmtInt(player.pp)}</p>
+            {/* 封面 + 世界/地区排名 */}
+            <div className="relative h-32 w-full overflow-hidden bg-gradient-to-br from-pc-teal/40 to-pc-blue/40">
+              {cover && (
+                <img
+                  src={cover}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                />
+              )}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/10" />
+              <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
+                <span
+                  title="世界排名"
+                  className="flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur-sm"
+                >
+                  <Globe className="h-3 w-3" />
+                  {player.globalRank != null ? `#${fmtInt(player.globalRank)}` : "#-"}
+                </span>
+                <span
+                  title="地区排名"
+                  className="flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur-sm"
+                >
+                  <MapPin className="h-3 w-3" />
+                  {player.countryRank != null ? `#${fmtInt(player.countryRank)}` : "#-"}
+                </span>
               </div>
-              <div className="w-px self-stretch bg-(--pc-border)" />
-              <div className="flex-1">
-                <p className="text-xs text-(--pc-faint)">世界排名</p>
-                <p className="font-sans text-sm font-bold text-(--pc-ink)">
-                  {player.globalRank != null ? `#${fmtInt(player.globalRank)}` : "-"}
-                </p>
-              </div>
-            </div>
-            {/* g0v0：头像 + 玩家名，置于最底部（未启用 g0v0 比赛时不显示） */}
-            {showGv0 && (
-            <div className="flex w-full items-center justify-center gap-1.5 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1">
-              {player.guServerUserId || player.guServerUsername ? (
-                <>
-                  {player.guServerUserId && (
-                    <img
-                      src={site.urls.g0v0Avatar(player.guServerUserId)}
-                      alt=""
-                      className="h-5 w-5 rounded-full border border-(--pc-border) object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  )}
-                  <span className="truncate text-xs font-bold text-pc-teal">
-                    {player.guServerUsername || `#${player.guServerUserId}`}
-                  </span>
-                </>
-              ) : (
-                <span className="text-xs text-(--pc-faint)/60">未绑定 g0v0</span>
+              {player.registrationStatus && player.registrationStatus !== "not_registered" && (
+                <span className="absolute right-2 top-2">
+                  {statusBadge(player.registrationStatus)}
+                </span>
               )}
             </div>
-            )}
-          </div>
-        </button>
+
+            {/* 头像压在封面右下角，下面是玩家名 */}
+            <div className="relative flex flex-1 flex-col px-3 pb-3 pt-2">
+              <Avatar className="absolute -top-8 right-3 h-16 w-16 rounded-xl border-4 border-(--pc-white) bg-(--pc-paper) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]">
+                <AvatarImage
+                  src={player.avatarUrl || osuAvatarUrl(player.osuId)}
+                  alt={player.username}
+                />
+                <AvatarFallback className="bg-pc-yellow/30 text-base font-bold text-(--pc-ink)">
+                  {player.username?.slice(0, 1).toUpperCase() ?? "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 pr-20">
+                <p className="truncate text-[15px] font-bold leading-tight text-(--pc-ink)">
+                  {player.username}
+                </p>
+                <p className="mt-1 truncate text-xs text-(--pc-faint)">
+                  {player.country ?? "-"} · {fmtInt(player.pp)}pp
+                </p>
+              </div>
+              {/* g0v0：头像 + 玩家名（未启用 g0v0 比赛时不显示） */}
+              {showGv0 && (
+                <div className="mt-auto flex items-center gap-1.5 pt-2">
+                  {player.guServerUserId || player.guServerUsername ? (
+                    <>
+                      {player.guServerUserId && (
+                        <img
+                          src={site.urls.g0v0Avatar(player.guServerUserId)}
+                          alt=""
+                          loading="lazy"
+                          className="h-4 w-4 rounded-full border border-(--pc-border) object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      )}
+                      <span className="truncate text-[11px] font-bold text-pc-teal">
+                        {player.guServerUsername || `#${player.guServerUserId}`}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-[11px] text-(--pc-faint)/70">未绑定 g0v0</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </button>
+
+          {/* 贴在卡片上的表情（绝对定位，0–1 相对坐标） */}
+          {stickers.length > 0 && (
+            <div className="pointer-events-none absolute inset-0 z-20">
+              {stickers.map((s) => {
+                const src = EMOJI_MAP[s.token];
+                if (!src) return null;
+                const removable = isAdmin || (viewerOsuId != null && s.createdBy === viewerOsuId);
+                return (
+                  <span
+                    key={s.id}
+                    className="group/sticker pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: `${s.x * 100}%`, top: `${s.y * 100}%` }}
+                  >
+                    <img
+                      src={src}
+                      alt={s.token}
+                      title={`:${s.token}:`}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-9 w-9 object-contain drop-shadow-[0_2px_2px_rgba(0,0,0,0.25)]"
+                    />
+                    {removable && !placingToken && (
+                      <button
+                        type="button"
+                        title="删除这个表情"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDeleteSticker(s);
+                        }}
+                        className="absolute -right-1 -top-1 hidden h-4 w-4 place-items-center rounded-full bg-(--pc-ink) text-white group-hover/sticker:grid hover:bg-pc-primary"
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 贴表情入口：只在登录后显示，hover 卡片时出现在封面右上 */}
+          {viewerOsuId && !placingToken && (
+            <button
+              type="button"
+              title="贴一个表情"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddSticker(player);
+              }}
+              className="absolute right-2 top-11 z-30 hidden h-7 w-7 place-items-center rounded-full border-2 border-(--pc-border) bg-(--pc-white)/90 text-(--pc-slate) shadow-[1px_1px_0_rgba(0,0,0,0.08)] backdrop-blur-sm group-hover:grid hover:border-pc-primary hover:text-pc-primary max-md:grid"
+            >
+              <SmilePlus className="h-4 w-4" />
+            </button>
+          )}
+
+          {/* 放置模式：点卡片任意位置贴上去 */}
+          {placingToken && (
+            <button
+              type="button"
+              aria-label="点击卡片放置表情"
+              className="absolute inset-0 z-40 cursor-crosshair rounded-2xl bg-pc-primary/5 ring-2 ring-pc-primary/50"
+              onMouseMove={(e) => setPreview(ratio(e))}
+              onMouseLeave={() => setPreview(null)}
+              onClick={(e) => {
+                const { x, y } = ratio(e);
+                setPreview(null);
+                onPlaceSticker(player, placingToken, x, y);
+              }}
+            >
+              {placingSrc && preview && (
+                <img
+                  src={placingSrc}
+                  alt=""
+                  className="pointer-events-none absolute h-9 w-9 -translate-x-1/2 -translate-y-1/2 opacity-80"
+                  style={{ left: `${preview.x * 100}%`, top: `${preview.y * 100}%` }}
+                />
+              )}
+              {!preview && (
+                <span className="absolute left-1/2 top-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-pc-primary px-2 py-0.5 text-[10px] font-bold text-pc-cream">
+                  点击卡片放置表情
+                </span>
+              )}
+            </button>
+          )}
+        </div>
       </HoverCardTrigger>
       {player.season && player.season.length > 0 && (
         <HoverCardContent side="top" align="center" className="max-w-[240px]">
@@ -208,12 +412,83 @@ function PlayerCard({
 }
 
 export default function RegistrationsPage() {
-  const { settings } = useApp();
+  const { settings, user, permissions } = useApp();
+  const isAdmin = !!permissions?.isadmin;
   const seasonOptions = buildSeasonOptions(settings);
   const { data, loading, error, run } = useAsync<SessionUser[]>();
   const [filter, setFilter] = useState<FilterKey>("all");
   const [season, setSeason] = useState<string | undefined>(undefined);
   const [selected, setSelected] = useState<SessionUser | null>(null);
+
+  // ---- 表情贴纸 ----
+  const [stickers, setStickers] = useState<Record<string, PlayerSticker[]>>({});
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerPlayer, setPickerPlayer] = useState<SessionUser | null>(null);
+  const [placing, setPlacing] = useState<{ osuId: string; token: string } | null>(null);
+
+  // 贴纸和玩家列表并行拉取，不阻塞卡片渲染
+  useEffect(() => {
+    let cancelled = false;
+    void api.get<PlayerSticker[]>("/api/stickers").then((res) => {
+      if (cancelled || !res.ok) return;
+      const grouped: Record<string, PlayerSticker[]> = {};
+      for (const s of res.data) (grouped[s.osuId] ??= []).push(s);
+      setStickers(grouped);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 放置模式按 Esc 取消
+  useEffect(() => {
+    if (!placing) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPlacing(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [placing]);
+
+  const openStickerPicker = (p: SessionUser) => {
+    if (!user) {
+      toast({ title: "请先登录后再贴表情" });
+      return;
+    }
+    setPlacing(null);
+    setPickerPlayer(p);
+    setPickerOpen(true);
+  };
+
+  const placeSticker = async (p: SessionUser, token: string, x: number, y: number) => {
+    setPlacing(null);
+    const res = await api.post<PlayerSticker>("/api/stickers", {
+      osuId: p.osuId,
+      token,
+      x,
+      y,
+    });
+    if (!res.ok) {
+      toast({ variant: "destructive", title: "贴表情失败", description: res.error.message });
+      return;
+    }
+    setStickers((prev) => ({
+      ...prev,
+      [p.osuId]: [...(prev[p.osuId] ?? []), res.data],
+    }));
+  };
+
+  const deleteSticker = async (s: PlayerSticker) => {
+    const res = await api.delete(`/api/stickers/${s.id}`);
+    if (!res.ok) {
+      toast({ variant: "destructive", title: "删除失败", description: res.error.message });
+      return;
+    }
+    setStickers((prev) => ({
+      ...prev,
+      [s.osuId]: (prev[s.osuId] ?? []).filter((it) => it.id !== s.id),
+    }));
+  };
 
   const currentSeason = settings?.current_season;
 
@@ -320,9 +595,21 @@ export default function RegistrationsPage() {
         )}
 
         {!loadingPlayers && !error && visible.length > 0 && (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
             {visible.map((p) => (
-              <PlayerCard key={p.osuId} player={p} settings={settings} onSelect={setSelected} />
+              <PlayerCard
+                key={p.osuId}
+                player={p}
+                settings={settings}
+                stickers={stickers[p.osuId] ?? []}
+                placingToken={placing?.osuId === p.osuId ? placing.token : null}
+                viewerOsuId={user?.osuId ?? null}
+                isAdmin={isAdmin}
+                onSelect={setSelected}
+                onAddSticker={openStickerPicker}
+                onPlaceSticker={placeSticker}
+                onDeleteSticker={deleteSticker}
+              />
             ))}
           </div>
         )}
@@ -471,6 +758,18 @@ export default function RegistrationsPage() {
             </DialogContent>
           )}
         </Dialog>
+
+        {/* 全局表情选择器：选完后进入放置模式，点卡片定位 */}
+        <EmojiPicker
+          open={pickerOpen}
+          onOpenChange={(open) => {
+            setPickerOpen(open);
+            if (!open) setPickerPlayer(null);
+          }}
+          onPick={(token) => {
+            if (pickerPlayer) setPlacing({ osuId: pickerPlayer.osuId, token });
+          }}
+        />
       </div>
     </div>
   );
