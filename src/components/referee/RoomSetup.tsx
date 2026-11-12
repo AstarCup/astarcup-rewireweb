@@ -67,7 +67,7 @@ const DEFAULT_BEATMAP_ID = 5228817;
 
 interface RoomSetupProps {
   /** MakeRoom / JoinRoom 成功后回传 RoomJoinedResponse */
-  onRoomJoined: (resp: RoomJoinedResponse) => void;
+  onRoomJoined: (resp: RoomJoinedResponse, created?: boolean) => void;
   /** 对战下拉选中的赛程（供玩家面板一键邀请选手） */
   onSelectMatchup?: (m: MatchSchedule | null) => void;
 }
@@ -197,7 +197,7 @@ export default function RoomSetup({ onRoomJoined, onSelectMatchup }: RoomSetupPr
     setMakeBusy(false);
     if (res.ok && res.data) {
       toast({ title: "房间已创建", description: res.data.name });
-      onRoomJoined(res.data);
+      onRoomJoined(res.data, true);
       // 新建房间默认改为团队赛（Team Versus）
       void invokeHub(
         hub.changeRoomSettings(res.data.room_id, { type: "team_versus" }),

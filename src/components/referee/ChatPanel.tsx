@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, Send } from "lucide-react";
+import { ArrowDown, Bot, Loader2, Send } from "lucide-react";
 import type { ChatLine, RefRoomState } from "@/lib/ref";
 import { cn, osuAvatarUrl } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -26,11 +26,25 @@ interface ChatPanelProps {
   /** 当前裁判的 osu! id：自己的消息靠右显示 */
   meId?: string | null;
   disabled?: boolean;
+  /** 裁判助手开关（默认开启） */
+  agentEnabled?: boolean;
+  onToggleAgent?: () => void;
+  /** 裁判助手处理中（聊天区显示提示） */
+  agentBusy?: boolean;
   onSend: (text: string) => void;
 }
 
 /** 中栏上半：聊天（用户消息 + 系统消息）+ 发送框（支持 /roll、!mp 本地命令） */
-export default function ChatPanel({ lines, matchStatus, meId, disabled, onSend }: ChatPanelProps) {
+export default function ChatPanel({
+  lines,
+  matchStatus,
+  meId,
+  disabled,
+  agentEnabled,
+  onToggleAgent,
+  agentBusy,
+  onSend,
+}: ChatPanelProps) {
   const [text, setText] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
   /** 首次加载 / 切换会话时直接定位到底部；之后在底部则自动跟随，不在底部才出“新消息”按钮 */
@@ -100,6 +114,18 @@ export default function ChatPanel({ lines, matchStatus, meId, disabled, onSend }
         <div className="flex items-center gap-2 text-xs text-(--pc-slate)">
           <span>状态</span>
           <Badge variant={status.variant}>{status.label}</Badge>
+          {onToggleAgent && (
+            <Button
+              variant={agentEnabled ? "primary" : "outline"}
+              size="sm"
+              aria-pressed={agentEnabled}
+              onClick={onToggleAgent}
+              title="裁判助手开关：!mp pick / ban / bp 等自动裁判命令"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              裁判助手
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="grid gap-3">
@@ -156,6 +182,12 @@ export default function ChatPanel({ lines, matchStatus, meId, disabled, onSend }
               );
             })}
           </MessageGroup>
+          {agentBusy && (
+            <div className="mt-2 flex items-center gap-2 px-1 font-mono text-xs italic text-(--pc-slate)">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              裁判助手处理中…
+            </div>
+          )}
           </div>
           {newCount > 0 && (
             <button

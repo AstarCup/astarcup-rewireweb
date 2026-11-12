@@ -27,6 +27,7 @@ import {
 import type { DisplayScore, MatchSchedule } from "@/lib/types";
 import { runChatInput } from "@/components/referee/chatCommands";
 import { useMatchTimer } from "@/components/referee/useMatchTimer";
+import { RefAgent } from "@/components/referee/refAgent";
 import RefereeTopBar from "@/components/referee/RefereeTopBar";
 import PlayersPanel from "@/components/referee/PlayersPanel";
 import MatchControlPanel from "@/components/referee/MatchControlPanel";
@@ -96,7 +97,7 @@ function saveRoomState(state: RefRoomState | null) {
 }
 
 export default function RefereePage() {
-  const { user, loading } = useApp();
+  const { user, loading, settings } = useApp();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -233,6 +234,58 @@ export default function RefereePage() {
 
   // ---- 对战列表选中的对战（玩家面板一键邀请选手用） ----
   const [pickedMatchup, setPickedMatchup] = useState<MatchSchedule | null>(null);
+  const pickedMatchupRef = useRef(pickedMatchup);
+  pickedMatchupRef.current = pickedMatchup;
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+
+  // ---- 裁判助手（聊天里的 ref bot）：默认开启，开关持久化 ----
+  const [agentEnabled, setAgentEnabled] = useState(
+    () => localStorage.getItem("ref:refAgentEnabled") !== "off",
+  );
+  const [agentBusy, setAgentBusy] = useState(false);
+  const agentEnabledRef = useRef(agentEnabled);
+  agentEnabledRef.current = agentEnabled;
+  const agentRef = useRef<RefAgent | null>(null);
+  useEffect(() => {
+    const agent = new RefAgent({
+      getRoom: () => roomRef.current,
+      getMatchup: () => pickedMatchupRef.current,
+      getSettings: () => settingsRef.current,
+      system: (t) =>
+        setChatLines((prev) => [
+          ...prev,
+          { kind: "system", id: `s-${++lineIdRef.current}`, content: t, at: new Date().toISOString() },
+        ]),
+      say: async (t) => {
+        const ch = roomRef.current?.chatChannelId;
+        if (ch == null) return;
+        const res = await refApi.sendChat(ch, t);
+        if (!res.ok) {
+          toast({ variant: "destructive", title: "助手播报失败", description: res.error.message });
+        }
+      },
+      fetchScores: async () => {
+        const roomNow = roomRef.current;
+        if (!roomNow) return null;
+        const current = Object.values(roomNow.playlistItems).find((x) => Number(x.order) === 0);
+        if (!current) return null;
+        const res = await refApi.getRoomScores(roomNow.id, current.id);
+        return res.ok ? (Array.isArray(res.data) ? res.data : []) : null;
+      },
+      onTurnState: setAgentBusy,
+    });
+    agent.enabled = agentEnabledRef.current;
+    agentRef.current = agent;
+  }, []);
+  useEffect(() => {
+    try {
+      localStorage.setItem("ref:refAgentEnabled", agentEnabled ? "on" : "off");
+    } catch {
+      /* 隐私模式忽略 */
+    }
+    if (agentRef.current) agentRef.current.enabled = agentEnabled;
+  }, [agentEnabled]);
 
   // ---- 房间倒计时播报（!mp timer / 开始比赛带倒计时） ----
   const timer = useMatchTimer(async (text) => {
@@ -340,6 +393,11 @@ export default function RefereePage() {
         });
       }
       if (additions.length) setChatLines((prev) => [...prev, ...additions]);
+      // 玩家聊天交给裁判助手判断是否回应（自己/助手的发言不转发；闲聊不回应由模型判断）
+      for (const a of additions) {
+        if (meId != null && String(a.userId) === meId) continue;
+        void agentRef.current?.handleChatMessage(a.content, a.userId ?? 0, a.username ?? "");
+      }
 
       // 顺手把消息里带的 / 刚补到的资料并进用户缓存
       const withUsers: OsuUserLite[] = [];
@@ -405,13 +463,15 @@ export default function RefereePage() {
   }, []);
 
   const handleRoomJoined = useCallback(
-    (resp: RoomJoinedResponse) => {
+    (resp: RoomJoinedResponse, created?: boolean) => {
       const state = createRoomState(resp);
       roomRef.current = state;
       setRoom(state);
       setScores(null);
       setChatLines([]);
       lastChatIdRef.current = 0;
+      // 新建房间：让裁判助手自动播报对局信息（赛季 / 阶段 / 对阵双方）
+      if (created) void agentRef.current?.introduce();
       // 记住房间，刷新页面 / 切 Tab 回来时可以自动重新加入
       try {
         localStorage.setItem(LAST_ROOM_KEY, String(state.id));
@@ -542,6 +602,9 @@ export default function RefereePage() {
     async (text: string) => {
       const roomNow = roomRef.current;
       if (!roomNow) return;
+      // 裁判助手优先接管其命令（!mp pick / ban / bp / agent …）
+      const agentHandled = agentRef.current ? await agentRef.current.handleCommand(text) : false;
+      if (agentHandled) return;
       const handled = await runChatInput(text, {
         room: roomNow,
         system: appendSystem,
@@ -560,6 +623,8 @@ export default function RefereePage() {
       const res = await refApi.sendChat(roomNow.chatChannelId, text);
       if (res.ok && res.data) {
         void appendUserMessages([res.data]);
+        // 裁判本人的发言也交给裁判助手（助手播报不走这条路径，不会自我回流）
+        void agentRef.current?.handleRefMessage(text);
       } else if (!res.ok) {
         toast({ variant: "destructive", title: "发送失败", description: res.error.message });
       }
@@ -617,6 +682,8 @@ export default function RefereePage() {
           return;
         }
         if (result.refreshScoresWith != null) void loadScores(roomNow.id, result.refreshScoresWith);
+        // 裁判助手：roll 判定、小节结束播报等自动行为
+        void agentRef.current?.handleEvent(ev);
       },
       onState: (state, err) => {
         setConnState(state);
@@ -783,6 +850,9 @@ export default function RefereePage() {
                     matchStatus={room.status}
                     meId={user?.osuId ?? null}
                     disabled={room.chatChannelId == null}
+                    agentEnabled={agentEnabled}
+                    onToggleAgent={() => setAgentEnabled((v) => !v)}
+                    agentBusy={agentBusy}
                     onSend={(text) => void handleSend(text)}
                   />
                   <ScoresPanel
