@@ -48,6 +48,9 @@ function whenResourcesReady(): Promise<void> {
 /** 首屏真实加载追踪的资源：按字节统计进度（banner.png 等大图） */
 type BootAsset = { loaded: number; total: number };
 
+/** 首屏图片追踪的单次运行结果 */
+type BootRun = { assets: BootAsset[]; done: Promise<void> };
+
 /** 图片内存缓存：原始 URL → blob URL。SPA 生命周期内保留，页面回访免重复下载大图 */
 const imageCache = new Map<string, string>();
 
@@ -111,6 +114,8 @@ async function loadImageWithProgress(
     const reader = res.body?.getReader();
     if (!reader) {
       asset.total = asset.loaded = size || 1;
+      // 无法流式读取：回退原生加载，保证图片一定能显示
+      if (img.isConnected) img.src = url;
       onProgress();
       return;
     }
@@ -148,10 +153,35 @@ async function loadImageWithProgress(
     asset.total = asset.loaded = asset.total || loaded;
     onProgress();
   } catch {
-    // 单个资源失败不阻塞揭幕
+    // 单个资源失败不阻塞揭幕；回退原生加载，保证图片一定能显示
     asset.total = asset.loaded = asset.total || 1;
+    if (img.isConnected) img.src = url;
     onProgress();
   }
+}
+
+/** 首屏图片追踪单例：StrictMode 双执行/重复挂载时复用同一批 fetch，避免重复下载 */
+let bootRun: BootRun | null = null;
+/** 进度刷新回调：由 effect 注册/注销 */
+let bootTick: (() => void) | null = null;
+
+/** 发起首屏图片追踪（只执行一次）：移除 <img> 原生 src，统一走带真实字节进度的 fetch */
+function startBootImageTracking(): BootRun {
+  if (bootRun) return bootRun;
+  const assets: BootAsset[] = [];
+  const targets = collectBootImages()
+    // 已加载完成的资源直接计入，不重复下载
+    .filter((img) => !(img.complete && img.naturalWidth > 0))
+    .map((img) => ({ img, url: img.src }));
+  // 统一由 fetch 下载：先移除 src，阻止 <img> 原生请求，避免双重下载
+  for (const target of targets) target.img.removeAttribute("src");
+  const loads = targets.map(({ img, url }) => {
+    const asset: BootAsset = { loaded: 0, total: 0 };
+    assets.push(asset);
+    return loadImageWithProgress(img, url, asset, () => bootTick?.());
+  });
+  bootRun = { assets, done: Promise.all(loads).then(() => {}) };
+  return bootRun;
 }
 
 /** 路由 → 幕布上展示的下一个页面名（超大描边字） */
@@ -252,12 +282,12 @@ export default function PageTransition() {
     let rafId = 0;
     const startedAt = performance.now();
 
-    // ---- 真实加载进度（按字节汇总） ----
-    const assets: BootAsset[] = [];
+    // ---- 真实加载进度（按字节汇总）：图片追踪为模块级单例，重复执行复用同一批 fetch ----
+    const run = startBootImageTracking();
     const flush = () => {
       rafId = 0;
-      const total = assets.reduce((s, a) => s + a.total, 0);
-      const loaded = assets.reduce((s, a) => s + a.loaded, 0);
+      const total = run.assets.reduce((s, a) => s + a.total, 0);
+      const loaded = run.assets.reduce((s, a) => s + a.loaded, 0);
       const pct = total > 0 ? (loaded / total) * 100 : 100;
       // 不回退；揭幕前封顶 99%，100% 留给全部就绪的那一刻
       setBootProgress((p) => Math.min(Math.max(p, pct), 99));
@@ -265,21 +295,8 @@ export default function PageTransition() {
     const schedule = () => {
       if (!rafId) rafId = requestAnimationFrame(flush);
     };
-
-    const targets = collectBootImages()
-      // 已加载完成的资源直接计入，不重复下载
-      .filter((img) => !(img.complete && img.naturalWidth > 0))
-      .map((img) => ({ img, url: img.src }));
-    // 统一由下方的 fetch 下载：先移除 src，阻止 <img> 原生请求
-    for (const target of targets) target.img.removeAttribute("src");
-
-    const loads: Array<Promise<void>> = [];
-    for (const { img, url } of targets) {
-      const asset: BootAsset = { loaded: 0, total: 0 };
-      assets.push(asset);
-      loads.push(loadImageWithProgress(img, url, asset, schedule));
-    }
-    if (assets.length === 0) schedule();
+    bootTick = schedule;
+    if (run.assets.length === 0) schedule();
 
     const finish = () => {
       if (finished) return;
@@ -289,10 +306,12 @@ export default function PageTransition() {
       revealTimer = window.setTimeout(() => setBootDone(true), remain);
     };
     const fallback = window.setTimeout(finish, BOOT_MAX_MS);
-    Promise.all([...loads, whenResourcesReady()]).then(finish);
+    // 必须等所有图片真正下载完成才揭幕（StrictMode 下重复执行也共享同一批下载）
+    Promise.all([run.done, whenResourcesReady()]).then(finish);
 
     return () => {
       finished = true;
+      bootTick = null;
       window.clearTimeout(fallback);
       window.clearTimeout(revealTimer);
       cancelAnimationFrame(rafId);
@@ -433,7 +452,7 @@ export default function PageTransition() {
             className="page-transition-layer page-transition-layer--background paper-texture"
           >
             <div ref={titleRef} className="page-transition-title">
-              {displayed.title}
+              {/*{displayed.title}*/}
             </div>
           </div>
         </div>
