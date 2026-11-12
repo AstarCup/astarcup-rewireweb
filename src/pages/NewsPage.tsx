@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
-import { PageHeader } from "@/components/paper/paper";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";

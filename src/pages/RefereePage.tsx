@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Gavel, Link2, Loader2, Plug, ShieldCheck, Unplug } from "lucide-react";
+import { Link2, Loader2, Plug, ShieldCheck, Unplug } from "lucide-react";
 import { useApp } from "@/lib/app-context";
 import { toast } from "@/hooks/use-toast";
 import { LoadingBlock } from "@/hooks/useFetch";

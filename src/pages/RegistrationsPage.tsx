@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import RadarChart from "@/components/ui/RadarChart";
 import SeasonBadge from "@/components/SeasonBadge";
-import { PageHeader } from "@/components/paper/paper";
 import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";

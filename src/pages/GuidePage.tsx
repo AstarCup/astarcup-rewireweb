@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { parseFrontMatter, renderMarkdown } from "@/lib/markdown";
 import type { SeasonRule } from "@/lib/types";
-import { PageHeader } from "@/components/paper/paper";
 import { Button } from "@/components/ui/button";
 import "@/components/paper/prose.css";
 
