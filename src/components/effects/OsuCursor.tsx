@@ -54,13 +54,14 @@ function classify(target: EventTarget | null): CursorKind {
   return "normal";
 }
 
-export default function OsuCursor() {
+export default function OsuCursor({ enabled = true }: { enabled?: boolean }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const rotateRef = useRef<HTMLDivElement>(null);
   const scaleRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     if (window.matchMedia("(pointer: coarse)").matches) return;
     const root = rootRef.current;
     const rotate = rotateRef.current;
@@ -298,9 +299,12 @@ export default function OsuCursor() {
       document.removeEventListener("dragstart", onDragStart);
       window.removeEventListener("blur", onWindowLeave);
       window.removeEventListener("scroll", onScroll, { capture: true });
+      // 关闭开关时同时收起光标和指示框，并恢复系统光标
       document.documentElement.classList.remove("osu-cursor-on");
+      root.style.display = "none";
+      frame.style.opacity = "0";
     };
-  }, []);
+  }, [enabled]);
 
   return (
     <>

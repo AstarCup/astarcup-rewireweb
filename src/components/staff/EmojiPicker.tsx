@@ -1,23 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { EMOJI_PACKS } from "@/lib/emoji-data";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const ALL = "__all__";
 
@@ -28,102 +21,138 @@ interface EmojiPickerProps {
   onPick: (token: string) => void;
 }
 
-/** 自定义表情选择器：按表情包浏览 / 搜索，点选插入 `:token:` */
+/** 表情选择器：大图网格 + 底部表情包条（参考聊天表情面板的布局） */
 export default function EmojiPicker({ open, onOpenChange, onPick }: EmojiPickerProps) {
-  const [query, setQuery] = useState("");
   const [packId, setPackId] = useState<string>(ALL);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const activeTileRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    setQuery("");
     setPackId(ALL);
   }, [open]);
 
+  // 切换表情包后把选中的包滚到中间
+  useEffect(() => {
+    activeTileRef.current?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [packId]);
+
   const list = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const packs = packId === ALL ? EMOJI_PACKS : EMOJI_PACKS.filter((p) => p.id === packId);
-    return packs.flatMap((p) =>
-      p.emojis.filter(
-        (e) => !q || e.name.toLowerCase().includes(q) || e.token.toLowerCase().includes(q),
-      ),
-    );
-  }, [query, packId]);
+    if (packId === ALL) return EMOJI_PACKS.flatMap((p) => p.emojis);
+    return EMOJI_PACKS.find((p) => p.id === packId)?.emojis ?? [];
+  }, [packId]);
+
+  const currentPack = EMOJI_PACKS.find((p) => p.id === packId);
+  const scrollStrip = (dir: -1 | 1) => {
+    stripRef.current?.scrollBy({ left: dir * 240, behavior: "smooth" });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl gap-3">
+      <DialogContent className="max-w-3xl gap-3">
         <DialogHeader>
-          <DialogTitle className="text-lg">插入表情</DialogTitle>
-          <DialogDescription>
-            这些表情会以 <code className="font-bold">:名称:</code> 的形式写进 Markdown，前台按图片显示。
+          <div className="flex items-center justify-between gap-3 pr-6">
+            <DialogTitle className="text-lg">插入表情</DialogTitle>
+            <Badge variant="outline">
+              {currentPack ? currentPack.name : `全部（${EMOJI_PACKS.length} 包）`}
+            </Badge>
+          </div>
+          <DialogDescription className="text-xs">
+            点表情插入到光标处，Markdown 里写作 <code className="font-bold">:名称:</code>
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={packId} onValueChange={setPackId}>
-            <SelectTrigger className="h-9 w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>全部表情包（{EMOJI_PACKS.length}）</SelectItem>
-              {EMOJI_PACKS.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}（{p.emojis.length}）
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="relative min-w-[180px] flex-1">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-(--pc-faint)" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="搜索表情名…"
-              className="h-9 pl-8"
-            />
+        {/* 表情网格 */}
+        <div className="h-[380px] min-w-0 overflow-y-auto rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-2">
+          <div className="grid min-w-0 grid-cols-[repeat(5,minmax(0,1fr))] gap-1.5 sm:grid-cols-[repeat(6,minmax(0,1fr))]">
+            {list.map((emoji) => (
+              <button
+                key={emoji.token}
+                type="button"
+                title={`:${emoji.token}:`}
+                onClick={() => {
+                  onPick(emoji.token);
+                  onOpenChange(false);
+                }}
+                className="flex aspect-square min-w-0 items-center justify-center overflow-hidden rounded-xl p-1.5 transition-colors hover:bg-(--pc-paper) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-primary/40"
+              >
+                <img
+                  src={emoji.url}
+                  alt={emoji.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-contain"
+                />
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="max-h-[52vh] overflow-y-auto rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-2">
-          {list.length === 0 ? (
-            <p className="py-10 text-center text-sm text-(--pc-faint)">没有匹配的表情</p>
-          ) : (
-            <div className="grid grid-cols-6 gap-1 sm:grid-cols-8 md:grid-cols-10">
-              {list.map((emoji) => (
-                <button
-                  key={emoji.token}
-                  type="button"
-                  title={`:${emoji.token}:`}
-                  onClick={() => {
-                    onPick(emoji.token);
-                    onOpenChange(false);
-                  }}
-                  className="flex flex-col items-center gap-1 rounded-lg p-1.5 transition-colors hover:bg-(--pc-paper) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pc-primary/40"
-                >
-                  <img
-                    src={emoji.url}
-                    alt={emoji.name}
-                    loading="lazy"
-                    decoding="async"
-                    className="h-10 w-10 object-contain"
-                  />
-                  <span className="w-full truncate text-center text-[10px] text-(--pc-slate)">
-                    {emoji.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <span className="mr-auto text-xs text-(--pc-faint)">
-            共 {list.length} 个{query.trim() ? "匹配" : ""}表情
-          </span>
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            关闭
+        {/* 底部表情包条 */}
+        <div className="flex min-w-0 items-center gap-1.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="向左滚动表情包"
+            onClick={() => scrollStrip(-1)}
+          >
+            <ChevronLeft className="h-5 w-5" />
           </Button>
-        </DialogFooter>
+          <div
+            ref={stripRef}
+            className="flex flex-1 items-center gap-2 overflow-x-auto scroll-smooth py-1"
+          >
+            <button
+              type="button"
+              title={`全部表情（${EMOJI_PACKS.length} 包）`}
+              onClick={() => setPackId(ALL)}
+              className={cn(
+                "grid h-12 w-12 shrink-0 place-items-center rounded-xl border-2 transition-colors",
+                packId === ALL
+                  ? "border-pc-primary bg-pc-primary/10 text-pc-primary"
+                  : "border-(--pc-border) text-(--pc-faint) hover:bg-(--pc-paper)",
+              )}
+            >
+              <LayoutGrid className="h-5 w-5" />
+            </button>
+            {EMOJI_PACKS.map((pack) => {
+              const active = pack.id === packId;
+              const cover = pack.emojis[0];
+              return (
+                <button
+                  key={pack.id}
+                  type="button"
+                  title={pack.name}
+                  ref={active ? activeTileRef : undefined}
+                  onClick={() => setPackId(pack.id)}
+                  className={cn(
+                    "grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl border-2 p-1 transition-colors",
+                    active
+                      ? "border-pc-primary bg-pc-primary/10"
+                      : "border-(--pc-border) hover:bg-(--pc-paper)",
+                  )}
+                >
+                  {cover && (
+                    <img
+                      src={cover.url}
+                      alt={pack.name}
+                      loading="lazy"
+                      className="h-full w-full object-contain"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="向右滚动表情包"
+            onClick={() => scrollStrip(1)}
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toast";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import PageTransition from "@/components/layout/PageTransition";
 import BackToTop from "@/components/layout/BackToTop";
+import CursorToggle from "@/components/layout/CursorToggle";
 import OsuCursor from "@/components/effects/OsuCursor";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -35,7 +37,32 @@ function PublicLayout() {
   );
 }
 
+const CURSOR_KEY = "osu-cursor-enabled";
+
+/** 默认关闭自定义光标，用户主动打开后再记进 localStorage */
+function readCursorEnabled(): boolean {
+  try {
+    return localStorage.getItem(CURSOR_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 export default function App() {
+  const [cursorEnabled, setCursorEnabled] = useState(readCursorEnabled);
+
+  const toggleCursor = () => {
+    setCursorEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(CURSOR_KEY, String(next));
+      } catch {
+        /* 隐私模式下忽略 */
+      }
+      return next;
+    });
+  };
+
   return (
     <Toaster>
       <Routes>
@@ -59,8 +86,10 @@ export default function App() {
       </Route>
     </Routes>
     <BackToTop />
+    {/* 左下角开关：关掉后自定义光标和可点击元素指示框一起关闭 */}
+    <CursorToggle enabled={cursorEnabled} onToggle={toggleCursor} />
     {/* osu!lazer 风格自定义光标：全站生效（含 staff 后台），触屏自动禁用 */}
-    <OsuCursor />
+    <OsuCursor enabled={cursorEnabled} />
     </Toaster>
   );
 }

@@ -55,6 +55,16 @@ html.osu-cursor-on [data-cursor="native"] * {
   cursor: auto !important;
 }
 
+/* 左下角光标开关：触屏 / 窄屏（移动端）不显示 */
+.cursor-toggle {
+  display: flex;
+}
+@media (pointer: coarse), (max-width: 767px) {
+  .cursor-toggle {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .osu-cursor-fill {
     transition: none;
