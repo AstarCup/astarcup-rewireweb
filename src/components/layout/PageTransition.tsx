@@ -96,15 +96,15 @@ function mimeFromUrl(url: string): string {
 }
 
 /**
- * 流式读取图片并统计真实字节进度；读取完成后把 blob 写回 <img>，
- * 页面只下载一次，进度条反映的就是这张图的真实加载进度。
+ * 流式读取图片并统计真实字节进度；读取完成后把 blob 写回 <img> 并进入内存缓存。
+ * 调用前需先移除 <img> 的 src：下载全程只有这一次 fetch，避免双重下载。
  */
 async function loadImageWithProgress(
   img: HTMLImageElement,
+  url: string,
   asset: BootAsset,
   onProgress: () => void,
 ): Promise<void> {
-  const url = img.src;
   try {
     const res = await fetch(url);
     const size = Number(res.headers.get("content-length")) || 0;
@@ -137,7 +137,7 @@ async function loadImageWithProgress(
     const blobUrl = URL.createObjectURL(new Blob([merged], { type: type || undefined }));
     // 进入内存缓存并常驻（SPA 生命周期内复用：切换页面回来免重复下载）
     imageCache.set(url, blobUrl);
-    if (img.isConnected && img.src === url) {
+    if (img.isConnected) {
       // 写回失败时回退原始地址，保证图片一定能显示
       img.onerror = () => {
         img.onerror = null;
@@ -234,15 +234,17 @@ export default function PageTransition() {
   const backgroundRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
 
-  // 内容真正切换上屏时：把内存缓存里的图片写回新页面（回访免重复下载），并通知 ScrollToTop 滚动复位
-  useEffect(() => {
+  // 内容真正切换上屏时：把内存缓存里的图片写回新页面（回访免重复下载），并通知 ScrollToTop 滚动复位。
+  // useLayoutEffect：在浏览器为 <img> 发起原生请求之前写回 blob，不留下多余的请求记录
+  useLayoutEffect(() => {
     patchImagesWithCache();
     window.dispatchEvent(new Event(PAGE_SWAP_EVENT));
   }, [swapId]);
 
   // 首屏 loading：按真实字节进度追踪当前页面的大图（如首页 12MB 的 banner.png），
-  // 并等待字体与 window load，保证最短展示时长
-  useEffect(() => {
+  // 并等待字体与 window load，保证最短展示时长。
+  // useLayoutEffect：在浏览器发起 <img> 原生请求之前先移除 src，全程只走一次 fetch，避免双重下载
+  useLayoutEffect(() => {
     if (!booting) return;
     bootShown = true;
     let finished = false;
@@ -264,13 +266,18 @@ export default function PageTransition() {
       if (!rafId) rafId = requestAnimationFrame(flush);
     };
 
-    const loads: Array<Promise<void>> = [];
-    for (const img of collectBootImages()) {
+    const targets = collectBootImages()
       // 已加载完成的资源直接计入，不重复下载
-      if (img.complete && img.naturalWidth > 0) continue;
+      .filter((img) => !(img.complete && img.naturalWidth > 0))
+      .map((img) => ({ img, url: img.src }));
+    // 统一由下方的 fetch 下载：先移除 src，阻止 <img> 原生请求
+    for (const target of targets) target.img.removeAttribute("src");
+
+    const loads: Array<Promise<void>> = [];
+    for (const { img, url } of targets) {
       const asset: BootAsset = { loaded: 0, total: 0 };
       assets.push(asset);
-      loads.push(loadImageWithProgress(img, asset, schedule));
+      loads.push(loadImageWithProgress(img, url, asset, schedule));
     }
     if (assets.length === 0) schedule();
 
