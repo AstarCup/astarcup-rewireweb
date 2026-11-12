@@ -1,0 +1,67 @@
+/* =========================================================
+ * 字体与全局基础样式
+ * ========================================================= */
+
+/* ---- 英文字体：Varela Round（覆盖拉丁字母；中文回退到系统中文字体） ---- */
+@font-face {
+  font-family: "Varela Round";
+  src: url("/assets/fonts/Varela_Round/VarelaRound-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection {
+    background: #f5c040;
+    color: #2d2d2d;
+  }
+  /* ---- 全局滚动条样式（Paper Craft 风格） ---- */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #d8cfc0 transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #d8cfc0;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #e85d75;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  .dark * {
+    scrollbar-color: #3a332a transparent;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #3a332a;
+    background-clip: padding-box;
+  }
+}
+
+/* ---- 无障碍：系统减少动态效果模式 ---- */
+/*@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+  }
+}*/

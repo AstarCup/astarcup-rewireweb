@@ -1,0 +1,105 @@
+/* =========================================================
+ * 设计令牌：shadcn 主题变量 + Paper Craft 调色板（亮/暗色）
+ * ========================================================= */
+
+:root {
+  /* ---- Paper Craft shadcn theme tokens ---- */
+  --background: 32 79% 96%;            /* #fdf6ee */
+  --foreground: 0 0% 18%;              /* #2d2d2d */
+  --card: 32 79% 96%;
+  --card-foreground: 0 0% 18%;
+  --popover: 32 79% 96%;
+  --popover-foreground: 0 0% 18%;
+  --primary: 350 75% 64%;              /* #e85d75 */
+  --primary-foreground: 0 0% 9%;
+  --secondary: 32 79% 96%;
+  --secondary-foreground: 0 0% 9%;
+  --muted: 0 0% 100%;
+  --muted-foreground: 40 13% 64%;
+  --accent: 168 39% 54%;               /* #5cb8a5 */
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 36 24% 84%;                /* #e0d8cc */
+  --input: 36 24% 84%;
+  --ring: 350 75% 64%;
+  --chart-1: 350 75% 64%;
+  --chart-2: 168 39% 54%;
+  --chart-3: 42 90% 61%;               /* #f5c040 */
+  --chart-4: 224 33% 56%;              /* #6b7fb5 */
+  --chart-5: 216 63% 70%;
+  --sidebar: 32 79% 96%;
+  --sidebar-foreground: 0 0% 18%;
+  --sidebar-primary: 350 75% 64%;
+  --sidebar-primary-foreground: 0 0% 9%;
+  --sidebar-accent: 168 39% 54%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 36 24% 84%;
+  --sidebar-ring: 350 75% 64%;
+  --radius: 0.75rem;
+
+  /* ---- Paper Craft palette ---- */
+  --pc-primary: #e85d75;
+  --pc-teal: #5cb8a5;
+  --pc-yellow: #f5c040;
+  --pc-blue: #6b7fb5;
+  --pc-paper: #fdf6ee;
+  --pc-white: #fffdf9;
+  --pc-ink: #2d2d2d;
+  --pc-slate: #666666;
+  --pc-faint: #b0a898;
+  --pc-border: #e0d8cc;
+
+  /* 强调色上的固定“纸色”文字（明/暗均保持） */
+  --pc-cream: #fdf6ee;
+
+  /* 动画速度倍率（AnimatedLogo 等使用 calc(time * var(--anim-scale))） */
+  --anim-scale: 1;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* ---- shadcn tokens（暗色） ---- */
+  --background: 30 18% 8%;
+  --foreground: 40 25% 88%;
+  --card: 30 16% 11%;
+  --card-foreground: 40 25% 88%;
+  --popover: 30 16% 11%;
+  --popover-foreground: 40 25% 88%;
+  --primary: 350 75% 64%;
+  --primary-foreground: 0 0% 9%;
+  --secondary: 30 16% 13%;
+  --secondary-foreground: 40 25% 88%;
+  --muted: 30 12% 15%;
+  --muted-foreground: 40 12% 56%;
+  --accent: 168 39% 54%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 30 12% 19%;
+  --input: 30 12% 19%;
+  --ring: 350 75% 64%;
+  --sidebar: 30 16% 11%;
+  --sidebar-foreground: 40 25% 88%;
+  --sidebar-primary: 350 75% 64%;
+  --sidebar-primary-foreground: 0 0% 9%;
+  --sidebar-accent: 168 39% 54%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 30 12% 19%;
+  --sidebar-ring: 350 75% 64%;
+
+  /* ---- Paper Craft palette（暗色） ---- */
+  --pc-primary: #f07a90;
+  --pc-teal: #5cb8a5;
+  --pc-yellow: #f5c040;
+  --pc-blue: #8598cc;
+  --pc-paper: #17130e;
+  --pc-white: #221c14;
+  --pc-ink: #ece4d5;
+  --pc-slate: #b6aa95;
+  --pc-faint: #857961;
+  --pc-border: #3a332a;
+
+  --pc-cream: #fdf6ee;
+}

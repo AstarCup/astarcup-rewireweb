@@ -1,0 +1,61 @@
+/* =========================================================
+ * 页面转场幕布（Page Transition，动画由 GSAP 驱动，见 PageTransition.tsx）
+ * ========================================================= */
+
+.page-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 各色层同宽（需与 PageTransition.tsx 中 LAYER_WIDTH_VW 保持一致）：
+   宽于视口，最上层行至中点时恰好完全遮挡，内容切换隐藏其中 */
+.page-transition-layer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 220vw;
+  will-change: transform;
+}
+
+/* 错位先行的色层：暗 → 青 → 黄 → 主色，依次领先 */
+.page-transition-layer--shadow {
+  background-color: rgba(0, 0, 0, 0.12);
+}
+
+.page-transition-layer--teal {
+  background-color: var(--pc-teal);
+}
+
+.page-transition-layer--yellow {
+  background-color: var(--pc-yellow);
+}
+
+.page-transition-layer--primary {
+  background-color: var(--pc-primary);
+}
+
+/* 最上层：主题背景色（亮/暗色自动适配），承载超大字 */
+.page-transition-layer--background {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background-color: hsl(var(--background));
+}
+
+.page-transition-title {
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 400px;
+  line-height: 0.85;
+  font-weight: 700;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  /* 只留描边轮廓，不填充，描边取字体颜色（亮/暗色自动适配） */
+  color: transparent;
+  -webkit-text-stroke: 1px hsl(var(--foreground));
+  will-change: transform;
+}

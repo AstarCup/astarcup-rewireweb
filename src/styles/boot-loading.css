@@ -1,0 +1,49 @@
+/* =========================================================
+ * 首屏 Loading（logo + 进度条，资源就绪后由转场动画揭幕）
+ * ========================================================= */
+
+.boot-loading {
+  position: fixed;
+  inset: 0;
+  /* 低于转场幕布（100）：揭幕时先被幕布完全遮挡，再随内容切换移除 */
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background-color: hsl(var(--background));
+}
+
+.boot-loading__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.boot-loading__logo {
+  width: min(280px, 64vw);
+  height: auto;
+}
+
+.boot-loading__track {
+  width: min(280px, 64vw);
+  height: 12px;
+  overflow: hidden;
+  border: 2px solid var(--pc-border);
+  border-radius: 999px;
+  background-color: var(--pc-white);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.boot-loading__bar {
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--pc-primary);
+  transition: width 400ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-loading__bar {
+    transition: none;
+  }
+}
