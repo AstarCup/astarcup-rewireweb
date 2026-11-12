@@ -64,7 +64,6 @@ export default function GuidePage() {
 
   return (
     <div>
-      <PageHeader title="比赛手册" subtitle="AstarCup 系列赛事的完整规则与参赛说明。" accent="var(--pc-blue)" />
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
         <div className="mb-8 flex flex-wrap items-center gap-3">
           {seasons.map((se) => (

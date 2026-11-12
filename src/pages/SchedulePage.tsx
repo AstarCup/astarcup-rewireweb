@@ -105,7 +105,6 @@ export default function SchedulePage() {
 
   return (
     <div className="bg-(--pc-paper)">
-      <PageHeader title="赛程安排" subtitle="比赛对阵与每场直播、回放信息一览" />
 
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         {loading && <LoadingBlock label="正在加载赛程…" />}

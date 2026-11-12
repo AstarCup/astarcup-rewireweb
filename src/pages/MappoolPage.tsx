@@ -208,7 +208,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
               </HoverCardTrigger>
               <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
                 <p className="text-xs font-bold text-(--pc-ink)">
-                  osu direct 打开（osu://b/{map.beatmapId}）
+                  osu! 直接打开
                 </p>
               </HoverCardContent>
             </HoverCard>
@@ -263,7 +263,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
         )}
         {map.comment && (
           <p className="mt-2 rounded-lg bg-(--pc-paper) px-2 py-1 text-xs text-(--pc-faint)">
-            备注：{map.comment}
+            {map.comment}
           </p>
         )}
       </div>
@@ -483,7 +483,6 @@ export default function MappoolPage() {
   if (String(settings?.mappool_visible ?? "true") === "false") {
     return (
       <div className="bg-(--pc-paper)">
-        <PageHeader title="图池" subtitle="本赛事的比赛选图池" />
         <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
           <div className="rounded-2xl bg-(--pc-white) p-10 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
             <p className="font-sans text-sm text-(--pc-faint)">图池尚未公开，敬请期待</p>
@@ -497,7 +496,6 @@ export default function MappoolPage() {
 
   return (
     <div className="bg-(--pc-paper)">
-      <PageHeader title="图池" subtitle="查看各轮次选图与竞赛信息" />
 
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

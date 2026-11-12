@@ -351,7 +351,7 @@ export default function RoomManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle tag="房间管理" accent="var(--pc-teal)" className="mb-0">
+        <SectionTitle className="mb-0">
           比赛房间
         </SectionTitle>
         <div className="flex items-center gap-2">

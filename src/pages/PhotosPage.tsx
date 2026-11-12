@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { PageHeader, SectionTitle } from "@/components/paper/paper";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import winnersJson from "@/data/winners.json";
@@ -55,7 +54,6 @@ export default function PhotosPage() {
 
   return (
     <div>
-      <PageHeader title="历届风采" subtitle="AstarCup 历届比赛的获胜选手与精彩瞬间。" accent="var(--pc-yellow)" />
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         <div className="mb-10 flex items-center gap-3">
           {seasons.map((se) => (
@@ -70,7 +68,6 @@ export default function PhotosPage() {
           <span className="text-sm text-(--pc-faint)">当前赛季：{season.toUpperCase()}</span>
         </div>
 
-        <SectionTitle tag="获奖选手">本届获胜选手</SectionTitle>
         {cards.length === 0 ? (
           <p className="text-(--pc-faint)">暂无选手信息。</p>
         ) : (
@@ -110,9 +107,6 @@ export default function PhotosPage() {
           </div>
         )}
 
-        <SectionTitle tag="精彩瞬间" className="mt-16">
-          比赛剪影
-        </SectionTitle>
         {photos.length === 0 ? (
           <p className="text-(--pc-faint)">暂无照片。</p>
         ) : (

@@ -158,13 +158,9 @@ export default function StaffDashboardPage() {
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-(--pc-paper)">
-        <PageHeader title="管理后台" subtitle="工作人员专用" />
         <div className="mx-auto max-w-2xl px-4 py-12">
           <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
             <p className="text-2xl font-bold text-pc-primary">没有访问权限</p>
-            <p className="mt-3 text-sm text-(--pc-slate)">
-              此页面为工作人员管理后台，仅管理员可访问。
-            </p>
             <Link
               to="/player-info"
               className="mt-6 inline-block rounded-xl bg-pc-teal px-5 py-2.5 text-sm font-bold text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
@@ -184,12 +180,8 @@ export default function StaffDashboardPage() {
       {/* 桌面端：左侧边栏 */}
       <Sidebar side="left">
         <SidebarHeader>
-          <p className="text-xs font-bold tracking-wide text-(--pc-faint) uppercase">
-            管理后台
-          </p>
           <div className="flex items-center gap-2">
             <SidebarCollapseButton />
-            <p className="text-lg font-black text-(--pc-ink)">{active.label}</p>
           </div>
         </SidebarHeader>
 
@@ -238,11 +230,9 @@ export default function StaffDashboardPage() {
           {/* 桌面端：页面标题栏（标题前含侧边栏开关，收起后可再展开） */}
           <div className="mb-4 hidden items-center gap-2 lg:flex">
             <SidebarCollapseButton />
-            <p className="text-lg font-black text-(--pc-ink)">{active.label}</p>
           </div>
           {/* 移动端：顶栏（无站点导航时的返回入口） */}
           <div className="mb-4 flex items-center justify-between lg:hidden">
-            <p className="text-sm font-black text-(--pc-ink)">管理后台</p>
             <Link
               to="/"
               className="text-xs font-bold text-(--pc-slate) underline underline-offset-4 hover:text-pc-primary"

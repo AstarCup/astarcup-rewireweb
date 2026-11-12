@@ -235,7 +235,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           {/* 技能自评：左边输入，右边雷达图 */}
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
             <p className="text-sm font-bold text-(--pc-ink)">
-              技能自评（选填）：给你自己打个分，或者用来迷惑别人。
+              技能自评（选填）
             </p>
             <div className="mt-3 grid gap-4 md:grid-cols-[minmax(0,1fr)_250px] md:items-center">
               <div className="grid grid-cols-2 gap-3">
@@ -274,7 +274,6 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                     type="text"
                     value={customKey}
                     onChange={(e) => handleCustomKey(e.target.value)}
-                    placeholder="随便输点什么"
                     className={`h-9 w-full rounded-lg border-2 bg-(--pc-white) px-3 pr-8 text-sm text-(--pc-ink) outline-none ${customKeyState === "invalid"
                         ? "border-pc-primary"
                         : customKeyState === "valid"
@@ -316,7 +315,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
             <p className="text-sm font-bold text-(--pc-ink)">QQ 号（必填）</p>
             <p className="mt-0.5 text-xs text-(--pc-faint)">
-              方便staff与你联系（还请记得加QQ群:<a href={site.contact.qqGroup} target="_blank" rel="noopener noreferrer">{site.contact.qqGroupNumber}</a>）。
+              方便 staff 与你联系 · QQ 群：<a href={site.contact.qqGroup} target="_blank" rel="noopener noreferrer">{site.contact.qqGroupNumber}</a>
             </p>
             <input
               type="text"
@@ -325,9 +324,6 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
               placeholder="请输入 QQ 号"
               className="mt-3 h-9 w-full rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-pc-primary"
             />
-            {!qq.trim() && (
-              <p className="mt-1 text-xs text-pc-primary">报名需填写 QQ 号</p>
-            )}
           </div>
 
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">

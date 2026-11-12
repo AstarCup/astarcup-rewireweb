@@ -192,7 +192,7 @@ export default function StreamingManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle tag="房间加入" accent="var(--pc-primary)" className="mb-0">
+        <SectionTitle className="mb-0">
           主播 / 解说 / 裁判安排
         </SectionTitle>
         <div className="flex items-center gap-2">
@@ -381,7 +381,7 @@ export default function StreamingManagement() {
             })}
           </div>
 
-          <SectionTitle tag="当前安排" accent="var(--pc-teal)" className="mt-8 mb-0">
+          <SectionTitle className="mt-8 mb-0">
             人员安排列表
           </SectionTitle>
           {list.length === 0 ? (

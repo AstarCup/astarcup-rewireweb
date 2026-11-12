@@ -270,10 +270,6 @@ export default function RegistrationsPage() {
 
   return (
     <div className="bg-(--pc-paper)">
-      <PageHeader
-        title="参赛选手"
-        subtitle={loadingPlayers || error ? undefined : `共 ${counts.all} 名选手，${counts.approved} 名已审核`}
-      />
 
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         <div className="mb-8 flex flex-wrap items-center gap-2">

@@ -78,7 +78,7 @@ export default function ToolsPage() {
         subtitle={
           <>
             本站比赛用到的三个开源项目：OPP 负责图池与赛程组织，Ez2Lazer 与 g0v0 lazer
-            是选手的比赛客户端。点击项目标题或按钮可跳转到对应主页。
+            是选手的比赛客户端。
           </>
         }
       />

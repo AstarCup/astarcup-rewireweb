@@ -277,7 +277,7 @@ export default function PlayerInfoPage() {
                 报名参赛
               </CardTitle>
               <CardDescription className="mt-1">
-                你尚未报名本赛季，点击报名按钮完成报名，等待管理员审核。
+                你尚未报名本赛季。
               </CardDescription>
             </div>
             <Button variant="primary" size="lg" onClick={() => setRegisterOpen(true)}>

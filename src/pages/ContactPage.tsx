@@ -22,7 +22,7 @@ const craftColors = ["var(--pc-primary)", "var(--pc-teal)", "var(--pc-yellow)", 
 export default function ContactPage() {
   return (
     <div>
-      <PageHeader title="联系我们" subtitle="AstarCup 赛事 Staff 团队风采一览。" />
+      <PageHeader title="联系我们" />
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {staff.map((member, i) => {
@@ -70,9 +70,6 @@ export default function ContactPage() {
 
         <Card className="mt-12 flex flex-col items-center p-10 text-center">
           <h2 className="text-2xl font-bold text-(--pc-ink)">想加入 Staff？</h2>
-          <p className="mt-2 max-w-md text-sm text-(--pc-slate)">
-            欢迎加入我们的 QQ 群，一起为 AstarCup 系列赛事出一份力！
-          </p>
           <Button asChild variant="primary" size="lg" className="mt-6">
             <a href={site.contact.qqGroup} target="_blank" rel="noopener noreferrer">
               加入招募群

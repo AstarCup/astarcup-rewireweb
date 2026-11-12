@@ -123,7 +123,7 @@ export default function RegisterPage() {
             <p className="mb-1 font-bold text-(--pc-ink)">隐私说明</p>
             <p>
               登录仅获取你的昵称、头像及 basic profile（osuId、pp、排名等）用于赛事报名与
-              对阵展示，不会公开其他私人信息。
+              对阵展示。
             </p>
           </div>
         </CardContent>

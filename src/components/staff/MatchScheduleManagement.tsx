@@ -195,7 +195,7 @@ export default function MatchScheduleManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle tag="比赛预约管理" accent="var(--pc-primary)" className="mb-0">
+        <SectionTitle className="mb-0">
           赛程安排
         </SectionTitle>
         <div className="flex items-center gap-2">

@@ -160,7 +160,7 @@ export default function UserManagement() {
 
   return (
     <div>
-      <SectionTitle tag="用户管理" accent="var(--pc-blue)">
+      <SectionTitle>
         注册用户
       </SectionTitle>
 

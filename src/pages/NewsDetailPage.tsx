@@ -38,7 +38,6 @@ export default function NewsDetailPage() {
   if (state.loading) {
     return (
       <div>
-        <PageHeader title="赛事资讯" accent="#5cb8a5" />
         <LoadingBlock label="加载资讯中…" />
       </div>
     );
@@ -48,7 +47,6 @@ export default function NewsDetailPage() {
   if (!item) {
     return (
       <div>
-        <PageHeader title="赛事资讯" />
         <div className="mx-auto max-w-2xl px-4 py-12 md:px-8">
           <Card className="p-8 text-center">
             <h2 className="text-xl font-bold text-(--pc-ink)">文章不存在</h2>
@@ -68,7 +66,6 @@ export default function NewsDetailPage() {
 
   return (
     <div>
-      <PageHeader title="赛事资讯" accent="var(--pc-teal)" />
       <article className="mx-auto max-w-2xl px-4 py-10 md:px-8">
         <header className="mb-8 border-b-2 border-(--pc-border) pb-6">
           <h1 className="text-2xl font-bold leading-snug text-(--pc-ink) md:text-3xl">

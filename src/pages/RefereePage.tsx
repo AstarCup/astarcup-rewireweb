@@ -742,16 +742,11 @@ export default function RefereePage() {
   const inConsole = bound && (room != null || connState !== "disconnected");
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-8 md:px-6">
+    <div className="mx-auto max-w-[1600px] px-4 md:px-6">
       {/* 页头 */}
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-(--pc-ink) md:text-3xl">
-            <Gavel className="h-7 w-7 text-pc-primary" /> 裁判控制台
-          </h1>
-          <p className="mt-1 text-sm text-(--pc-slate)">
-            创建/加入 osu! 多人游戏房间并进行执裁：玩家管理、图池队列、比赛控制与实时事件。
-          </p>
+
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {bindStatus?.bound && (
@@ -787,9 +782,6 @@ export default function RefereePage() {
         <Card className="mx-auto max-w-xl">
           <CardHeader>
             <CardTitle>绑定 osu! 账号（裁判授权）</CardTitle>
-            <CardDescription>
-              使用裁判用的 osu! 账号完成授权后，才能连接裁判服务器并管理多人游戏房间。
-            </CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={handleBind} disabled={bindBusy}>
@@ -837,7 +829,7 @@ export default function RefereePage() {
                   <MatchControlPanel room={room} timer={timer} />
                 </>
               ) : (
-                <PlaceholderCard text="创建或加入房间后，在此管理玩家与比赛控制" />
+                <PlaceholderCard text="" />
               )}
             </div>
 

@@ -243,7 +243,7 @@ export default function ReplayCollectionManagement() {
 
   return (
     <div>
-      <SectionTitle tag="回放收集" accent="var(--pc-blue)">
+      <SectionTitle>
         已上传回放
       </SectionTitle>
 
@@ -303,7 +303,7 @@ export default function ReplayCollectionManagement() {
       </div>
 
       <p className="mt-3 text-xs text-(--pc-faint)">
-        共 {maps.length} 张测图中选图 · 点击卡片或「上传回放」按钮选择 .osr 文件
+        共 {maps.length} 张测图中选图
       </p>
 
       {loading ? (

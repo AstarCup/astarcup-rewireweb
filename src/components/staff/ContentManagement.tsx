@@ -259,8 +259,8 @@ export default function ContentManagement() {
     <div className="p-6">
       {/* ============ 资讯 ============ */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SectionTitle tag="资讯管理" accent="#6b7fb5" className="mb-0">
-          News
+        <SectionTitle className="mb-0">
+          资讯管理
         </SectionTitle>
         <Button size="sm" onClick={openCreate}>
           <Plus className="mr-1.5 h-4 w-4" /> 新建资讯
@@ -269,7 +269,7 @@ export default function ContentManagement() {
 
       {newsList.length === 0 ? (
         <p className="mt-4 rounded-2xl bg-(--pc-white) p-6 text-sm text-(--pc-slate) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
-          还没有资讯，点右上角「新建资讯」创建第一篇。
+          还没有资讯。
         </p>
       ) : (
         <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
@@ -413,7 +413,7 @@ export default function ContentManagement() {
       {/* ============ 赛季规则 ============ */}
       <div className="mt-10 border-t-2 border-(--pc-border) pt-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <SectionTitle tag="Bot 规则" accent="#5cb8a5" className="mb-0">
+          <SectionTitle className="mb-0">
             赛季规则
           </SectionTitle>
           <div className="flex items-center gap-2">
@@ -491,8 +491,7 @@ export default function ContentManagement() {
 
             {(rules ?? []).length === 0 && !ruleDialog.open && (
               <p className="mt-4 rounded-2xl bg-(--pc-white) p-6 text-sm text-(--pc-slate) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
-                数据库里还没有赛季规则。输入赛季 ID 点「新建」，或先执行 sql/content_tables.sql
-                完成迁移播种。
+                还没有赛季规则。
               </p>
             )}
           </>
@@ -510,7 +509,7 @@ export default function ContentManagement() {
               {ruleDialog.isNew ? "新建赛季规则" : `编辑赛季规则 · ${ruleDialog.season}`}
             </DialogTitle>
             <DialogDescription>
-              Markdown 正文，保存后写入 season_rules 表，Bot 立即生效。
+              支持 Markdown 正文，保存后 Bot 立即生效。
             </DialogDescription>
           </DialogHeader>
           <div className={DIALOG_BODY}>

@@ -385,12 +385,9 @@ export default function SettingsManagement() {
     <div className="mx-auto max-w-[1200px]">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <SectionTitle tag="系统设置" accent="var(--pc-primary)">
+          <SectionTitle>
             赛事设置
           </SectionTitle>
-          <p className="-mt-3 text-sm text-(--pc-slate)">
-            维护赛事名称、当前赛季与阶段、报名门槛和功能开关。
-          </p>
         </div>
         <div className="mb-6 flex flex-wrap items-center gap-2">
           {currentRow && <Badge variant="outline">{currentRow.name}</Badge>}
@@ -404,10 +401,10 @@ export default function SettingsManagement() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         {/* 左列 */}
         <div className="flex flex-col gap-4">
-          <Panel icon={Trophy} title="赛事信息" desc="对外展示的名称与当前进度">
+          <Panel icon={Trophy} title="赛事信息">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <Field label="赛事名称" hint="显示在首页与导航栏">
+                <Field label="赛事名称">
                   <Input
                     value={form.tournament_name}
                     onChange={setField("tournament_name")}
@@ -434,7 +431,7 @@ export default function SettingsManagement() {
                   </SelectContent>
                 </Select>
               </Field>
-              <Field label="当前阶段" hint="决定图池默认展示的轮次">
+              <Field label="当前阶段">
                 <StageCombobox
                   value={form.current_season_stage}
                   onChange={(v) => setForm((f) => ({ ...f, current_season_stage: v }))}
@@ -446,7 +443,6 @@ export default function SettingsManagement() {
           <Panel
             icon={CalendarRange}
             title="赛季池"
-            desc="赛季 ID · 名称 · 状态；设为当前后全站按它展示"
             action={<Badge variant="outline">{seasons.length} 个赛季</Badge>}
           >
             {seasons.length === 0 ? (
@@ -556,7 +552,7 @@ export default function SettingsManagement() {
 
         {/* 右列 */}
         <div className="flex flex-col gap-4">
-          <Panel icon={UserPlus} title="报名设置" desc="PP 门槛与报名开关">
+          <Panel icon={UserPlus} title="报名设置">
             <div className="grid gap-3">
               <div className="grid grid-cols-2 gap-3">
                 <Field label="最低 PP" hint="留空不限">
@@ -578,18 +574,16 @@ export default function SettingsManagement() {
               </div>
               <ToggleRow
                 title="开放报名"
-                desc="允许新玩家提交报名"
                 checked={registrationEnabled}
                 onCheckedChange={setRegistrationEnabled}
               />
             </div>
           </Panel>
 
-          <Panel icon={Eye} title="展示与联动" desc="图池可见性与比赛平台">
+          <Panel icon={Eye} title="展示与联动">
             <div className="grid gap-2">
               <ToggleRow
                 title="图池可见"
-                desc="向选手展示当前图池"
                 checked={mappoolVisible}
                 onCheckedChange={setMappoolVisible}
               />

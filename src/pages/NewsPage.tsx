@@ -15,13 +15,12 @@ export default function NewsPage() {
 
   return (
     <div>
-      <PageHeader title="赛事资讯" subtitle="AstarCup 系列赛事的最新动态与官方公告。" />
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
         {loading && <LoadingBlock label="加载资讯中…" />}
         {error && !loading && <ErrorBlock message={error} onRetry={() => void refetch()} />}
         {!loading && !error && newsItems.length === 0 && (
           <Card className="p-8 text-center">
-            <p className="text-sm text-(--pc-slate)">暂无资讯，稍后再来看看。</p>
+            <p className="text-sm text-(--pc-slate)">暂无资讯</p>
           </Card>
         )}
         <div className="space-y-5">

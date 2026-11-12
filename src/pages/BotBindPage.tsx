@@ -123,7 +123,7 @@ export default function BotBindPage() {
               绑定链接无效
             </CardTitle>
             <CardDescription>
-              链接缺少绑定令牌，可能已被复制不完整，或者你直接打开了本页面。
+              链接缺少绑定令牌。
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

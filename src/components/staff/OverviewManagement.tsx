@@ -52,7 +52,7 @@ export default function OverviewManagement() {
         </div>
       </div>
 
-      <SectionTitle tag="后台概览" accent="var(--pc-primary)">
+      <SectionTitle>
         运营数据一览
       </SectionTitle>
 
@@ -106,7 +106,7 @@ export default function OverviewManagement() {
       </Card>
 
       {/* 分赛季数据板块 */}
-      <SectionTitle tag="赛季数据" accent="var(--pc-teal)" className="mt-10">
+      <SectionTitle className="mt-10">
         按赛季查看报名 / 图池 / 回放统计
       </SectionTitle>
 
