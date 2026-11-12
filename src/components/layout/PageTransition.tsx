@@ -48,6 +48,24 @@ function whenResourcesReady(): Promise<void> {
 /** 首屏真实加载追踪的资源：按字节统计进度（banner.png 等大图） */
 type BootAsset = { loaded: number; total: number };
 
+/** 图片内存缓存：原始 URL → blob URL。SPA 生命周期内保留，页面回访免重复下载大图 */
+const imageCache = new Map<string, string>();
+
+/** 把内存缓存里的图片写回 <img>：切换页面回来时 banner.png 等大图无需重新加载 */
+function patchImagesWithCache(): void {
+  for (const img of Array.from(document.images)) {
+    const cached = imageCache.get(img.src);
+    if (!cached || img.src === cached) continue;
+    const original = img.src;
+    // 写回失败时回退原始地址，保证图片一定能显示
+    img.onerror = () => {
+      img.onerror = null;
+      img.src = original;
+    };
+    img.src = cached;
+  }
+}
+
 /** 收集当前页面 DOM 中需要真实加载的图片（跳过懒加载与 data: 占位图） */
 function collectBootImages(): HTMLImageElement[] {
   return Array.from(document.images).filter(
@@ -117,6 +135,8 @@ async function loadImageWithProgress(
     // MIME 必须保留：SVG 等类型在 <img> 中渲染要求 blob 带正确类型，缺失会解码失败只剩 alt 文本
     const type = res.headers.get("content-type")?.split(";")[0].trim() || mimeFromUrl(url);
     const blobUrl = URL.createObjectURL(new Blob([merged], { type: type || undefined }));
+    // 进入内存缓存并常驻（SPA 生命周期内复用：切换页面回来免重复下载）
+    imageCache.set(url, blobUrl);
     if (img.isConnected && img.src === url) {
       // 写回失败时回退原始地址，保证图片一定能显示
       img.onerror = () => {
@@ -124,13 +144,6 @@ async function loadImageWithProgress(
         img.src = url;
       };
       img.src = blobUrl;
-      // 解码完成后释放 blob 内存
-      img.decode().then(
-        () => URL.revokeObjectURL(blobUrl),
-        () => URL.revokeObjectURL(blobUrl),
-      );
-    } else {
-      URL.revokeObjectURL(blobUrl);
     }
     asset.total = asset.loaded = asset.total || loaded;
     onProgress();
@@ -221,8 +234,9 @@ export default function PageTransition() {
   const backgroundRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
 
-  // 内容真正切换上屏时，通知 ScrollToTop 等滚动复位
+  // 内容真正切换上屏时：把内存缓存里的图片写回新页面（回访免重复下载），并通知 ScrollToTop 滚动复位
   useEffect(() => {
+    patchImagesWithCache();
     window.dispatchEvent(new Event(PAGE_SWAP_EVENT));
   }, [swapId]);
 
