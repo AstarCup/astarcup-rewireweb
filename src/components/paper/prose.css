@@ -9,6 +9,13 @@
   margin-top: 1rem;
 }
 
+/* 分割线（Markdown 的 --- / *** / ___） */
+.prose-article hr {
+  border: none;
+  border-top: 2px dashed var(--pc-border);
+  margin: 2rem 0;
+}
+
 .prose-article h1,
 .prose-article h2,
 .prose-article h3,

@@ -1,0 +1,62 @@
+/* osu!lazer 风格自定义光标（参考 osu-lazer-style-cursor）
+   填充色：平时 rgba(7,20,36,1)，按下时 rgba(32,99,133,1)。 */
+
+.osu-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  display: none;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* 可点击元素上的吸附描边框（纯色，不用渐变） */
+.osu-frame {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2147483646;
+  width: 0;
+  height: 0;
+  border: 2px solid var(--pc-primary);
+  border-radius: 14px;
+  box-shadow: 0 0 0 4px rgba(233, 59, 102, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, width, height, opacity;
+}
+
+.osu-cursor-rotate,
+.osu-cursor-scale {
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.osu-cursor-fill {
+  fill: rgba(7, 20, 36, 1);
+  fill-opacity: 1;
+  transition: fill 180ms ease;
+}
+
+.osu-cursor.is-down .osu-cursor-fill {
+  fill: rgba(32, 99, 133, 1);
+}
+
+/* 启用自定义光标时全站隐藏系统光标（输入框也用自定义光标）；
+   个别确实需要系统光标的地方加 data-cursor="native" 显式声明 */
+html.osu-cursor-on,
+html.osu-cursor-on * {
+  cursor: none !important;
+}
+html.osu-cursor-on [data-cursor="native"],
+html.osu-cursor-on [data-cursor="native"] * {
+  cursor: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .osu-cursor-fill {
+    transition: none;
+  }
+}

@@ -1,8 +1,10 @@
 /**
  * Minimal markdown + front-matter parser used for News & Guide pages.
  * Sufficient for the tournament content (headings, lists, links, bold,
- * italics, inline code, images, paragraphs, block quotes).
+ * italics, inline code, images, paragraphs, block quotes) 以及自定义表情 `:token:`。
  */
+
+import { EMOJI_MAP } from "@/lib/emoji-data";
 
 export interface FrontMatter {
   title?: string;
@@ -47,6 +49,13 @@ function safeUrl(url: string): string {
 
 function inline(src: string): string {
   let s = escapeHtml(src);
+  // 自定义表情：:token: → <img class="emoji">（token 只允许中英文/数字/下划线/连字符）
+  s = s.replace(/:([\u4e00-\u9fa5A-Za-z0-9_-]+):/g, (m, token: string) => {
+    const url = EMOJI_MAP[token];
+    return url
+      ? `<img src="${url}" alt="${token}" title=":${token}:" class="emoji" loading="lazy" />`
+      : m;
+  });
   // images ![alt](url title)
   s = s.replace(
     /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
@@ -114,6 +123,10 @@ export function renderMarkdown(src: string): string {
       closeList();
       const level = m[1].length;
       out.push(`<h${level}>${inline(m[2])}</h${level}>`);
+    } else if (/^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
+      // 分割线：--- / *** / ___（可带空格）
+      closeList();
+      out.push("<hr />");
     } else if (/^[-*]\s+/.test(trimmed)) {
       if (!inList) {
         inList = true;

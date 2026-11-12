@@ -7,5 +7,7 @@
 @import "./styles/paper-craft.css";
 @import "./styles/page-transition.css";
 @import "./styles/boot-loading.css";
+@import "./styles/osu-cursor.css";
+@import "./styles/emoji.css";
 
 @custom-variant dark (&:is(.dark *));

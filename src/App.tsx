@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toast";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import PageTransition from "@/components/layout/PageTransition";
 import BackToTop from "@/components/layout/BackToTop";
+import OsuCursor from "@/components/effects/OsuCursor";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import HomePage from "@/pages/HomePage";
@@ -58,6 +59,8 @@ export default function App() {
       </Route>
     </Routes>
     <BackToTop />
+    {/* osu!lazer 风格自定义光标：全站生效（含 staff 后台），触屏自动禁用 */}
+    <OsuCursor />
     </Toaster>
   );
 }

@@ -1,0 +1,16 @@
+/* 自定义表情（public/assets/szmEmoji）：
+   Markdown 里写成 :token:，渲染成行内小图（前台文章 / vditor 编辑器与预览都生效）。 */
+.emoji,
+img.emoji,
+.vditor-reset img.emoji,
+.prose-article img.emoji {
+  display: inline-block;
+  width: 1.4em;
+  height: 1.4em;
+  max-width: none;
+  margin: 0 0.08em;
+  vertical-align: -0.3em;
+  border-radius: 0;
+  box-shadow: none;
+  object-fit: contain;
+}
