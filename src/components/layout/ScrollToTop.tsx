@@ -1,11 +1,18 @@
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { PAGE_SWAP_EVENT } from "@/components/layout/PageTransition";
 
-/** Scrolls to top on route change. */
+/**
+ * 切换页面后滚动到顶部。
+ *
+ * 页面转场时，内容切换（及滚动复位）发生在幕布完全遮挡屏幕的那一刻
+ * （PAGE_SWAP_EVENT），避免旧页面在幕布落下前就跳回顶部。
+ */
 export default function ScrollToTop() {
-  const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
-  }, [pathname]);
+    const onSwap = () => window.scrollTo({ top: 0, behavior: "auto" });
+    window.addEventListener(PAGE_SWAP_EVENT, onSwap);
+    return () => window.removeEventListener(PAGE_SWAP_EVENT, onSwap);
+  }, []);
   return null;
 }

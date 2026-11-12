@@ -1,6 +1,7 @@
-import { Routes, Route, Outlet } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toast";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import PageTransition from "@/components/layout/PageTransition";
 import BackToTop from "@/components/layout/BackToTop";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -26,7 +27,7 @@ function PublicLayout() {
       <ScrollToTop />
       <Navbar />
       <main className="flex-1">
-        <Outlet />
+        <PageTransition />
       </main>
       <Footer />
     </div>

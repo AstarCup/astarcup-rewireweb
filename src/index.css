@@ -246,9 +246,81 @@
   transform: translate(5px, 5px) rotate(2deg);
 }
 
+/* ---- 页面转场幕布（Page Transition） ---- */
+.page-transition-curtain {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  /* 宽于视口：横扫全程存在一段“完全遮挡”区间，内容切换隐藏其中 */
+  width: 160vw;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--pc-primary);
+  /* 前进方向（右缘）层叠的“纸边”，随幕布平移带出纸片叠层感 */
+  box-shadow:
+    18px 0 0 var(--pc-yellow),
+    30px 0 0 var(--pc-teal),
+    42px 0 0 rgba(0, 0, 0, 0.12);
+  will-change: transform;
+}
+
+.page-transition-title {
+  font-family: "Varela Round", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 800px;
+  line-height: 0.85;
+  font-weight: 700;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  /* 只留描边轮廓，不填充 */
+  color: transparent;
+  -webkit-text-stroke: 5px var(--pc-cream);
+  will-change: transform;
+}
+
+/* 幕布自左向右横扫：-160vw（屏外左侧）→ 100vw（屏外右侧），单段连续动画、中途不停顿。
+   横扫至 50% 时幕布恰好完全遮挡屏幕（内容切换点）。
+   时长需与 PageTransition.tsx 中的 SWAP_MS / TOTAL_MS 保持一致。 */
+@keyframes page-curtain-sweep {
+  from {
+    transform: translateX(-160vw);
+  }
+  to {
+    transform: translateX(100vw);
+  }
+}
+
+/* 标题相对幕布轻微前移，形成超大字平移的视差感 */
+@keyframes page-title-sweep {
+  from {
+    transform: translateX(-20vw);
+  }
+  to {
+    transform: translateX(20vw);
+  }
+}
+
+.page-transition-curtain--sweep {
+  animation: page-curtain-sweep 800ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.page-transition-title--sweep {
+  animation: page-title-sweep 800ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
+  }
+
+  /* 页面转场在 JS 层已降级为直接切换，这里兜底禁用幕布动画 */
+  .page-transition-curtain,
+  .page-transition-title {
+    animation: none !important;
   }
 }
