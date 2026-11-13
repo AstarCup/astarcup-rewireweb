@@ -14,9 +14,12 @@ import {
   Settings,
   Swords,
   Users,
+  Timer,
+  UserCog,
 } from "lucide-react";
 import { useApp } from "@/lib/app-context";
-import { LoadingBlock } from "@/hooks/useFetch";
+import { LoadingBlock } from "@/components/paper/feedback";
+import { EmptyState } from "@/components/paper/paper";
 import { cn } from "@/lib/utils";
 import {
   NavigationMenu,
@@ -51,6 +54,8 @@ import RoomManagement from "@/components/staff/RoomManagement";
 import MatchupManagement from "@/components/staff/MatchupManagement";
 import UserManagement from "@/components/staff/UserManagement";
 import SettingsManagement from "@/components/staff/SettingsManagement";
+import TaskScheduleManagement from "@/components/staff/TaskScheduleManagement";
+import StaffListManagement from "@/components/staff/StaffListManagement";
 import ContentManagement from "@/components/staff/ContentManagement";
 import RefereeConsole from "@/components/staff/RefereeConsole";
 
@@ -66,6 +71,8 @@ const TABS = [
   { key: "streaming", label: "房间加入", Icon: Radio, Comp: StreamingManagement },
   { key: "content", label: "内容管理", Icon: Newspaper, Comp: ContentManagement },
   { key: "settings", label: "系统设置", Icon: Settings, Comp: SettingsManagement },
+  { key: "tasks", label: "计划任务", Icon: Timer, Comp: TaskScheduleManagement },
+  { key: "stafflist", label: "工作人员", Icon: UserCog, Comp: StaffListManagement },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -97,7 +104,7 @@ const NAV: {
 const SIDEBAR_SECTIONS: { label?: string; items: TabKey[] }[] = [
   { items: ["overview", "mappool", "replays"] },
   { label: "比赛管理", items: ["schedules", "matchups", "rooms", "referee", "users"] },
-  { items: ["streaming", "content", "settings"] },
+  { items: ["streaming", "content", "stafflist", "tasks", "settings"] },
 ];
 
 const TRIGGER_BASE =
@@ -155,15 +162,17 @@ export default function StaffDashboardPage() {
     return (
       <div className="min-h-screen bg-(--pc-paper)">
         <div className="mx-auto max-w-2xl px-4 py-12">
-          <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="text-2xl font-bold text-pc-primary">没有访问权限</p>
-            <Link
-              to="/player-info"
-              className="mt-6 inline-block rounded-xl bg-pc-teal px-5 py-2.5 text-sm font-bold text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
-            >
-              返回个人信息页
-            </Link>
-          </div>
+          <EmptyState
+            title="没有访问权限"
+            action={
+              <Button
+                asChild
+                className="rounded-xl bg-pc-teal px-5 py-2.5 text-sm font-bold text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]"
+              >
+                <Link to="/player-info">返回个人信息页</Link>
+              </Button>
+            }
+          />
         </div>
       </div>
     );

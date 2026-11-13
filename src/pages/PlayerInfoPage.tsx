@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Gamepad2, Bot, Home, LogOut, RefreshCw, ShieldCheck, Trophy, User } from "lucide-react";
 import { api, qs } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
-import { useFetch, useAsync, LoadingBlock } from "@/hooks/useFetch";
+import { useFetch, useAsync } from "@/hooks/useFetch";
+import { LoadingBlock } from "@/components/paper/feedback";
+import { useOsuAuth, useOAuthCallback, type AuthUrlResponse } from "@/hooks/use-osu-auth";
 import { toast } from "@/hooks/use-toast";
 import { fmtInt, formatDateTime, osuAvatarUrl, platformLabel } from "@/lib/utils";
 import type { BotBindCode, BotBinding, MatchRoom, NextMatch, Settings } from "@/lib/types";
@@ -15,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import RegisterDialog from "@/components/RegisterDialog";
 import SeasonBadge from "@/components/SeasonBadge";
+import { EmptyState } from "@/components/paper/paper";
 import {
   Dialog,
   DialogContent,
@@ -90,8 +93,11 @@ export default function PlayerInfoPage() {
   const [registerOpen, setRegisterOpen] = useState(false);
 
   // ---- g0v0 服务器绑定 ----
-  const [searchParams] = useSearchParams();
-  const [bindBusy, setBindBusy] = useState(false);
+  const {
+    busy: bindBusy,
+    start: startBind,
+  } = useOsuAuth(() => api.get<AuthUrlResponse>("/api/bind/url"));
+  const [unbindBusy, setUnbindBusy] = useState(false);
 
   // ---- 机器人身份绑定 ----
   const botBindings = useFetch<BotBinding[]>(() => api.get<BotBinding[]>("/api/me/bot-bindings"));
@@ -100,43 +106,23 @@ export default function PlayerInfoPage() {
   const [unbindingBotId, setUnbindingBotId] = useState<number | null>(null);
 
   // OAuth 回调后跳转提示 + 清理地址栏参数
-  useEffect(() => {
-    const b = searchParams.get("bound");
-    if (b === "1") toast({ title: "g0v0 绑定成功" });
-    else if (b === "error") {
-      const reason = searchParams.get("reason") ?? "";
-      const text: Record<string, string> = {
-        disabled: "绑定功能未启用",
-        state_mismatch: "安全校验失败，请重新绑定",
-        no_code: "未获取到授权码",
-        network: "网络错误，无法连接 g0v0 服务器",
-        token_failed: "换取 g0v0 令牌失败",
-        token_missing: "令牌响应缺少 access_token",
-        token_parse: "令牌响应解析失败",
-        me_failed: "获取 g0v0 用户信息失败",
-        me_parse: "g0v0 用户信息响应解析失败",
-        me_id_missing: "g0v0 用户信息缺少 id",
-        db_error: "写入绑定信息失败",
-      };
-      toast({
-        variant: "destructive",
-        title: "g0v0 绑定失败",
-        description: text[reason] ?? reason,
-      });
-    }
-    if (b) {
-      const params = new URLSearchParams(window.location.search);
-      params.delete("bound");
-      params.delete("reason");
-      const qs = params.toString();
-      window.history.replaceState(
-        null,
-        "",
-        `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`,
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useOAuthCallback({
+    successTitle: "g0v0 绑定成功",
+    errorTitle: "g0v0 绑定失败",
+    errorText: {
+      disabled: "绑定功能未启用",
+      state_mismatch: "安全校验失败，请重新绑定",
+      no_code: "未获取到授权码",
+      network: "网络错误，无法连接 g0v0 服务器",
+      token_failed: "换取 g0v0 令牌失败",
+      token_missing: "令牌响应缺少 access_token",
+      token_parse: "令牌响应解析失败",
+      me_failed: "获取 g0v0 用户信息失败",
+      me_parse: "g0v0 用户信息响应解析失败",
+      me_id_missing: "g0v0 用户信息缺少 id",
+      db_error: "写入绑定信息失败",
+    },
+  });
 
   if (loading) {
     return (
@@ -155,23 +141,15 @@ export default function PlayerInfoPage() {
 
   // ---- g0v0 服务器绑定 ----
   const handleBind = async () => {
-    setBindBusy(true);
-    const res = await api.get<{ authUrl: string }>("/api/bind/url");
-    setBindBusy(false);
-    if (res.ok && res.data.authUrl) {
-      window.location.href = res.data.authUrl;
-    } else {
-      toast({
-        variant: "destructive",
-        title: "绑定失败",
-        description: !res.ok ? res.error.message : "未获取到授权地址，请稍后重试",
-      });
+    const err = await startBind();
+    if (err) {
+      toast({ variant: "destructive", title: "绑定失败", description: err });
     }
   };
   const handleUnbind = async () => {
-    setBindBusy(true);
+    setUnbindBusy(true);
     const res = await api.post("/api/bind/unbind");
-    setBindBusy(false);
+    setUnbindBusy(false);
     if (res.ok) {
       toast({ title: "已解除 g0v0 绑定" });
       await refresh();
@@ -397,7 +375,11 @@ export default function PlayerInfoPage() {
                       </p>
                     )}
                   </div>
-                  <Button variant="outline" onClick={() => void handleUnbind()} disabled={bindBusy}>
+                  <Button
+                    variant="outline"
+                    onClick={() => void handleUnbind()}
+                    disabled={unbindBusy}
+                  >
                     解绑
                   </Button>
                 </>
@@ -479,7 +461,7 @@ export default function PlayerInfoPage() {
                   </Button>
                 </div>
                 {botBindings.loading ? (
-                  <p className="text-sm text-(--pc-faint)">加载中…</p>
+                  <LoadingBlock compact label="加载中…" />
                 ) : botBindings.error ? (
                   <p className="text-sm text-pc-primary">{botBindings.error}</p>
                 ) : (botBindings.data ?? []).length === 0 ? (
@@ -577,9 +559,7 @@ export default function PlayerInfoPage() {
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 py-12">
-                <p className="text-sm text-(--pc-faint)">暂无下一轮对阵</p>
-              </div>
+              <EmptyState label="暂无下一轮对阵" className="bg-transparent shadow-none" />
             )}
           </CardContent>
         </Card>

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toast";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import PageTransition from "@/components/layout/PageTransition";
@@ -59,6 +59,7 @@ function readCursorEnabled(): boolean {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
   const [cursorEnabled, setCursorEnabled] = useState(readCursorEnabled);
 
   const toggleCursor = () => {
@@ -103,8 +104,10 @@ export default function App() {
         </Route>
       </Routes>
       <BackToTop />
-      {/* 左下角开关：关掉后自定义光标和可点击元素指示框一起关闭 */}
-      <CursorToggle enabled={cursorEnabled} onToggle={toggleCursor} />
+      {/* 左下角开关：关掉后自定义光标和可点击元素指示框一起关闭（后台页面不显示） */}
+      {!pathname.startsWith("/staff-dashboard") && (
+        <CursorToggle enabled={cursorEnabled} onToggle={toggleCursor} />
+      )}
       {/* osu!lazer 风格自定义光标：全站生效（含 staff 后台），触屏自动禁用 */}
       <OsuCursor enabled={cursorEnabled} />
     </Toaster>

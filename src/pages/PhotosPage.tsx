@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/paper/paper";
 import winnersJson from "@/data/winners.json";
 import { osuAvatarUrl } from "@/lib/utils";
 
@@ -69,7 +70,7 @@ export default function PhotosPage() {
         </div>
 
         {cards.length === 0 ? (
-          <p className="text-(--pc-faint)">暂无选手信息。</p>
+          <EmptyState label="暂无选手信息。" />
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {cards.map((card) => {
@@ -108,7 +109,7 @@ export default function PhotosPage() {
         )}
 
         {photos.length === 0 ? (
-          <p className="text-(--pc-faint)">暂无照片。</p>
+          <EmptyState label="暂无照片。" />
         ) : (
           <div className="grid gap-8 sm:grid-cols-2">
             {photos.map((photo) => (

@@ -1,20 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useApp } from "@/lib/app-context";
-import { LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { api, qs, blob, downloadBlob } from "@/lib/api";
 import { SectionTitle } from "@/components/paper/paper";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
 import { seasonOptions as buildSeasonOptions, CATEGORY_OPTIONS, MODS_ORDER } from "@/lib/types";
 import type { MapSelection } from "@/lib/types";
 import { MOD_COLORS, MOD_DISPLAY, modBase } from "@/lib/mods";
@@ -243,52 +237,28 @@ export default function ReplayCollectionManagement() {
 
       {/* Filters + actions */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Label className="text-xs text-(--pc-faint)">赛季</Label>
-          <Select value={season} onValueChange={setSeason}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="最新" />
-            </SelectTrigger>
-            <SelectContent>
-              {seasonOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs text-(--pc-faint)">阶段</Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="全部">All</SelectItem>
-              {CATEGORY_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs text-(--pc-faint)">MOD</Label>
-          <Select value={modFilter} onValueChange={setModFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {modOptions.map((o) => (
-                <SelectItem key={o.key} value={o.key}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <FilterSelect label="赛季" value={season} onValueChange={setSeason} placeholder="最新" className="w-36">
+          {seasonOptions.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </FilterSelect>
+        <FilterSelect label="阶段" value={category} onValueChange={setCategory} className="w-32">
+          <SelectItem value="全部">All</SelectItem>
+          {CATEGORY_OPTIONS.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </FilterSelect>
+        <FilterSelect label="MOD" value={modFilter} onValueChange={setModFilter} className="w-32">
+          {modOptions.map((o) => (
+            <SelectItem key={o.key} value={o.key}>
+              {o.label}
+            </SelectItem>
+          ))}
+        </FilterSelect>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="teal" onClick={downloadAll} disabled={downloading}>
             {downloading ? "下载中…" : "下载全部回放"}

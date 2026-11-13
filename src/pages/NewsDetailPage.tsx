@@ -4,7 +4,7 @@ import { renderMarkdown } from "@/lib/markdown";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingBlock } from "@/hooks/useFetch";
+import { LoadingBlock } from "@/components/paper/feedback";
 import { api } from "@/lib/api";
 import type { NewsDetail } from "@/lib/types";
 import "@/components/paper/prose.css";

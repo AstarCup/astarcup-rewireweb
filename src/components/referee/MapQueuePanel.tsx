@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Check, Loader2, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Check, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
 import ModPicker, { ModIcon } from "@/components/referee/ModPicker";
+import { useConfirm } from "@/hooks/use-confirm";
 import { toast } from "@/hooks/use-toast";
 import {
   getBeatmapCached,
@@ -13,6 +14,7 @@ import {
   type RefRoomState,
 } from "@/lib/ref";
 import { Badge } from "@/components/ui/badge";
+import { BusyButton } from "@/components/ui/busy-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -143,6 +145,7 @@ interface PlaylistDialogProps {
 }
 
 function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogProps) {
+  const confirm = useConfirm();
   const [beatmapId, setBeatmapId] = useState("");
   const [rulesetId, setRulesetId] = useState("");
   const [requiredMods, setRequiredMods] = useState<RefMod[]>([]);
@@ -201,7 +204,7 @@ function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogPro
 
   const remove = async () => {
     if (!editing) return;
-    if (!window.confirm("确定要从图池移除这张图吗？")) return;
+    if (!(await confirm({ title: "确定要从图池移除这张图吗？" }))) return;
     setBusy(true);
     const res = await invokeHub(hub.removePlaylistItem(room.id, editing.id));
     setBusy(false);
@@ -267,10 +270,9 @@ function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogPro
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button size="sm" onClick={submit} disabled={busy}>
-            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+          <BusyButton size="sm" onClick={submit} loading={busy}>
             {editing ? "保存" : "添加"}
-          </Button>
+          </BusyButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -5,7 +5,7 @@ import Logo from "./Logo";
 import MessageCenter from "./MessageCenter";
 import ThemeToggle from "./ThemeToggle";
 import { useApp } from "@/lib/app-context";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import UserAvatar from "@/components/UserAvatar";
 import {
   Drawer,
   DrawerTrigger,
@@ -21,7 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn, osuAvatarUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const LINKS = [
   { to: "/", label: "首页" },
@@ -143,10 +143,13 @@ export default function Navbar() {
                     className="flex items-center gap-2 rounded-xl bg-(--pc-white) p-1 pr-2 shadow-[2px_2px_0px_rgba(0,0,0,0.08)] transition-all duration-200 hover:-translate-y-0.5 focus:outline-none"
                     aria-label="用户菜单"
                   >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatarUrl || osuAvatarUrl(user.osuId)} />
-                      <AvatarFallback>{user.username?.[0]?.toUpperCase() ?? "?"}</AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      username={user.username}
+                      avatarUrl={user.avatarUrl}
+                      osuId={user.osuId}
+                      className="h-8 w-8"
+                      uppercase
+                    />
                     <span className="hidden text-sm font-bold lg:inline">{user.username}</span>
                   </button>
                 </DropdownMenuTrigger>

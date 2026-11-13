@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
+import { useOsuAuth, type AuthUrlResponse } from "@/hooks/use-osu-auth";
 import { fmtInt } from "@/lib/utils";
 import { site } from "@/lib/site";
 import { REG_STATUS_LABEL } from "@/lib/types";
@@ -50,21 +51,18 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
     null,
   );
   const [customKeyError, setCustomKeyError] = useState("");
-  const [bindBusy, setBindBusy] = useState(false);
+  const {
+    busy: bindBusy,
+    start: startBind,
+  } = useOsuAuth(() => api.get<AuthUrlResponse>("/api/bind/url"));
   const [qq, setQq] = useState("");
 
   const g0v0Bound = !!user?.g0v0Bound;
   /** 只有「使用 g0v0 比赛」开启时才要求绑定 */
   const requireGv0 = String(settings?.use_gv0 ?? false) === "true";
   const handleBind = async () => {
-    setBindBusy(true);
-    const res = await api.get<{ authUrl: string }>("/api/bind/url");
-    setBindBusy(false);
-    if (res.ok && res.data.authUrl) {
-      window.location.href = res.data.authUrl;
-    } else {
-      setRegMsg(!res.ok ? res.error.message : "未获取到授权地址，请稍后重试");
-    }
+    const err = await startBind();
+    if (err) setRegMsg(err);
   };
 
   const regEnabled = String(settings?.registration_enabled ?? true) !== "false";

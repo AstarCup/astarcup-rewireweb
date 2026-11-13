@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Download, Loader2, Radio, Trash2 } from "lucide-react";
+import { Download, Radio, Trash2 } from "lucide-react";
 import { downloadBlob } from "@/lib/api";
 import { hub, invokeHub, type EventLogEntry } from "@/lib/ref";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Badge } from "@/components/ui/badge";
+import { BusyButton } from "@/components/ui/busy-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -46,6 +48,7 @@ interface EventsPanelProps {
 
 /** 右栏下半：Events 事件日志（倒序）+ Debug（Ping） */
 export default function EventsPanel({ events, onClear }: EventsPanelProps) {
+  const confirm = useConfirm();
   const [pingBusy, setPingBusy] = useState(false);
   const [pingResult, setPingResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [onlyKey, setOnlyKey] = useState(false);
@@ -64,8 +67,8 @@ export default function EventsPanel({ events, onClear }: EventsPanelProps) {
     );
   };
 
-  const clearLog = () => {
-    if (!window.confirm("确定清空事件日志吗？此操作不可恢复。")) return;
+  const clearLog = async () => {
+    if (!(await confirm({ title: "确定清空事件日志吗？此操作不可恢复。" }))) return;
     onClear?.();
   };
   const list = onlyKey ? events.filter((ev) => KEY_EVENTS.has(ev.name)) : events;
@@ -125,14 +128,15 @@ export default function EventsPanel({ events, onClear }: EventsPanelProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={sendPing} disabled={pingBusy}>
-            {pingBusy ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Radio className="h-3.5 w-3.5" />
-            )}
+          <BusyButton
+            variant="outline"
+            size="sm"
+            onClick={sendPing}
+            loading={pingBusy}
+            icon={<Radio className="h-3.5 w-3.5" />}
+          >
             发送 Ping
-          </Button>
+          </BusyButton>
           <Button
             variant="outline"
             size="sm"

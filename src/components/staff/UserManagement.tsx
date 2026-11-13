@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 import { Search, BadgeCheck, Check, Users, Trash2 } from "lucide-react";
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { SectionTitle } from "@/components/paper/paper";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { PaperTable, Thead, Th } from "@/components/paper/table";
+import UserAvatar from "@/components/UserAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { formatDate, osuAvatarUrl } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { REG_STATUS_OPTIONS, REG_STATUS_VARIANT, REG_STATUS_LABEL } from "@/lib/types";
 import type { AdminUserStub } from "@/lib/types";
 
@@ -205,18 +207,17 @@ export default function UserManagement() {
         </Button>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-        <table className="w-full min-w-[860px] text-sm">
-          <thead>
-            <tr className="border-b-2 border-(--pc-border) text-left text-xs text-(--pc-faint)">
-              <th className="px-4 py-3 font-bold">用户</th>
-              <th className="px-4 py-3 font-bold">osuId</th>
-              <th className="px-4 py-3 font-bold">QQ</th>
-              <th className="px-4 py-3 font-bold">分组</th>
-              <th className="px-4 py-3 font-bold">报名状态</th>
-              <th className="px-4 py-3 font-bold">注册时间</th>
-            </tr>
-          </thead>
+      <PaperTable minWidth={860} className="mt-4">
+        <Thead>
+          <tr>
+            <Th>用户</Th>
+            <Th>osuId</Th>
+            <Th>QQ</Th>
+            <Th>分组</Th>
+            <Th>报名状态</Th>
+            <Th>注册时间</Th>
+          </tr>
+        </Thead>
           <tbody>
             {filtered.length === 0 && (
               <tr>
@@ -233,15 +234,12 @@ export default function UserManagement() {
                     <tr className="cursor-context-menu border-b border-(--pc-border) last:border-0">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <Avatar className="h-8 w-8">
-                            {(u.avatarUrl || osuAvatarUrl(u.osuId)) && (
-                              <AvatarImage
-                                src={u.avatarUrl || osuAvatarUrl(u.osuId)}
-                                alt={u.username}
-                              />
-                            )}
-                            <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
-                          </Avatar>
+                          <UserAvatar
+                            username={u.username}
+                            avatarUrl={u.avatarUrl}
+                            osuId={u.osuId}
+                            className="h-8 w-8"
+                          />
                           <span className="font-bold text-(--pc-ink)">{u.username}</span>
                         </div>
                       </td>
@@ -338,8 +336,7 @@ export default function UserManagement() {
               );
             })}
           </tbody>
-        </table>
-      </div>
+      </PaperTable>
     </div>
   );
 }

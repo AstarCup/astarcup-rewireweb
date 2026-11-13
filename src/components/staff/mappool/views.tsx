@@ -3,7 +3,8 @@ import { CircleArrowRight, Clipboard, Download, Globe, MessageSquare } from "luc
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import UserAvatar from "@/components/UserAvatar";
+import { PaperTable, Thead, Th } from "@/components/paper/table";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
   ContextMenu,
@@ -98,24 +99,23 @@ function MapContextMenu({
 /** 表格视图 */
 export function MapTableView({ maps, actions }: { maps: MapSelection[]; actions: MapViewActions }) {
   return (
-    <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-      <table className="w-full min-w-[900px] text-left text-sm">
-        <thead>
-          <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">MOD</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">BID</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">封面</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">歌曲</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">谱师</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">★</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">AR</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">CS</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">OD</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">BPM</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">时长</th>
-            <th className="px-3 py-2.5 font-bold text-(--pc-slate)">状态</th>
-          </tr>
-        </thead>
+    <PaperTable minWidth={900} className="mt-4">
+      <Thead>
+        <tr>
+          <Th>MOD</Th>
+          <Th>BID</Th>
+          <Th>封面</Th>
+          <Th>歌曲</Th>
+          <Th>谱师</Th>
+          <Th>★</Th>
+          <Th>AR</Th>
+          <Th>CS</Th>
+          <Th>OD</Th>
+          <Th>BPM</Th>
+          <Th>时长</Th>
+          <Th>状态</Th>
+        </tr>
+      </Thead>
         <tbody>
           {maps.map((m) => (
             <MapContextMenu key={m.id} map={m} actions={actions}>
@@ -193,8 +193,7 @@ export function MapTableView({ maps, actions }: { maps: MapSelection[]; actions:
             </MapContextMenu>
           ))}
         </tbody>
-      </table>
-    </div>
+    </PaperTable>
   );
 }
 
@@ -484,17 +483,14 @@ export function MapCardView({
                                   onClick={() => actions.onComment(m)}
                                   className="flex items-center gap-1.5 rounded-full border-2 border-(--pc-border) bg-(--pc-white) px-2 py-1 text-left transition hover:-translate-y-0.5"
                                 >
-                                  <Avatar className="h-5 w-5">
-                                    {(c.avatarUrl || osuAvatarUrl(c.userId)) && (
-                                      <AvatarImage
-                                        src={c.avatarUrl || osuAvatarUrl(c.userId)}
-                                        alt={c.username}
-                                      />
-                                    )}
-                                    <AvatarFallback className="bg-pc-yellow/30 text-[8px] font-bold text-(--pc-ink)">
-                                      {c.username?.slice(0, 1).toUpperCase() || "?"}
-                                    </AvatarFallback>
-                                  </Avatar>
+                                  <UserAvatar
+                                    username={c.username}
+                                    avatarUrl={c.avatarUrl}
+                                    osuId={c.userId}
+                                    className="h-5 w-5"
+                                    fallbackClassName="bg-pc-yellow/30 text-[8px] font-bold text-(--pc-ink)"
+                                    uppercase
+                                  />
                                   <span className="text-[10px] text-(--pc-slate)">
                                     {c.comment.slice(0, 12)}
                                     {c.comment.length > 12 ? "…" : ""}
@@ -503,17 +499,14 @@ export function MapCardView({
                               </HoverCardTrigger>
                               <HoverCardContent className="w-72">
                                 <div className="flex items-center gap-2.5">
-                                  <Avatar className="h-10 w-10 rounded-xl">
-                                    {(c.avatarUrl || osuAvatarUrl(c.userId)) && (
-                                      <AvatarImage
-                                        src={c.avatarUrl || osuAvatarUrl(c.userId)}
-                                        alt={c.username}
-                                      />
-                                    )}
-                                    <AvatarFallback className="bg-pc-yellow/30 font-bold text-(--pc-ink)">
-                                      {c.username?.slice(0, 1).toUpperCase() || "?"}
-                                    </AvatarFallback>
-                                  </Avatar>
+                                  <UserAvatar
+                                    username={c.username}
+                                    avatarUrl={c.avatarUrl}
+                                    osuId={c.userId}
+                                    className="h-10 w-10 rounded-xl"
+                                    fallbackClassName="bg-pc-yellow/30 font-bold text-(--pc-ink)"
+                                    uppercase
+                                  />
                                   <div className="min-w-0">
                                     <p className="font-bold text-sm text-(--pc-ink)">
                                       {c.username}

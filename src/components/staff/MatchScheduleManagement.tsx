@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { toast } from "@/hooks/use-toast";
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { api, qs } from "@/lib/api";
-import { SectionTitle } from "@/components/paper/paper";
+import { SectionTitle, SectionHeader } from "@/components/paper/paper";
+import { PaperTable, Thead, Th } from "@/components/paper/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -197,7 +199,7 @@ export default function MatchScheduleManagement() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <SectionHeader className="mb-6 gap-4">
         <SectionTitle className="mb-0">赛程安排</SectionTitle>
         <div className="flex items-center gap-2">
           <SeasonSelect
@@ -275,26 +277,25 @@ export default function MatchScheduleManagement() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
+      </SectionHeader>
 
       {schedules.length === 0 ? (
         <p className="py-10 text-center text-sm text-(--pc-faint)">
           {activeSeason === "all" ? "还没有赛程。" : "当前赛季还没有赛程。"}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-          <table className="w-full min-w-[980px] text-left text-sm">
-            <thead>
-              <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper) text-xs text-(--pc-slate)">
-                <th className="whitespace-nowrap px-4 py-3 font-bold">时间</th>
-                <th className="px-4 py-3 font-bold">房间</th>
-                <th className="px-4 py-3 font-bold">对阵</th>
-                <th className="whitespace-nowrap px-4 py-3 font-bold">比分</th>
-                <th className="whitespace-nowrap px-4 py-3 font-bold">赛季</th>
-                <th className="whitespace-nowrap px-4 py-3 font-bold">状态</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right font-bold">操作</th>
-              </tr>
-            </thead>
+        <PaperTable minWidth={980}>
+          <Thead>
+            <tr>
+              <Th>时间</Th>
+              <Th>房间</Th>
+              <Th>对阵</Th>
+              <Th>比分</Th>
+              <Th>赛季</Th>
+              <Th>状态</Th>
+              <Th className="text-right">操作</Th>
+            </tr>
+          </Thead>
             <tbody>
               {schedules.map((s) => {
                 const room = s.room ?? null;
@@ -351,8 +352,7 @@ export default function MatchScheduleManagement() {
                 );
               })}
             </tbody>
-          </table>
-        </div>
+        </PaperTable>
       )}
 
       {/* 编辑赛程 */}

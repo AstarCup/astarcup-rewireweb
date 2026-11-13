@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Copy, Gavel, Loader2, Plug, Settings, UserPlus, X } from "lucide-react";
+import { Copy, Gavel, Plug, Settings, UserPlus, X } from "lucide-react";
+import { useConfirm } from "@/hooks/use-confirm";
 import { toast } from "@/hooks/use-toast";
 import {
   hub,
@@ -13,6 +14,7 @@ import {
 } from "@/lib/ref";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { BusyButton } from "@/components/ui/busy-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +52,7 @@ export default function RefereeTopBar({
   reconnecting,
   onCloseRoom,
 }: RefereeTopBarProps) {
+  const confirm = useConfirm();
   // Add Referee 弹窗
   const [refOpen, setRefOpen] = useState(false);
   const [refUserId, setRefUserId] = useState("");
@@ -146,7 +149,8 @@ export default function RefereeTopBar({
   };
 
   const closeRoom = async () => {
-    if (!window.confirm(`确定要永久关闭房间 ${room.id} 吗？此操作不可撤销。`)) return;
+    const ok = await confirm({ title: `确定要永久关闭房间 ${room.id} 吗？此操作不可撤销。` });
+    if (!ok) return;
     const res = await invokeHub(hub.closeRoom(room.id));
     if (res.ok) {
       toast({ title: "房间已关闭" });
@@ -267,9 +271,9 @@ export default function RefereeTopBar({
                     </label>
                   </div>
                 </div>
-                <Button size="sm" onClick={submitSettings} disabled={settingsBusy}>
-                  {settingsBusy && <Loader2 className="h-3.5 w-3.5 animate-spin" />} 应用
-                </Button>
+                <BusyButton size="sm" onClick={submitSettings} loading={settingsBusy}>
+                  应用
+                </BusyButton>
               </div>
             </PopoverContent>
           </Popover>
@@ -290,14 +294,15 @@ export default function RefereeTopBar({
               {meta.label}
             </span>
             {connState === "disconnected" && (
-              <Button variant="outline" size="sm" onClick={onReconnect} disabled={reconnecting}>
-                {reconnecting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Plug className="h-3.5 w-3.5" />
-                )}
+              <BusyButton
+                variant="outline"
+                size="sm"
+                onClick={onReconnect}
+                loading={reconnecting}
+                icon={<Plug className="h-3.5 w-3.5" />}
+              >
                 重连
-              </Button>
+              </BusyButton>
             )}
           </div>
         </div>
@@ -327,10 +332,9 @@ export default function RefereeTopBar({
             <Button variant="outline" size="sm" onClick={() => setRefOpen(false)}>
               取消
             </Button>
-            <Button size="sm" onClick={submitAddReferee} disabled={refBusy}>
-              {refBusy && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            <BusyButton size="sm" onClick={submitAddReferee} loading={refBusy}>
               邀请
-            </Button>
+            </BusyButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

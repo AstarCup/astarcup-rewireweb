@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Pencil, Plus, Save, Trash2 } from "lucide-react";
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { SectionTitle } from "@/components/paper/paper";
+import { SectionTitle, SectionHeader } from "@/components/paper/paper";
+import { PaperTable, Thead, Th } from "@/components/paper/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -260,29 +262,28 @@ export default function ContentManagement() {
   return (
     <div className="p-6">
       {/* ============ 资讯 ============ */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <SectionHeader>
         <SectionTitle className="mb-0">资讯管理</SectionTitle>
         <Button size="sm" onClick={openCreate}>
           <Plus className="mr-1.5 h-4 w-4" /> 新建资讯
         </Button>
-      </div>
+      </SectionHeader>
 
       {newsList.length === 0 ? (
         <p className="mt-4 rounded-2xl bg-(--pc-white) p-6 text-sm text-(--pc-slate) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
           还没有资讯。
         </p>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead>
-              <tr className="border-b-2 border-(--pc-border) text-left text-xs text-(--pc-faint)">
-                <th className="px-4 py-3 font-bold">日期</th>
-                <th className="px-4 py-3 font-bold">标题</th>
-                <th className="px-4 py-3 font-bold">slug</th>
-                <th className="px-4 py-3 font-bold">状态</th>
-                <th className="px-4 py-3 text-right font-bold">操作</th>
-              </tr>
-            </thead>
+        <PaperTable minWidth={720} className="mt-4">
+          <Thead>
+            <tr>
+              <Th>日期</Th>
+              <Th>标题</Th>
+              <Th>slug</Th>
+              <Th>状态</Th>
+              <Th className="text-right">操作</Th>
+            </tr>
+          </Thead>
             <tbody>
               {newsList.map((n) => (
                 <tr
@@ -322,8 +323,7 @@ export default function ContentManagement() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+        </PaperTable>
       )}
 
       {/* 新建 / 编辑资讯：全屏弹窗 + vditor */}
@@ -407,7 +407,7 @@ export default function ContentManagement() {
 
       {/* ============ 赛季规则 ============ */}
       <div className="mt-10 border-t-2 border-(--pc-border) pt-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <SectionHeader>
           <SectionTitle className="mb-0">赛季规则</SectionTitle>
           <div className="flex items-center gap-2">
             <Input
@@ -420,21 +420,20 @@ export default function ContentManagement() {
               <Plus className="mr-1 h-3.5 w-3.5" /> 新建
             </Button>
           </div>
-        </div>
+        </SectionHeader>
         {rulesLoading ? (
           <LoadingBlock label="加载规则中…" />
         ) : (
           <>
-            <div className="mt-4 overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-              <table className="w-full min-w-[720px] text-sm">
-                <thead>
-                  <tr className="border-b-2 border-(--pc-border) text-left text-xs text-(--pc-faint)">
-                    <th className="px-4 py-3 font-bold">赛季</th>
-                    <th className="px-4 py-3 font-bold">规则预览</th>
-                    <th className="px-4 py-3 font-bold">更新时间</th>
-                    <th className="px-4 py-3 text-right font-bold">操作</th>
-                  </tr>
-                </thead>
+            <PaperTable minWidth={720} className="mt-4">
+              <Thead>
+                <tr>
+                  <Th>赛季</Th>
+                  <Th>规则预览</Th>
+                  <Th>更新时间</Th>
+                  <Th className="text-right">操作</Th>
+                </tr>
+              </Thead>
                 <tbody>
                   {(rules ?? []).map((r) => (
                     <tr
@@ -456,7 +455,6 @@ export default function ContentManagement() {
                       </td>
                       <td className="px-4 py-3">
                         {/* 操作区只需阻止行点击冒泡，本身没有交互语义 */}
-                        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
                         <div
                           className="flex justify-end gap-2"
                           onClick={(e) => e.stopPropagation()}
@@ -477,8 +475,7 @@ export default function ContentManagement() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
-            </div>
+            </PaperTable>
 
             {(rules ?? []).length === 0 && !ruleDialog.open && (
               <p className="mt-4 rounded-2xl bg-(--pc-white) p-6 text-sm text-(--pc-slate) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">

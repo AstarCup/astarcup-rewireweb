@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Loader2, Megaphone, OctagonX, Play, TimerOff } from "lucide-react";
+import { Megaphone, OctagonX, Play, TimerOff } from "lucide-react";
+import { useConfirm } from "@/hooks/use-confirm";
 import { toast } from "@/hooks/use-toast";
 import { hub, invokeHub, type RefRoomState } from "@/lib/ref";
 import type { MatchTimer } from "@/components/referee/useMatchTimer";
 import { Badge } from "@/components/ui/badge";
+import { BusyButton } from "@/components/ui/busy-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +33,7 @@ interface MatchControlPanelProps {
 
 /** 左栏下半：倒计时秒数 + 开始比赛 / 倒计时播报 / 停止倒计时 / 中止比赛 */
 export default function MatchControlPanel({ room, timer }: MatchControlPanelProps) {
+  const confirm = useConfirm();
   const [secondsText, setSecondsText] = useState("0");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -73,7 +76,7 @@ export default function MatchControlPanel({ room, timer }: MatchControlPanelProp
   };
 
   const abortMatch = async () => {
-    if (!window.confirm("确定要中止当前比赛吗？")) return;
+    if (!(await confirm({ title: "确定要中止当前比赛吗？" }))) return;
     setBusy("abort");
     const res = await invokeHub(hub.abortMatch(room.id));
     setBusy(null);
@@ -134,33 +137,36 @@ export default function MatchControlPanel({ room, timer }: MatchControlPanelProp
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="teal" size="sm" onClick={startMatch} disabled={busy === "start"}>
-            {busy === "start" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Play className="h-3.5 w-3.5" />
-            )}
+          <BusyButton
+            variant="teal"
+            size="sm"
+            onClick={startMatch}
+            loading={busy === "start"}
+            icon={<Play className="h-3.5 w-3.5" />}
+          >
             开始比赛
-          </Button>
+          </BusyButton>
           <Button variant="yellow" size="sm" onClick={announceTimer}>
             <Megaphone className="h-3.5 w-3.5" /> 倒计时播报
           </Button>
-          <Button variant="outline" size="sm" onClick={stopTimer} disabled={busy === "stop"}>
-            {busy === "stop" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <TimerOff className="h-3.5 w-3.5" />
-            )}
+          <BusyButton
+            variant="outline"
+            size="sm"
+            onClick={stopTimer}
+            loading={busy === "stop"}
+            icon={<TimerOff className="h-3.5 w-3.5" />}
+          >
             停止倒计时
-          </Button>
-          <Button variant="destructive" size="sm" onClick={abortMatch} disabled={busy === "abort"}>
-            {busy === "abort" ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <OctagonX className="h-3.5 w-3.5" />
-            )}
+          </BusyButton>
+          <BusyButton
+            variant="destructive"
+            size="sm"
+            onClick={abortMatch}
+            loading={busy === "abort"}
+            icon={<OctagonX className="h-3.5 w-3.5" />}
+          >
             中止比赛
-          </Button>
+          </BusyButton>
         </div>
       </CardContent>
     </Card>

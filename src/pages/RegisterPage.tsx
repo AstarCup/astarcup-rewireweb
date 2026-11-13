@@ -3,6 +3,8 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Lock, LogOut, ShieldCheck, Home } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
+import { useOsuAuth, type AuthUrlResponse } from "@/hooks/use-osu-auth";
+import { InlineAlert } from "@/components/paper/paper";
 import {
   Card,
   CardContent,
@@ -13,10 +15,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/layout/Logo";
-
-interface AuthUrlResponse {
-  authUrl: string;
-}
 
 const errorMessages: Record<string, string> = {
   auth_failed: "osu! 授权失败，请重试。",
@@ -33,8 +31,8 @@ export default function RegisterPage() {
   const error = searchParams.get("error");
   const success = searchParams.get("success");
 
-  const [fetching, setFetching] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
+  const { busy, start } = useOsuAuth(() => api.get<AuthUrlResponse>("/api/auth/url"));
 
   const errorText = error ? (errorMessages[error] ?? "登录失败，请重试。") : null;
 
@@ -46,15 +44,9 @@ export default function RegisterPage() {
   }, [success, navigate]);
 
   const handleOsuLogin = async () => {
-    setFetching(true);
     setUrlError(null);
-    const res = await api.get<AuthUrlResponse>("/api/auth/url");
-    if (res.ok) {
-      window.location.href = res.data.authUrl;
-      return;
-    }
-    setFetching(false);
-    setUrlError(res.error.message);
+    const err = await start();
+    if (err) setUrlError(err);
   };
 
   // Logged in state
@@ -105,25 +97,17 @@ export default function RegisterPage() {
           <CardDescription>使用 osu! 账号登录，即可完成报名。</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {errorText && (
-            <div className="rounded-xl border-2 border-pc-primary/40 bg-pc-primary/10 p-4 text-sm font-bold text-pc-primary">
-              {errorText}
-            </div>
-          )}
-          {urlError && (
-            <div className="rounded-xl border-2 border-pc-primary/40 bg-pc-primary/10 p-4 text-sm font-bold text-pc-primary">
-              {urlError}
-            </div>
-          )}
+          {errorText && <InlineAlert>{errorText}</InlineAlert>}
+          {urlError && <InlineAlert>{urlError}</InlineAlert>}
 
           <Button
             size="lg"
             variant="primary"
             className="w-full"
-            disabled={fetching}
+            disabled={busy}
             onClick={() => void handleOsuLogin()}
           >
-            {fetching ? "正在获取授权链接…" : "使用 osu! 账号登录"}
+            {busy ? "正在获取授权链接…" : "使用 osu! 账号登录"}
           </Button>
 
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4 text-xs leading-relaxed text-(--pc-slate)">

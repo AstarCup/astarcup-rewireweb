@@ -6,6 +6,7 @@
  */
 import type { MapSelection } from "@/lib/types";
 import { expandModsText, type RefMod } from "@/lib/ref";
+import { site } from "@/lib/site";
 
 /** DT/HT 的倍率设置键（osu! API 的 mod settings） */
 const SPEED_CHANGE_KEY = "speed_change";
@@ -41,4 +42,24 @@ export function poolMapMods(map: MapSelection): { required: RefMod[]; allowed: R
     required,
     allowed: freeMod ? expandModsText("FM", 0).allowed : [],
   };
+}
+
+/** Beatmapset id usable for /api/beatmaps/download (custom/original maps excluded). */
+export function mapFileSid(m: MapSelection): number | null {
+  return m.beatmapsetId != null && m.beatmapsetId > 0 ? m.beatmapsetId : null;
+}
+
+/** 谱面文件名（zip 打包用，过滤非法字符） */
+export function mapFileName(m: MapSelection): string {
+  const base = [m.artist, m.title, `[${m.version}]`].filter(Boolean).join(" - ");
+  return (base.replace(/[\\/:*?"<>|]/g, "_") || `map_${m.beatmapId}`) + ".osz";
+}
+
+/** 生成 OPP 深链：opp://mappool/{tournament}?season=..&category=.. */
+export function oppPoolLink(season: string, category: string): string {
+  const params = new URLSearchParams();
+  params.set("season", season);
+  if (category && category !== "全部") params.set("category", category);
+  const qs = params.toString();
+  return `${site.opp.scheme}://mappool/${site.opp.tournament}${qs ? `?${qs}` : ""}`;
 }

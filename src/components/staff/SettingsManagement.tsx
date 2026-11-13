@@ -5,7 +5,6 @@ import {
   Check,
   ChevronsUpDown,
   Eye,
-  Loader2,
   Plus,
   RotateCcw,
   Save,
@@ -14,7 +13,8 @@ import {
   UserPlus,
   UsersRound,
 } from "lucide-react";
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { SectionTitle } from "@/components/paper/paper";
@@ -23,7 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { BusyButton } from "@/components/ui/busy-button";
+import UserAvatar from "@/components/UserAvatar";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +50,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { cn, osuAvatarUrl } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { REG_STATUS_LABEL, REG_STATUS_VARIANT } from "@/lib/types";
 import type { Settings, AdminUserStub } from "@/lib/types";
 
@@ -610,14 +611,15 @@ export default function SettingsManagement() {
           >
             <RotateCcw className="h-3.5 w-3.5" /> 重置
           </Button>
-          <Button size="sm" onClick={() => void save()} disabled={busy || !dirty}>
-            {busy ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Save className="h-3.5 w-3.5" />
-            )}
+          <BusyButton
+            size="sm"
+            onClick={() => void save()}
+            disabled={!dirty}
+            loading={busy}
+            icon={<Save className="h-3.5 w-3.5" />}
+          >
             保存设置
-          </Button>
+          </BusyButton>
         </div>
       </div>
 
@@ -642,12 +644,12 @@ export default function SettingsManagement() {
               <ul className="divide-y divide-(--pc-border)">
                 {seasonPlayers.map((u) => (
                   <li key={u.osuId} className="flex items-center gap-3 px-4 py-2.5">
-                    <Avatar className="h-8 w-8">
-                      {(u.avatarUrl || osuAvatarUrl(u.osuId)) && (
-                        <AvatarImage src={u.avatarUrl || osuAvatarUrl(u.osuId)} alt={u.username} />
-                      )}
-                      <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      username={u.username}
+                      avatarUrl={u.avatarUrl}
+                      osuId={u.osuId}
+                      className="h-8 w-8"
+                    />
                     <span className="font-bold text-(--pc-ink)">{u.username}</span>
                     <span className="font-mono text-xs text-(--pc-slate)">{u.osuId}</span>
                     <Badge

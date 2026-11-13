@@ -59,6 +59,73 @@ export function SectionTitle({
   );
 }
 
+/** 空状态占位（Paper Craft 风格） */
+export function EmptyState({
+  label,
+  title,
+  icon,
+  action,
+  className,
+}: {
+  label?: ReactNode;
+  title?: string;
+  icon?: ReactNode;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]",
+        className,
+      )}
+    >
+      {icon && <div className="mb-3 flex justify-center">{icon}</div>}
+      {title && <p className="text-2xl font-bold text-pc-primary">{title}</p>}
+      {label && (
+        <p className={cn("font-sans text-sm text-(--pc-faint)", title && "mt-2")}>{label}</p>
+      )}
+      {action && <div className="mt-6">{action}</div>}
+    </div>
+  );
+}
+
+/** 章节标题行：标题与操作按钮横向排布（操作区作为 children 跟在标题之后，自动靠右） */
+export function SectionHeader({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-wrap items-center justify-between gap-3", className)}>
+      {children}
+    </div>
+  );
+}
+
+/** 内联提示条（错误/警告文案） */
+export function InlineAlert({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      role="alert"
+      className={cn(
+        "rounded-xl border-2 border-pc-primary/40 bg-pc-primary/10 p-4 text-sm font-bold text-pc-primary",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 /** Paper page header banner. */
 export function PageHeader({
   title,

@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { ChevronsUpDown } from "lucide-react";
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { formatWallClock } from "@/lib/utils";
-import { SectionTitle } from "@/components/paper/paper";
+import { SectionTitle, SectionHeader } from "@/components/paper/paper";
+import { PaperTable, Thead, Th } from "@/components/paper/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -328,7 +330,7 @@ export default function RoomManagement() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <SectionHeader className="mb-6 gap-4">
         <SectionTitle className="mb-0">比赛房间</SectionTitle>
         <div className="flex items-center gap-2">
           <SeasonSelect
@@ -680,28 +682,27 @@ export default function RoomManagement() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
+      </SectionHeader>
 
       {rooms.length === 0 ? (
         <p className="py-10 text-center text-sm text-(--pc-faint)">
           {activeSeason === "all" ? "还没有房间。" : "当前赛季还没有房间。"}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead>
-              <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">房间名称</th>
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">赛季</th>
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">阶段</th>
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">编号</th>
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">比赛时间</th>
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">人数</th>
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">状态</th>
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">预约</th>
-                <th className="px-4 py-3 font-bold text-(--pc-slate)">操作</th>
-              </tr>
-            </thead>
+        <PaperTable minWidth={900}>
+          <Thead>
+            <tr>
+              <Th>房间名称</Th>
+              <Th>赛季</Th>
+              <Th>阶段</Th>
+              <Th>编号</Th>
+              <Th>比赛时间</Th>
+              <Th>人数</Th>
+              <Th>状态</Th>
+              <Th>预约</Th>
+              <Th>操作</Th>
+            </tr>
+          </Thead>
             <tbody>
               {rooms.map((room) => {
                 const scheduleCount = room.schedules?.length ?? room.scheduleIds?.length ?? 0;
@@ -773,8 +774,7 @@ export default function RoomManagement() {
                 );
               })}
             </tbody>
-          </table>
-        </div>
+        </PaperTable>
       )}
     </div>
   );

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Link2, Loader2, Plug, ShieldCheck, Unplug } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Link2, Plug, ShieldCheck, Unplug } from "lucide-react";
 import { useApp } from "@/lib/app-context";
+import { ConfirmProvider, useConfirm } from "@/hooks/use-confirm";
+import { useOAuthCallback, useOsuAuth } from "@/hooks/use-osu-auth";
 import { toast } from "@/hooks/use-toast";
-import { LoadingBlock } from "@/hooks/useFetch";
+import { LoadingBlock } from "@/components/paper/feedback";
 import {
   applyHubEvent,
   asNum,
@@ -38,6 +40,7 @@ import MapQueuePanel from "@/components/referee/MapQueuePanel";
 import ModSettingsPanel from "@/components/referee/ModSettingsPanel";
 import EventsPanel from "@/components/referee/EventsPanel";
 import { Badge } from "@/components/ui/badge";
+import { BusyButton } from "@/components/ui/busy-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -99,7 +102,7 @@ function saveRoomState(state: RefRoomState | null) {
 export default function RefereePage() {
   const { user, loading, settings } = useApp();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const confirm = useConfirm();
 
   // ---- 登录态：未登录去 /register（同 PlayerInfoPage） ----
   useEffect(() => {
@@ -120,25 +123,7 @@ export default function RefereePage() {
   }, [user, loadBindStatus]);
 
   // ---- OAuth 回跳：/referee?bound=1 或 ?error=xxx → toast + 清理地址栏 ----
-  useEffect(() => {
-    const b = searchParams.get("bound");
-    const err = searchParams.get("error");
-    if (b === "1") toast({ title: "osu! 账号绑定成功" });
-    else if (err) toast({ variant: "destructive", title: "绑定失败", description: err });
-    if (b || err) {
-      const params = new URLSearchParams(window.location.search);
-      params.delete("bound");
-      params.delete("error");
-      params.delete("reason");
-      const qs = params.toString();
-      window.history.replaceState(
-        null,
-        "",
-        `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`,
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useOAuthCallback({ successTitle: "osu! 账号绑定成功", errorTitle: "绑定失败" });
 
   // ---- 连接状态（SSE state 事件 + GET /api/ref/status） ----
   const [connState, setConnState] = useState<RefConnectionState>("disconnected");
@@ -699,26 +684,19 @@ export default function RefereePage() {
   }, [user, bindStatus?.bound, appendSystem, handleCloseRoom, loadScores, ensureUsers]);
 
   // ---- 绑定 / 解绑 ----
-  const [bindBusy, setBindBusy] = useState(false);
+  const { busy: bindBusy, start: startBind } = useOsuAuth(() => refApi.getBindUrl());
+  const [unbindBusy, setUnbindBusy] = useState(false);
   const handleBind = async () => {
-    setBindBusy(true);
-    const res = await refApi.getBindUrl();
-    setBindBusy(false);
-    if (res.ok && res.data.authUrl) {
-      window.location.href = res.data.authUrl;
-    } else {
-      toast({
-        variant: "destructive",
-        title: "获取授权链接失败",
-        description: res.ok ? "未获取到授权地址，请稍后重试" : res.error.message,
-      });
+    const err = await startBind();
+    if (err) {
+      toast({ variant: "destructive", title: "获取授权链接失败", description: err });
     }
   };
   const handleUnbind = async () => {
-    if (!window.confirm("确定要解除 osu! 裁判授权绑定吗？")) return;
-    setBindBusy(true);
+    if (!(await confirm({ title: "确定要解除 osu! 裁判授权绑定吗？" }))) return;
+    setUnbindBusy(true);
     const res = await refApi.clearBind();
-    setBindBusy(false);
+    setUnbindBusy(false);
     if (res.ok) {
       toast({ title: "已解除绑定" });
       await loadBindStatus();
@@ -740,147 +718,152 @@ export default function RefereePage() {
   const inConsole = bound && (room != null || connState !== "disconnected");
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 md:px-6">
-      {/* 页头 */}
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div></div>
-        <div className="flex flex-wrap items-center gap-2">
-          {bindStatus?.bound && (
-            <>
-              <Badge
-                variant={
-                  connState === "connected"
-                    ? "teal"
+    <ConfirmProvider>
+      <div className="mx-auto max-w-[1600px] px-4 md:px-6">
+        {/* 页头 */}
+        <header className="flex flex-wrap items-end justify-between gap-3">
+          <div></div>
+          <div className="flex flex-wrap items-center gap-2">
+            {bindStatus?.bound && (
+              <>
+                <Badge
+                  variant={
+                    connState === "connected"
+                      ? "teal"
+                      : connState === "connecting"
+                        ? "yellow"
+                        : "primary"
+                  }
+                  title={lastError ?? undefined}
+                >
+                  {connState === "connected"
+                    ? "裁判服务器已连接"
                     : connState === "connecting"
-                      ? "yellow"
-                      : "primary"
-                }
-                title={lastError ?? undefined}
-              >
-                {connState === "connected"
-                  ? "裁判服务器已连接"
-                  : connState === "connecting"
-                    ? "正在连接…"
-                    : "未连接"}
-              </Badge>
-              <Badge variant="teal">
-                <ShieldCheck className="mr-1 h-3 w-3" />
-                {bindStatus.username || bindStatus.osuId || "已绑定"}
-              </Badge>
-              <Button variant="outline" size="sm" onClick={handleUnbind} disabled={bindBusy}>
-                <Unplug className="h-3.5 w-3.5" /> 解除绑定
-              </Button>
-            </>
-          )}
-        </div>
-      </header>
-
-      {bindLoading ? (
-        <LoadingBlock label="检查绑定状态…" />
-      ) : !bound ? (
-        /* 未绑定：绑定引导卡片 */
-        <Card className="mx-auto max-w-xl">
-          <CardHeader>
-            <CardTitle>绑定 osu! 账号（裁判授权）</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleBind} disabled={bindBusy}>
-              {bindBusy ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Link2 className="h-4 w-4" />
-              )}
-              绑定 osu! 账号（裁判授权）
-            </Button>
-          </CardContent>
-        </Card>
-      ) : !inConsole ? (
-        /* 已绑定未连接：连接引导卡片 */
-        <Card className="mx-auto max-w-xl">
-          <CardHeader>
-            <CardTitle>连接裁判服务器</CardTitle>
-            <CardDescription>
-              当前状态：{connState === "connecting" ? "连接中" : "未连接"}
-              {lastError ? `（${lastError}）` : ""}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={handleConnect} disabled={connecting}>
-              {connecting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Plug className="h-4 w-4" />
-              )}
-              连接裁判服务器
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        /* 主控制台：三栏布局（左 玩家+比赛控制 / 中 房间或聊天+比分 /右 图池+Mod+事件） */
-        <>
-          {room && (
-            <RefereeTopBar
-              room={room}
-              connState={connState}
-              lastError={lastError}
-              onReconnect={handleConnect}
-              reconnecting={connecting}
-              onCloseRoom={handleCloseRoom}
-            />
-          )}
-          <div className="grid gap-4 py-4 xl:grid-cols-[300px_minmax(0,1fr)_360px]">
-            {/* 左栏 */}
-            <div className="flex flex-col gap-4">
-              {room ? (
-                <>
-                  <PlayersPanel room={room} matchup={pickedMatchup} />
-                  <MatchControlPanel room={room} timer={timer} />
-                </>
-              ) : (
-                <PlaceholderCard text="" />
-              )}
-            </div>
-
-            {/* 中栏 */}
-            <div className="flex flex-col gap-4">
-              {room ? (
-                <>
-                  <ChatPanel
-                    lines={chatLines}
-                    matchStatus={room.status}
-                    meId={user?.osuId ?? null}
-                    disabled={room.chatChannelId == null}
-                    agentEnabled={agentEnabled}
-                    onToggleAgent={() => setAgentEnabled((v) => !v)}
-                    agentBusy={agentBusy}
-                    onSend={(text) => void handleSend(text)}
-                  />
-                  <ScoresPanel
-                    matchType={room.type}
-                    teams={Object.fromEntries(
-                      Object.values(room.players).map((p) => [p.id, p.team]),
-                    )}
-                    scores={scores}
-                  />
-                </>
-              ) : (
-                <RoomSetup onRoomJoined={handleRoomJoined} onSelectMatchup={setPickedMatchup} />
-              )}
-            </div>
-
-            {/* 右栏 */}
-            <div className="flex flex-col gap-4">
-              {room && (
-                <>
-                  <MapQueuePanel room={room} />
-                  <ModSettingsPanel room={room} />
-                </>
-              )}
-              <EventsPanel events={events} onClear={() => setEvents([])} />
-            </div>
+                      ? "正在连接…"
+                      : "未连接"}
+                </Badge>
+                <Badge variant="teal">
+                  <ShieldCheck className="mr-1 h-3 w-3" />
+                  {bindStatus.username || bindStatus.osuId || "已绑定"}
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleUnbind}
+                  disabled={bindBusy || unbindBusy}
+                >
+                  <Unplug className="h-3.5 w-3.5" /> 解除绑定
+                </Button>
+              </>
+            )}
           </div>
-        </>
-      )}
-    </div>
+        </header>
+  
+        {bindLoading ? (
+          <LoadingBlock label="检查绑定状态…" />
+        ) : !bound ? (
+          /* 未绑定：绑定引导卡片 */
+          <Card className="mx-auto max-w-xl">
+            <CardHeader>
+              <CardTitle>绑定 osu! 账号（裁判授权）</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BusyButton
+                onClick={handleBind}
+                loading={bindBusy}
+                icon={<Link2 className="h-4 w-4" />}
+              >
+                绑定 osu! 账号（裁判授权）
+              </BusyButton>
+            </CardContent>
+          </Card>
+        ) : !inConsole ? (
+          /* 已绑定未连接：连接引导卡片 */
+          <Card className="mx-auto max-w-xl">
+            <CardHeader>
+              <CardTitle>连接裁判服务器</CardTitle>
+              <CardDescription>
+                当前状态：{connState === "connecting" ? "连接中" : "未连接"}
+                {lastError ? `（${lastError}）` : ""}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <BusyButton
+                onClick={handleConnect}
+                loading={connecting}
+                icon={<Plug className="h-4 w-4" />}
+              >
+                连接裁判服务器
+              </BusyButton>
+            </CardContent>
+          </Card>
+        ) : (
+          /* 主控制台：三栏布局（左 玩家+比赛控制 / 中 房间或聊天+比分 /右 图池+Mod+事件） */
+          <>
+            {room && (
+              <RefereeTopBar
+                room={room}
+                connState={connState}
+                lastError={lastError}
+                onReconnect={handleConnect}
+                reconnecting={connecting}
+                onCloseRoom={handleCloseRoom}
+              />
+            )}
+            <div className="grid gap-4 py-4 xl:grid-cols-[300px_minmax(0,1fr)_360px]">
+              {/* 左栏 */}
+              <div className="flex flex-col gap-4">
+                {room ? (
+                  <>
+                    <PlayersPanel room={room} matchup={pickedMatchup} />
+                    <MatchControlPanel room={room} timer={timer} />
+                  </>
+                ) : (
+                  <PlaceholderCard text="" />
+                )}
+              </div>
+  
+              {/* 中栏 */}
+              <div className="flex flex-col gap-4">
+                {room ? (
+                  <>
+                    <ChatPanel
+                      lines={chatLines}
+                      matchStatus={room.status}
+                      meId={user?.osuId ?? null}
+                      disabled={room.chatChannelId == null}
+                      agentEnabled={agentEnabled}
+                      onToggleAgent={() => setAgentEnabled((v) => !v)}
+                      agentBusy={agentBusy}
+                      onSend={(text) => void handleSend(text)}
+                    />
+                    <ScoresPanel
+                      matchType={room.type}
+                      teams={Object.fromEntries(
+                        Object.values(room.players).map((p) => [p.id, p.team]),
+                      )}
+                      scores={scores}
+                    />
+                  </>
+                ) : (
+                  <RoomSetup onRoomJoined={handleRoomJoined} onSelectMatchup={setPickedMatchup} />
+                )}
+              </div>
+  
+              {/* 右栏 */}
+              <div className="flex flex-col gap-4">
+                {room && (
+                  <>
+                    <MapQueuePanel room={room} />
+                    <ModSettingsPanel room={room} />
+                  </>
+                )}
+                <EventsPanel events={events} onClear={() => setEvents([])} />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </ConfirmProvider>
   );
 }

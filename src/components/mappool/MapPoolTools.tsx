@@ -1,21 +1,12 @@
 import { useState } from "react";
 import JSZip from "jszip";
-import { Download, Loader2, Wrench } from "lucide-react";
+import { Download, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BusyButton } from "@/components/ui/busy-button";
 import { toast } from "@/hooks/use-toast";
 import { blob, downloadBlob } from "@/lib/api";
-import { site } from "@/lib/site";
+import { mapFileName, mapFileSid, oppPoolLink } from "@/lib/mappool";
 import type { MapSelection } from "@/lib/types";
-
-/** Beatmapset id usable for /api/beatmaps/download (custom/original maps excluded). */
-export function mapFileSid(m: MapSelection): number | null {
-  return m.beatmapsetId != null && m.beatmapsetId > 0 ? m.beatmapsetId : null;
-}
-
-export function mapFileName(m: MapSelection): string {
-  const base = [m.artist, m.title, `[${m.version}]`].filter(Boolean).join(" - ");
-  return (base.replace(/[\\/:*?"<>|]/g, "_") || `map_${m.beatmapId}`) + ".osz";
-}
 
 /** 图池批量下载（打包为 zip） */
 export function BulkDownload({ maps, className }: { maps: MapSelection[]; className?: string }) {
@@ -66,38 +57,21 @@ export function BulkDownload({ maps, className }: { maps: MapSelection[]; classN
 
   return (
     <div className={`flex items-center gap-2 ${className ?? ""}`}>
-      <Button
+      <BusyButton
         variant="teal"
         size="sm"
+        loading={busy}
+        icon={<Download className="h-4 w-4" />}
         onClick={() => void run()}
-        disabled={busy || downloadables.length === 0}
+        disabled={downloadables.length === 0}
       >
-        {busy ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            打包中 {progress?.done ?? 0}/{progress?.total ?? 0}
-          </>
-        ) : (
-          <>
-            <Download className="h-4 w-4" />
-            下载图池
-          </>
-        )}
-      </Button>
+        {busy ? `打包中 ${progress?.done ?? 0}/${progress?.total ?? 0}` : "下载图池"}
+      </BusyButton>
       {skipped > 0 && !busy && (
         <span className="text-xs text-(--pc-faint)">{skipped} 张原创图不支持打包</span>
       )}
     </div>
   );
-}
-
-/** 生成 OPP 深链：opp://mappool/{tournament}?season=..&category=.. */
-export function oppPoolLink(season: string, category: string): string {
-  const params = new URLSearchParams();
-  params.set("season", season);
-  if (category && category !== "全部") params.set("category", category);
-  const qs = params.toString();
-  return `${site.opp.scheme}://mappool/${site.opp.tournament}${qs ? `?${qs}` : ""}`;
 }
 
 /** OPP 工具联动按钮：唤起 OPP 打开当前赛季/轮次图池 */

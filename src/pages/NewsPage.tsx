@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { formatDate } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/paper/paper";
 import { Badge } from "@/components/ui/badge";
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { api } from "@/lib/api";
 import type { NewsItem } from "@/lib/types";
 
@@ -15,11 +17,7 @@ export default function NewsPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-8">
         {loading && <LoadingBlock label="加载资讯中…" />}
         {error && !loading && <ErrorBlock message={error} onRetry={() => void refetch()} />}
-        {!loading && !error && newsItems.length === 0 && (
-          <Card className="p-8 text-center">
-            <p className="text-sm text-(--pc-slate)">暂无资讯</p>
-          </Card>
-        )}
+        {!loading && !error && newsItems.length === 0 && <EmptyState label="暂无资讯" />}
         <div className="space-y-5">
           {newsItems.map((item) => (
             <Link key={item.slug} to={`/news/${item.slug}`} className="block">

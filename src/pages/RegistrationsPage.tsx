@@ -10,7 +10,7 @@ import { Copy, ExternalLink, Globe, MapPin, SmilePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import UserAvatar from "@/components/UserAvatar";
 import {
   Select,
   SelectTrigger,
@@ -23,11 +23,12 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import RadarChart from "@/components/ui/RadarChart";
 import SeasonBadge from "@/components/SeasonBadge";
 import EmojiPicker from "@/components/emoji/EmojiPicker";
-import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
+import { useAsync } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { EMOJI_MAP } from "@/lib/emoji-data";
-import { cn, fmtInt, osuAvatarUrl } from "@/lib/utils";
+import { cn, fmtInt } from "@/lib/utils";
 import { useApp } from "@/lib/app-context";
 import { site } from "@/lib/site";
 import { seasonOptions as buildSeasonOptions } from "@/lib/types";
@@ -257,15 +258,14 @@ function PlayerCard({
 
             {/* 头像压在封面右下角，下面是玩家名 */}
             <div className="relative flex flex-1 flex-col px-3 pb-3 pt-2">
-              <Avatar className="absolute -top-8 right-3 h-16 w-16 rounded-xl border-4 border-(--pc-white) bg-(--pc-paper) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]">
-                <AvatarImage
-                  src={player.avatarUrl || osuAvatarUrl(player.osuId)}
-                  alt={player.username}
-                />
-                <AvatarFallback className="bg-pc-yellow/30 text-base font-bold text-(--pc-ink)">
-                  {player.username?.slice(0, 1).toUpperCase() ?? "?"}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                username={player.username}
+                avatarUrl={player.avatarUrl}
+                osuId={player.osuId}
+                className="absolute -top-8 right-3 h-16 w-16 rounded-xl border-4 border-(--pc-white) bg-(--pc-paper) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]"
+                fallbackClassName="bg-pc-yellow/30 text-base font-bold text-(--pc-ink)"
+                uppercase
+              />
               <div className="min-w-0 pr-20">
                 <p className="truncate text-[15px] font-bold leading-tight text-(--pc-ink)">
                   {player.username}
@@ -633,15 +633,14 @@ export default function RegistrationsPage() {
                 </div>
 
                 <div className="relative -mt-12 flex items-end gap-4 px-6">
-                  <Avatar className="h-24 w-24 rounded-2xl border-2 border-(--pc-border) bg-(--pc-white)">
-                    <AvatarImage
-                      src={selected.avatarUrl || osuAvatarUrl(selected.osuId)}
-                      alt={selected.username}
-                    />
-                    <AvatarFallback className="bg-pc-yellow/30 text-2xl font-bold text-(--pc-ink)">
-                      {selected.username?.slice(0, 1).toUpperCase() ?? "?"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    username={selected.username}
+                    avatarUrl={selected.avatarUrl}
+                    osuId={selected.osuId}
+                    className="h-24 w-24 rounded-2xl border-2 border-(--pc-border) bg-(--pc-white)"
+                    fallbackClassName="bg-pc-yellow/30 text-2xl font-bold text-(--pc-ink)"
+                    uppercase
+                  />
                   <div className="min-w-0 pb-1">
                     <DialogTitle className="flex flex-wrap items-center gap-2">
                       {selected.username}

@@ -17,6 +17,7 @@ import {
   type MapSelection,
 } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import { BusyButton } from "@/components/ui/busy-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -438,9 +439,9 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             取消
           </Button>
-          <Button size="sm" onClick={() => void submit()} disabled={!selected || busy}>
-            {busy && <Loader2 className="h-3.5 w-3.5 animate-spin" />} 加入图池
-          </Button>
+          <BusyButton size="sm" onClick={() => void submit()} loading={busy} disabled={!selected}>
+            加入图池
+          </BusyButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

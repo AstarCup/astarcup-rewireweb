@@ -1,11 +1,12 @@
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { api } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
 import { SectionTitle } from "@/components/paper/paper";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { fmt, fmtInt, osuAvatarUrl } from "@/lib/utils";
+import UserAvatar from "@/components/UserAvatar";
+import { fmt, fmtInt } from "@/lib/utils";
 import { seasonLabel } from "@/lib/types";
 import type { StaffStats, SeasonPlayerStat } from "@/lib/types";
 
@@ -37,15 +38,14 @@ export default function OverviewManagement() {
     <div>
       {/* Welcome banner */}
       <div className="mb-6 flex items-center gap-4 rounded-2xl bg-(--pc-white) p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-        <Avatar className="h-16 w-16 rounded-2xl border-2 border-pc-primary">
-          <AvatarImage
-            src={user?.avatarUrl || osuAvatarUrl(user?.osuId)}
-            alt={user?.username ?? ""}
-          />
-          <AvatarFallback className="bg-pc-yellow/30 text-xl font-bold text-(--pc-ink)">
-            {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          username={user?.username}
+          avatarUrl={user?.avatarUrl}
+          osuId={user?.osuId}
+          className="h-16 w-16 rounded-2xl border-2 border-pc-primary"
+          fallbackClassName="bg-pc-yellow/30 text-xl font-bold text-(--pc-ink)"
+          uppercase
+        />
         <div>
           <p className="font-bold text-xl text-(--pc-ink)">欢迎回来，{user?.username ?? "Staff"}</p>
           <div className="mt-2 flex flex-wrap gap-2">

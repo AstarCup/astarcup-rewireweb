@@ -3,12 +3,15 @@ import { Link } from "react-router-dom";
 import { Bot, CheckCircle2, Home, LogIn, ShieldAlert } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
-import { useAsync, LoadingBlock } from "@/hooks/useFetch";
+import { useAsync } from "@/hooks/useFetch";
+import { LoadingBlock } from "@/components/paper/feedback";
+import { useOsuAuth, type AuthUrlResponse } from "@/hooks/use-osu-auth";
 import { toast } from "@/hooks/use-toast";
 import { formatDateTime, platformLabel, platformUserLabel } from "@/lib/utils";
 import type { BotBindLinkInfo } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { InlineAlert } from "@/components/paper/paper";
 
 const TOKEN_KEY = "astracup_bind_token";
 
@@ -46,7 +49,13 @@ export default function BotBindPage() {
   const { user, loading } = useApp();
   const [token, setToken] = useState("");
   const [tokenReady, setTokenReady] = useState(false);
-  const [loginBusy, setLoginBusy] = useState(false);
+  const {
+    busy: loginBusy,
+    start: startLogin,
+  } = useOsuAuth(() => {
+    const query = new URLSearchParams({ redirect: "/bind" }).toString();
+    return api.get<AuthUrlResponse>(`/api/auth/url?${query}`);
+  });
 
   const inspect = useAsync<BotBindLinkInfo>();
   const confirm = useAsync<{
@@ -76,17 +85,12 @@ export default function BotBindPage() {
   }, [tokenReady, token, user, inspectRun]);
 
   const handleLogin = async () => {
-    setLoginBusy(true);
-    const query = new URLSearchParams({ redirect: "/bind" }).toString();
-    const res = await api.get<{ authUrl: string }>(`/api/auth/url?${query}`);
-    setLoginBusy(false);
-    if (res.ok && res.data.authUrl) {
-      window.location.href = res.data.authUrl;
-    } else {
+    const err = await startLogin();
+    if (err) {
       toast({
         variant: "destructive",
         title: "登录失败",
-        description: res.ok ? "未获取到授权地址" : res.error.message,
+        description: err,
       });
     }
   };
@@ -288,11 +292,7 @@ export default function BotBindPage() {
             </div>
           )}
 
-          {confirm.error && (
-            <div className="rounded-xl border-2 border-pc-primary/40 bg-pc-primary/10 p-4 text-sm font-bold text-pc-primary">
-              {confirm.error}
-            </div>
-          )}
+          {confirm.error && <InlineAlert>{confirm.error}</InlineAlert>}
 
           <div className="flex flex-wrap gap-2">
             <Button

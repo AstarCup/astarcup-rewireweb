@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Ban, Loader2, Lock, LockOpen, Search, UserPlus, UserRoundX, Users } from "lucide-react";
+import { Ban, Lock, LockOpen, Search, UserPlus, UserRoundX, Users } from "lucide-react";
+import { useConfirm } from "@/hooks/use-confirm";
 import { toast } from "@/hooks/use-toast";
 import {
   displayName,
@@ -14,7 +15,9 @@ import {
 } from "@/lib/ref";
 import type { MatchSchedule } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import UserAvatar from "@/components/UserAvatar";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { BusyButton } from "@/components/ui/busy-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -56,6 +59,7 @@ interface PlayersPanelProps {
 
 /** 左栏上半：玩家槽位列表（队伍色条 / 状态徽章 / mods / Kick）+ 邀请 + 锁位 */
 export default function PlayersPanel({ room, matchup }: PlayersPanelProps) {
+  const confirm = useConfirm();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteInput, setInviteInput] = useState("");
   const [inviteBusy, setInviteBusy] = useState(false);
@@ -136,7 +140,7 @@ export default function PlayersPanel({ room, matchup }: PlayersPanelProps) {
 
   const kick = async (player: RefUser) => {
     const name = displayName(player.user, player.id);
-    if (!window.confirm(`确定要踢出 ${name} 吗？`)) return;
+    if (!(await confirm({ title: `确定要踢出 ${name} 吗？` }))) return;
     const res = await invokeHub(hub.kickPlayer(room.id, player.id));
     if (!res.ok) {
       toast({ variant: "destructive", title: "踢出失败", description: res.error.message });
@@ -145,7 +149,8 @@ export default function PlayersPanel({ room, matchup }: PlayersPanelProps) {
 
   const ban = async (player: RefUser) => {
     const name = displayName(player.user, player.id);
-    if (!window.confirm(`确定要封禁 ${name} 吗？封禁后对方无法再进入本房间。`)) return;
+    const ok = await confirm({ title: `确定要封禁 ${name} 吗？封禁后对方无法再进入本房间。` });
+    if (!ok) return;
     const res = await invokeHub(hub.banUser(room.id, player.id));
     if (!res.ok) {
       toast({ variant: "destructive", title: "封禁失败", description: res.error.message });
@@ -170,19 +175,15 @@ export default function PlayersPanel({ room, matchup }: PlayersPanelProps) {
         <CardTitle className="text-base whitespace-nowrap md:text-lg">玩家</CardTitle>
         <div className="flex flex-wrap items-center gap-2">
           {pendingTargets.length > 0 && (
-            <Button
+            <BusyButton
               size="sm"
               onClick={() => void inviteMatchupPlayers()}
-              disabled={inviteAllBusy}
+              loading={inviteAllBusy}
+              icon={<Users className="h-3.5 w-3.5" />}
               title={`邀请 ${pendingTargets.map((t) => t.name).join(" 与 ")} 加入房间`}
             >
-              {inviteAllBusy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Users className="h-3.5 w-3.5" />
-              )}
               一键邀请
-            </Button>
+            </BusyButton>
           )}
           <Button variant="teal" size="sm" onClick={() => setInviteOpen(true)}>
             <UserPlus className="h-3.5 w-3.5" /> 邀请
@@ -224,6 +225,14 @@ export default function PlayersPanel({ room, matchup }: PlayersPanelProps) {
                     player.team !== "none" && "cursor-pointer",
                   )}
                   aria-label="切换队伍"
+                />
+                <UserAvatar
+                  username={player.user?.username}
+                  avatarUrl={player.user?.avatar_url}
+                  osuId={player.user?.id ?? player.id}
+                  className="h-8 w-8 shrink-0"
+                  fallbackClassName="bg-pc-yellow/30 font-bold text-(--pc-ink)"
+                  uppercase
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -318,14 +327,14 @@ export default function PlayersPanel({ room, matchup }: PlayersPanelProps) {
             <Button variant="outline" size="sm" onClick={() => setInviteOpen(false)}>
               关闭
             </Button>
-            <Button size="sm" onClick={() => void submitInvite()} disabled={inviteBusy}>
-              {inviteBusy ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Search className="h-3.5 w-3.5" />
-              )}
+            <BusyButton
+              size="sm"
+              onClick={() => void submitInvite()}
+              loading={inviteBusy}
+              icon={<Search className="h-3.5 w-3.5" />}
+            >
               邀请
-            </Button>
+            </BusyButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

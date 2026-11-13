@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingBlock, ErrorBlock, useFetch } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
+import { EmptyState } from "@/components/paper/paper";
 import { api } from "@/lib/api";
 import { cn, osuAvatarUrl } from "@/lib/utils";
 import { stageLabelOf } from "@/lib/rooms";
@@ -133,11 +135,7 @@ export default function SchedulePage() {
           </div>
         )}
 
-        {!loading && !error && rows.length === 0 && (
-          <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="font-sans text-sm text-(--pc-faint)">暂无赛程</p>
-          </div>
-        )}
+        {!loading && !error && rows.length === 0 && <EmptyState label="暂无赛程" />}
 
         {!loading && !error && rows.length > 0 && (
           <div className="overflow-hidden rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">

@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/app-context";
 import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
 import SeasonSelect from "@/components/staff/SeasonSelect";
-import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { toast } from "@/hooks/use-toast";
 import { api, qs } from "@/lib/api";
 import { stageLabelOf } from "@/lib/rooms";
 import { formatWallClock, cn, osuAvatarUrl } from "@/lib/utils";
-import { SectionTitle } from "@/components/paper/paper";
+import { SectionTitle, SectionHeader } from "@/components/paper/paper";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -190,7 +191,7 @@ export default function StreamingManagement() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <SectionHeader className="mb-6 gap-4">
         <SectionTitle className="mb-0">主播 / 解说 / 裁判安排</SectionTitle>
         <div className="flex items-center gap-2">
           <SeasonSelect
@@ -264,7 +265,7 @@ export default function StreamingManagement() {
             </DialogContent>
           </Dialog>
         </div>
-      </div>
+      </SectionHeader>
 
       {rooms.loading || assignments.loading ? (
         <LoadingBlock label="加载房间与安排中…" />

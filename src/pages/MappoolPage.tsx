@@ -9,7 +9,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
-import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
+import { useAsync } from "@/hooks/useFetch";
+import { LoadingBlock, ErrorBlock } from "@/components/paper/feedback";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn, fmt, osuAvatarUrl } from "@/lib/utils";
@@ -25,6 +26,8 @@ import {
 } from "@/lib/types";
 import { MOD_COLORS, MOD_DISPLAY, modBase } from "@/lib/mods";
 import { site } from "@/lib/site";
+import { EmptyState } from "@/components/paper/paper";
+import { PaperTable, Thead, Th } from "@/components/paper/table";
 import { BulkDownload, OppPoolButton } from "@/components/mappool/MapPoolTools";
 
 type ViewMode = "card" | "table";
@@ -270,24 +273,23 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
   // 列是否展示“物件数”由整组决定，保证 th 与 td 数量一致
   const showObjs = group.items.some((m) => m.moddedStats?.totalHitObjects != null);
   return (
-    <div className="overflow-x-auto rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-      <table className="w-full min-w-[760px] text-left text-sm">
-        <thead>
-          <tr className="border-b-2 border-(--pc-border) bg-(--pc-paper)">
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">MOD</th>
-            <th className="min-w-25 min-h-9 px-4 py-3 font-bold text-(--pc-slate)">封面</th>
-            <th className="w-full px-4 py-3 font-bold text-(--pc-slate)">图名</th>
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">CS</th>
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">AR</th>
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">OD</th>
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">BPM</th>
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">时长</th>
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">Max</th>
-            {showObjs && <th className="px-4 py-3 font-bold text-(--pc-slate)">物件数</th>}
-            <th className="px-4 py-3 font-bold text-(--pc-slate)">星级</th>
-          </tr>
-        </thead>
-        <tbody>
+    <PaperTable minWidth={760}>
+      <Thead>
+        <tr>
+          <Th>MOD</Th>
+          <Th className="min-w-25 min-h-9">封面</Th>
+          <Th className="w-full">图名</Th>
+          <Th>CS</Th>
+          <Th>AR</Th>
+          <Th>OD</Th>
+          <Th>BPM</Th>
+          <Th>时长</Th>
+          <Th>Max</Th>
+          {showObjs && <Th>物件数</Th>}
+          <Th>星级</Th>
+        </tr>
+      </Thead>
+      <tbody>
           {group.items.map((m) => {
             const title = displayTitle(m, useUnicode);
             const objs = m.moddedStats?.totalHitObjects;
@@ -371,9 +373,8 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
               </tr>
             );
           })}
-        </tbody>
-      </table>
-    </div>
+      </tbody>
+    </PaperTable>
   );
 }
 
@@ -486,9 +487,7 @@ export default function MappoolPage() {
     return (
       <div className="bg-(--pc-paper)">
         <div className="mx-auto max-w-6xl px-4 py-16 md:px-8">
-          <div className="rounded-2xl bg-(--pc-white) p-10 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="font-sans text-sm text-(--pc-faint)">图池尚未公开，敬请期待</p>
-          </div>
+          <EmptyState label="图池尚未公开，敬请期待" />
         </div>
       </div>
     );
@@ -591,9 +590,7 @@ export default function MappoolPage() {
         )}
 
         {settingsReady && !loading && !error && groups.length === 0 && (
-          <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
-            <p className="font-sans text-sm text-(--pc-faint)">该轮次暂未公开选图</p>
-          </div>
+          <EmptyState label="该轮次暂未公开选图" />
         )}
 
         {settingsReady && !loading && !error && groups.length > 0 && (
