@@ -3,7 +3,14 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Lock, LogOut, ShieldCheck, Home } from "lucide-react";
 import { api } from "@/lib/api";
 import { useApp } from "@/lib/app-context";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/layout/Logo";
 
@@ -29,7 +36,7 @@ export default function RegisterPage() {
   const [fetching, setFetching] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
 
-  const errorText = error ? errorMessages[error] ?? "登录失败，请重试。" : null;
+  const errorText = error ? (errorMessages[error] ?? "登录失败，请重试。") : null;
 
   // Auto-redirect to home after a successful login.
   useEffect(() => {
@@ -122,8 +129,7 @@ export default function RegisterPage() {
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4 text-xs leading-relaxed text-(--pc-slate)">
             <p className="mb-1 font-bold text-(--pc-ink)">隐私说明</p>
             <p>
-              登录仅获取你的昵称、头像及 basic profile（osuId、pp、排名等）用于赛事报名与
-              对阵展示。
+              登录仅获取你的昵称、头像及 basic profile（osuId、pp、排名等）用于赛事报名与 对阵展示。
             </p>
           </div>
         </CardContent>

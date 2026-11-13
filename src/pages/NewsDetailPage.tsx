@@ -22,13 +22,11 @@ export default function NewsDetailPage() {
   useEffect(() => {
     let cancelled = false;
     setState({ data: null, loading: true, error: null });
-    void api
-      .get<NewsDetail>(`/api/news/${encodeURIComponent(slug ?? "")}`)
-      .then((res) => {
-        if (cancelled) return;
-        if (res.ok) setState({ data: res.data, loading: false, error: null });
-        else setState({ data: null, loading: false, error: res.error.message });
-      });
+    void api.get<NewsDetail>(`/api/news/${encodeURIComponent(slug ?? "")}`).then((res) => {
+      if (cancelled) return;
+      if (res.ok) setState({ data: res.data, loading: false, error: null });
+      else setState({ data: null, loading: false, error: res.error.message });
+    });
     return () => {
       cancelled = true;
     };

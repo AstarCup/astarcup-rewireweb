@@ -183,15 +183,13 @@ function StageCombobox({ value, onChange }: { value: string; onChange: (v: strin
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const current = STAGE_OPTIONS.find((o) => o.value === value);
-  const filtered = STAGE_OPTIONS.filter(
-    (o) => o.label.includes(query) || o.value.includes(query),
-  );
+  const filtered = STAGE_OPTIONS.filter((o) => o.label.includes(query) || o.value.includes(query));
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
-          role="combobox"
+          aria-haspopup="listbox"
           aria-expanded={open}
           className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary"
         >
@@ -281,9 +279,8 @@ export default function SettingsManagement() {
       mappoolVisible !== (String(data.mappool_visible ?? true) !== "false") ||
       useGv0 !== (String(data.use_gv0 ?? false) === "true"));
 
-  const setField =
-    (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm((f) => ({ ...f, [k]: e.target.value }));
+  const setField = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const updateSeason = (index: number, patch: Partial<SeasonRow>) =>
     setSeasons((list) => list.map((s, i) => (i === index ? { ...s, ...patch } : s)));
@@ -324,8 +321,7 @@ export default function SettingsManagement() {
     if (res.ok) {
       const list = (res.data ?? []).filter(
         (u) =>
-          u.season?.includes(seasonId) &&
-          (u.registrationStatus ?? "not_registered") !== "approved",
+          u.season?.includes(seasonId) && (u.registrationStatus ?? "not_registered") !== "approved",
       );
       setSeasonPlayers(list);
     } else {
@@ -385,9 +381,7 @@ export default function SettingsManagement() {
     <div className="mx-auto max-w-[1200px]">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <SectionTitle>
-            赛事设置
-          </SectionTitle>
+          <SectionTitle>赛事设置</SectionTitle>
         </div>
         <div className="mb-6 flex flex-wrap items-center gap-2">
           {currentRow && <Badge variant="outline">{currentRow.name}</Badge>}

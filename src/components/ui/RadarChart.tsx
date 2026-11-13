@@ -30,11 +30,7 @@ function polygonPoints(skills: RadarSkill[], radius: number) {
     .join(" ");
 }
 
-export default function RadarChart({
-  skills,
-  size = 260,
-  className,
-}: RadarChartProps) {
+export default function RadarChart({ skills, size = 260, className }: RadarChartProps) {
   const gradId = useId();
   const radius = 78;
   const cx = 100;

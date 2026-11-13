@@ -19,15 +19,18 @@ function ScoreRow({ score }: { score: DisplayScore }) {
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-bold text-(--pc-ink)">{score.username}</div>
         <div className="text-xs text-(--pc-faint)">
-          {accPercent(score.accuracy)} · x{fmtInt(score.maxCombo)} ·{" "}
-          {score.statistics.count300}/{score.statistics.count100}/{score.statistics.count50}/
-          {score.statistics.countMiss}
+          {accPercent(score.accuracy)} · x{fmtInt(score.maxCombo)} · {score.statistics.count300}/
+          {score.statistics.count100}/{score.statistics.count50}/{score.statistics.countMiss}
           {score.mods.length > 0 ? ` · ${score.mods.join(" ")}` : ""}
         </div>
       </div>
       <div className="text-right">
-        <div className="font-mono text-sm font-bold text-(--pc-ink)">{fmtInt(score.totalScore)}</div>
-        <Badge variant={score.passed ? "teal" : "primary"}>{score.rank || (score.passed ? "PASS" : "FAIL")}</Badge>
+        <div className="font-mono text-sm font-bold text-(--pc-ink)">
+          {fmtInt(score.totalScore)}
+        </div>
+        <Badge variant={score.passed ? "teal" : "primary"}>
+          {score.rank || (score.passed ? "PASS" : "FAIL")}
+        </Badge>
       </div>
     </div>
   );
@@ -48,9 +51,7 @@ export default function ScoresPanel({ matchType, teams, scores }: ScoresPanelPro
   const red = sorted.filter((s) => teams[s.userId] === "red");
   const blue = sorted.filter((s) => teams[s.userId] === "blue");
   // 团队赛里没分队的玩家不能算进蓝队（否则总分虚高）
-  const unassigned = sorted.filter(
-    (s) => teams[s.userId] !== "red" && teams[s.userId] !== "blue",
-  );
+  const unassigned = sorted.filter((s) => teams[s.userId] !== "red" && teams[s.userId] !== "blue");
   const sum = (arr: DisplayScore[]) => arr.reduce((acc, s) => acc + (s.totalScore || 0), 0);
 
   return (
@@ -77,7 +78,9 @@ export default function ScoresPanel({ matchType, teams, scores }: ScoresPanelPro
               <div className="rounded-xl border-2 border-pc-primary/40 bg-pc-primary/5 p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-bold text-pc-primary">红队</span>
-                  <span className="font-mono text-lg font-bold text-(--pc-ink)">{fmtInt(sum(red))}</span>
+                  <span className="font-mono text-lg font-bold text-(--pc-ink)">
+                    {fmtInt(sum(red))}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-2">
                   {red.map((s) => (
@@ -89,7 +92,9 @@ export default function ScoresPanel({ matchType, teams, scores }: ScoresPanelPro
               <div className="rounded-xl border-2 border-pc-blue/40 bg-pc-blue/5 p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="text-sm font-bold text-pc-blue">蓝队</span>
-                  <span className="font-mono text-lg font-bold text-(--pc-ink)">{fmtInt(sum(blue))}</span>
+                  <span className="font-mono text-lg font-bold text-(--pc-ink)">
+                    {fmtInt(sum(blue))}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-2">
                   {blue.map((s) => (

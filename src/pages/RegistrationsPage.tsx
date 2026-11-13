@@ -18,17 +18,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  HoverCard,
-  HoverCardTrigger,
-  HoverCardContent,
-} from "@/components/ui/hover-card";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import RadarChart from "@/components/ui/RadarChart";
 import SeasonBadge from "@/components/SeasonBadge";
 import EmojiPicker from "@/components/emoji/EmojiPicker";
@@ -495,7 +486,7 @@ export default function RegistrationsPage() {
   // 默认取当前赛季；仅当用户尚未选择时填充，选择「全部」("") 后不再覆盖
   useEffect(() => {
     if (!settings) return;
-    setSeason((s) => (s === undefined ? currentSeason ?? "" : s));
+    setSeason((s) => (s === undefined ? (currentSeason ?? "") : s));
   }, [settings, currentSeason]);
 
   // 已结束赛季：隐藏状态筛选，展示所有参加过该赛季的玩家（不检查报名状态）
@@ -517,7 +508,7 @@ export default function RegistrationsPage() {
     void loadUsers(isFinished);
   }, [season, isFinished, loadUsers]);
 
-  const players = data ?? [];
+  const players = useMemo(() => data ?? [], [data]);
   const loadingPlayers = season === undefined || loading;
 
   const bySeason = useMemo(() => {
@@ -540,11 +531,11 @@ export default function RegistrationsPage() {
     return { all: bySeason.length, approved, registered };
   }, [bySeason]);
 
-  const countFor = (k: FilterKey) => (k === "all" ? counts.all : k === "approved" ? counts.approved : counts.registered);
+  const countFor = (k: FilterKey) =>
+    k === "all" ? counts.all : k === "approved" ? counts.approved : counts.registered;
 
   return (
     <div className="bg-(--pc-paper)">
-
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         <div className="mb-8 flex flex-wrap items-center gap-2">
           {TABS.map((t) => (
@@ -584,9 +575,7 @@ export default function RegistrationsPage() {
         </div>
 
         {loadingPlayers && <LoadingBlock label="正在加载参赛选手…" />}
-        {error && (
-          <ErrorBlock message={error} onRetry={() => void loadUsers(isFinished)} />
-        )}
+        {error && <ErrorBlock message={error} onRetry={() => void loadUsers(isFinished)} />}
 
         {!loadingPlayers && !error && visible.length === 0 && (
           <div className="rounded-2xl bg-(--pc-white) p-8 text-center shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
@@ -636,11 +625,7 @@ export default function RegistrationsPage() {
                 />
                 <div className="absolute right-14 top-4 flex flex-wrap items-center justify-end gap-2">
                   <Button asChild variant="outline" size="sm">
-                    <a
-                      href={site.urls.osuUser(selected.osuId)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                    <a href={site.urls.osuUser(selected.osuId)} target="_blank" rel="noreferrer">
                       <ExternalLink className="h-4 w-4" />
                       osu! 主页
                     </a>
@@ -713,11 +698,7 @@ export default function RegistrationsPage() {
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       {(selected.season ?? []).length > 0 ? (
                         (selected.season ?? []).map((s) => (
-                          <SeasonBadge
-                            key={s}
-                            season={s}
-                            label={seasonLabel(settings, s) || s}
-                          />
+                          <SeasonBadge key={s} season={s} label={seasonLabel(settings, s) || s} />
                         ))
                       ) : (
                         <span className="text-sm text-(--pc-faint)">—</span>

@@ -67,9 +67,7 @@ export default function MessageCenter() {
             messages.map((m) => (
               <div key={m.id} className="border-b border-(--pc-border)/60 px-4 py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="truncate text-sm font-bold text-(--pc-ink)">
-                    {m.title || "通知"}
-                  </p>
+                  <p className="truncate text-sm font-bold text-(--pc-ink)">{m.title || "通知"}</p>
                   <Badge variant={m.status === "unread" ? "yellow" : "outline"}>
                     {STATUS_LABEL[m.status] ?? m.status}
                   </Badge>

@@ -1,9 +1,6 @@
 function AnimatedLogo() {
   return (
-    
-    <div
-      className={`relative w-full flex justify-end items-right`}
-    >
+    <div className={`relative w-full flex justify-end items-right`}>
       <style>
         {`
                     @keyframes BlueStar {
@@ -149,13 +146,7 @@ function AnimatedLogo() {
         viewBox="0 0 885.931640625 608.8623046875"
       >
         {/* 边框白色 限定位置 */}
-        <image
-          href="/assets/NewLogo/background.svg"
-          width="850"
-          height="630"
-          x="10"
-          y="10"
-        />
+        <image href="/assets/NewLogo/background.svg" width="850" height="630" x="10" y="10" />
         <g className="yellow-star">
           {/* 黄色星星 */}
           <path

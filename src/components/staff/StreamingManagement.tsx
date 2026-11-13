@@ -38,7 +38,10 @@ const ROLE_LABEL: Record<StaffRole, string> = {
   streamer: "主播",
 };
 
-const ROLE_META: Record<StaffRole, { variant: "primary" | "teal" | "yellow" | "blue" | "outline" }> = {
+const ROLE_META: Record<
+  StaffRole,
+  { variant: "primary" | "teal" | "yellow" | "blue" | "outline" }
+> = {
   referee: { variant: "teal" },
   commentator: { variant: "yellow" },
   streamer: { variant: "blue" },
@@ -59,12 +62,8 @@ function roomSchedule(room: MatchRoom): string {
 export default function StreamingManagement() {
   const { user } = useApp();
   // 带赛程返回，用于只展示「已有玩家预约」的房间
-  const rooms = useFetch<MatchRoom[]>(() =>
-    api.get("/api/rooms" + qs({ withSchedules: true })),
-  );
-  const assignments = useFetch<StaffRoomAssignment[]>(() =>
-    api.get("/api/staff/assignments"),
-  );
+  const rooms = useFetch<MatchRoom[]>(() => api.get("/api/rooms" + qs({ withSchedules: true })));
+  const assignments = useFetch<StaffRoomAssignment[]>(() => api.get("/api/staff/assignments"));
   const currentSeason = useCurrentSeason();
   const [seasonFilter, setSeasonFilter] = useState<string | null>(null);
   const activeSeason = seasonFilter ?? currentSeason;
@@ -93,9 +92,7 @@ export default function StreamingManagement() {
   const list = useMemo(
     () =>
       (assignments.data ?? []).filter(
-        (a) =>
-          activeSeason === "all" ||
-          (a.room?.season ?? "").toLowerCase() === activeSeason,
+        (a) => activeSeason === "all" || (a.room?.season ?? "").toLowerCase() === activeSeason,
       ),
     [assignments.data, activeSeason],
   );
@@ -144,7 +141,9 @@ export default function StreamingManagement() {
         });
     setRoleBusy(null);
     if (res.ok) {
-      toast({ title: mine ? `已取消${ROLE_LABEL[targetRole]}` : `已加入${ROLE_LABEL[targetRole]}` });
+      toast({
+        title: mine ? `已取消${ROLE_LABEL[targetRole]}` : `已加入${ROLE_LABEL[targetRole]}`,
+      });
       void assignments.load();
     } else {
       toast({ variant: "destructive", title: res.error.message || "操作失败" });
@@ -192,94 +191,90 @@ export default function StreamingManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle className="mb-0">
-          主播 / 解说 / 裁判安排
-        </SectionTitle>
+        <SectionTitle className="mb-0">主播 / 解说 / 裁判安排</SectionTitle>
         <div className="flex items-center gap-2">
-        <SeasonSelect
-          value={activeSeason}
-          onChange={(v) => setSeasonFilter(v)}
-          options={seasonOptions}
-          includeAll
-          className="w-36"
-        />
-        <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
-          <DialogTrigger asChild>
-            <Button variant="primary">申请加入房间</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>申请加入房间</DialogTitle>
-              <DialogDescription>选择房间与职位角色（osuId 需为管理员）。</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3">
-              <div className="grid gap-1.5">
-                <Label>房间</Label>
-                <Select value={roomId} onValueChange={setRoomId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择房间" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {seasonRooms.map((r) => (
-                      <SelectItem key={r.id} value={String(r.id)}>
-                        {r.roomName}
-                        {r.season ? ` · ${r.season.toUpperCase()}` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1.5">
-                <Label>角色</Label>
-                <Select value={role} onValueChange={(v) => setRole(v as StaffRole)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="referee">裁判</SelectItem>
-                    <SelectItem value="commentator">解说</SelectItem>
-                    <SelectItem value="streamer">主播</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+          <SeasonSelect
+            value={activeSeason}
+            onChange={(v) => setSeasonFilter(v)}
+            options={seasonOptions}
+            includeAll
+            className="w-36"
+          />
+          <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
+            <DialogTrigger asChild>
+              <Button variant="primary">申请加入房间</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>申请加入房间</DialogTitle>
+                <DialogDescription>选择房间与职位角色（osuId 需为管理员）。</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-3">
                 <div className="grid gap-1.5">
-                  <Label>osuId</Label>
-                  <Input value={staffOsuId} onChange={(e) => setStaffOsuId(e.target.value)} />
+                  <Label>房间</Label>
+                  <Select value={roomId} onValueChange={setRoomId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择房间" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {seasonRooms.map((r) => (
+                        <SelectItem key={r.id} value={String(r.id)}>
+                          {r.roomName}
+                          {r.season ? ` · ${r.season.toUpperCase()}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>用户名</Label>
-                  <Input value={staffUsername} onChange={(e) => setStaffUsername(e.target.value)} />
+                  <Label>角色</Label>
+                  <Select value={role} onValueChange={(v) => setRole(v as StaffRole)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="referee">裁判</SelectItem>
+                      <SelectItem value="commentator">解说</SelectItem>
+                      <SelectItem value="streamer">主播</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-1.5">
+                    <Label>osuId</Label>
+                    <Input value={staffOsuId} onChange={(e) => setStaffOsuId(e.target.value)} />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>用户名</Label>
+                    <Input
+                      value={staffUsername}
+                      onChange={(e) => setStaffUsername(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">取消</Button>
-              </DialogClose>
-              <Button variant="primary" onClick={apply} disabled={busy}>
-                {busy ? "提交中…" : "提交"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">取消</Button>
+                </DialogClose>
+                <Button variant="primary" onClick={apply} disabled={busy}>
+                  {busy ? "提交中…" : "提交"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       {rooms.loading || assignments.loading ? (
         <LoadingBlock label="加载房间与安排中…" />
       ) : rooms.error || assignments.error ? (
-        <ErrorBlock
-          message={rooms.error || assignments.error || "加载失败"}
-          onRetry={refetch}
-        />
+        <ErrorBlock message={rooms.error || assignments.error || "加载失败"} onRetry={refetch} />
       ) : (
         <div>
           {seasonRooms.length === 0 && (
             <p className="rounded-2xl bg-(--pc-white) p-6 text-center text-sm text-(--pc-faint) shadow-[2px_2px_0px_rgba(0,0,0,0.06)]">
-              {activeSeason === "all"
-                ? "还没有玩家预约的房间。"
-                : "当前赛季还没有玩家预约的房间。"}
+              {activeSeason === "all" ? "还没有玩家预约的房间。" : "当前赛季还没有玩家预约的房间。"}
             </p>
           )}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -311,9 +306,7 @@ export default function StreamingManagement() {
                             {s.player1Username || "?"}
                           </span>
                           <span className="text-xs text-(--pc-faint)">vs</span>
-                          <span className="font-bold text-pc-blue">
-                            {s.player2Username || "?"}
-                          </span>
+                          <span className="font-bold text-pc-blue">{s.player2Username || "?"}</span>
                           <img
                             src={osuAvatarUrl(s.player2OsuId)}
                             alt=""
@@ -328,9 +321,7 @@ export default function StreamingManagement() {
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     {ROLE_ORDER.map((r) => {
                       const count = people.filter((a) => a.role === r).length;
-                      const mine = people.some(
-                        (a) => a.role === r && a.staffOsuId === user?.osuId,
-                      );
+                      const mine = people.some((a) => a.role === r && a.staffOsuId === user?.osuId);
                       return (
                         <button
                           key={r}
@@ -374,16 +365,16 @@ export default function StreamingManagement() {
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-3 text-xs text-(--pc-faint)">暂无人加入，点上面的职位即可加入</p>
+                    <p className="mt-3 text-xs text-(--pc-faint)">
+                      暂无人加入，点上面的职位即可加入
+                    </p>
                   )}
                 </Card>
               );
             })}
           </div>
 
-          <SectionTitle className="mt-8 mb-0">
-            人员安排列表
-          </SectionTitle>
+          <SectionTitle className="mt-8 mb-0">人员安排列表</SectionTitle>
           {list.length === 0 ? (
             <p className="py-8 text-center text-sm text-(--pc-faint)">暂无安排。</p>
           ) : (

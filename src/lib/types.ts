@@ -214,7 +214,9 @@ export interface ModdedStats {
   starRating?: number;
   bpm?: number;
   totalLength?: number;
-  [key: string]: any;
+  /** 物件数（osu! API 的 total_hit_objects 转换值） */
+  totalHitObjects?: number | null;
+  [key: string]: unknown;
 }
 
 export interface MapSelection {
@@ -342,7 +344,7 @@ export interface Settings {
   /** 赛季池：{ 赛季id: { name, status } } 字典 */
   seasons?: Record<string, SeasonInfo>;
   availableSeasons?: { value: string; label: string; status?: string }[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /** 由赛季池生成赛季下拉选项（value=赛季id, label=赛季名）。 */
@@ -514,17 +516,6 @@ export type StaffRole = "referee" | "commentator" | "streamer";
 
 export const MODS_ORDER: readonly string[] = ["NM", "HD", "HR", "DT", "FM", "LZ", "TB"];
 
-export const CATEGORIES = [
-  "All",
-  "QUA",
-  "RO32",
-  "RO16",
-  "QF",
-  "SF",
-  "F",
-  "GF",
-] as const;
-
 /** 图池阶段选项（value 为后端存储值，label 为英文简写） */
 export const CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: "qualification", label: "QUA" },
@@ -548,13 +539,6 @@ export const STAGE_TO_CATEGORY: Record<string, string> = {
   f: "finals",
   gf: "grandfinals",
 };
-
-/** Return unique mods in the canonical front-of-mod order. */
-export function modCountByOrder(list: string[]): string[] {
-  const order = MODS_ORDER as readonly string[];
-  const seen = Array.from(new Set(list.filter((m) => !!m)));
-  return seen.sort((a, b) => order.indexOf(a.split("+")[0]) - order.indexOf(b.split("+")[0]));
-}
 
 // ============ 资讯 / 赛季规则（后端 news、season_rules 表）============
 

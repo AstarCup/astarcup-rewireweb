@@ -255,7 +255,12 @@ export default function RefereePage() {
       system: (t) =>
         setChatLines((prev) => [
           ...prev,
-          { kind: "system", id: `s-${++lineIdRef.current}`, content: t, at: new Date().toISOString() },
+          {
+            kind: "system",
+            id: `s-${++lineIdRef.current}`,
+            content: t,
+            at: new Date().toISOString(),
+          },
         ]),
       say: async (t) => {
         const ch = roomRef.current?.chatChannelId;
@@ -348,10 +353,7 @@ export default function RefereePage() {
       });
       if (fresh.length === 0) return;
       // 先推进游标再做 await，避免轮询与"发送后回显"并发时重复插入
-      lastChatIdRef.current = Math.max(
-        prevMax,
-        ...fresh.map((m) => chatMessageId(m) ?? 0),
-      );
+      lastChatIdRef.current = Math.max(prevMax, ...fresh.map((m) => chatMessageId(m) ?? 0));
 
       // 发送者资料：本地没有的先补一次（照 apl-ref 的 Room.GetUser）
       const resolved = new Map<number, OsuUserLite>();
@@ -528,7 +530,10 @@ export default function RefereePage() {
           toast({ title: "已恢复房间", description: local.name || `#${local.id}` });
         } else {
           handleRoomJoined(backendRoom);
-          toast({ title: "已恢复房间", description: backendRoom.name || `#${backendRoom.room_id}` });
+          toast({
+            title: "已恢复房间",
+            description: backendRoom.name || `#${backendRoom.room_id}`,
+          });
         }
         return;
       }
@@ -691,14 +696,7 @@ export default function RefereePage() {
       },
     });
     return stop;
-  }, [
-    user,
-    bindStatus?.bound,
-    appendSystem,
-    handleCloseRoom,
-    loadScores,
-    ensureUsers,
-  ]);
+  }, [user, bindStatus?.bound, appendSystem, handleCloseRoom, loadScores, ensureUsers]);
 
   // ---- 绑定 / 解绑 ----
   const [bindBusy, setBindBusy] = useState(false);
@@ -745,15 +743,17 @@ export default function RefereePage() {
     <div className="mx-auto max-w-[1600px] px-4 md:px-6">
       {/* 页头 */}
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-
-        </div>
+        <div></div>
         <div className="flex flex-wrap items-center gap-2">
           {bindStatus?.bound && (
             <>
               <Badge
                 variant={
-                  connState === "connected" ? "teal" : connState === "connecting" ? "yellow" : "primary"
+                  connState === "connected"
+                    ? "teal"
+                    : connState === "connecting"
+                      ? "yellow"
+                      : "primary"
                 }
                 title={lastError ?? undefined}
               >
@@ -785,7 +785,11 @@ export default function RefereePage() {
           </CardHeader>
           <CardContent>
             <Button onClick={handleBind} disabled={bindBusy}>
-              {bindBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+              {bindBusy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Link2 className="h-4 w-4" />
+              )}
               绑定 osu! 账号（裁判授权）
             </Button>
           </CardContent>
@@ -802,7 +806,11 @@ export default function RefereePage() {
           </CardHeader>
           <CardContent>
             <Button onClick={handleConnect} disabled={connecting}>
-              {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plug className="h-4 w-4" />}
+              {connecting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plug className="h-4 w-4" />
+              )}
               连接裁判服务器
             </Button>
           </CardContent>
@@ -856,10 +864,7 @@ export default function RefereePage() {
                   />
                 </>
               ) : (
-                <RoomSetup
-                  onRoomJoined={handleRoomJoined}
-                  onSelectMatchup={setPickedMatchup}
-                />
+                <RoomSetup onRoomJoined={handleRoomJoined} onSelectMatchup={setPickedMatchup} />
               )}
             </div>
 

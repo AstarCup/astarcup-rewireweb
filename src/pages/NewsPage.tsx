@@ -7,9 +7,7 @@ import { api } from "@/lib/api";
 import type { NewsItem } from "@/lib/types";
 
 export default function NewsPage() {
-  const { data, loading, error, refetch } = useFetch<NewsItem[]>(() =>
-    api.get("/api/news"),
-  );
+  const { data, loading, error, refetch } = useFetch<NewsItem[]>(() => api.get("/api/news"));
   const newsItems = data ?? [];
 
   return (

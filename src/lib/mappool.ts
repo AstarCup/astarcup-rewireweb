@@ -5,7 +5,7 @@
  * 并可能带自定义 DT 倍率（customDTRate）与自定义 mod 名（customModName）。
  */
 import type { MapSelection } from "@/lib/types";
-import { DIFFICULTY_KEYS, expandModsText, type RefMod } from "@/lib/ref";
+import { expandModsText, type RefMod } from "@/lib/ref";
 
 /** DT/HT 的倍率设置键（osu! API 的 mod settings） */
 const SPEED_CHANGE_KEY = "speed_change";
@@ -41,26 +41,4 @@ export function poolMapMods(map: MapSelection): { required: RefMod[]; allowed: R
     required,
     allowed: freeMod ? expandModsText("FM", 0).allowed : [],
   };
-}
-
-/** RefMod[] → 可回填到输入框的文本（DT1.15 / DA[4,4,4,4] / HD） */
-export function modsToText(mods: RefMod[]): string {
-  return mods
-    .map((mod) => {
-      const settings = mod.settings ?? {};
-      const keys = Object.keys(settings);
-      if (keys.length === 0) return mod.acronym;
-
-      if (
-        (mod.acronym === "DT" || mod.acronym === "HT") &&
-        typeof settings[SPEED_CHANGE_KEY] === "number"
-      ) {
-        return `${mod.acronym}${settings[SPEED_CHANGE_KEY]}`;
-      }
-      if (mod.acronym === "DA" && DIFFICULTY_KEYS.every((k) => typeof settings[k] === "number")) {
-        return `DA[${DIFFICULTY_KEYS.map((k) => settings[k]).join(",")}]`;
-      }
-      return `${mod.acronym}${JSON.stringify(settings)}`;
-    })
-    .join(" ");
 }

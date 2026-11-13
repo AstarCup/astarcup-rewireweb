@@ -34,11 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatDate, osuAvatarUrl } from "@/lib/utils";
-import {
-  REG_STATUS_OPTIONS,
-  REG_STATUS_VARIANT,
-  REG_STATUS_LABEL,
-} from "@/lib/types";
+import { REG_STATUS_OPTIONS, REG_STATUS_VARIANT, REG_STATUS_LABEL } from "@/lib/types";
 import type { AdminUserStub } from "@/lib/types";
 
 const GROUP_OPTIONS = [
@@ -82,9 +78,7 @@ export default function UserManagement() {
     run(`approve-${u.osuId}`, () => api.post(`/api/admin/users/${u.osuId}/approve`));
 
   const setGroup = (u: AdminUserStub, group: "player" | "admin") =>
-    run(`group-${u.osuId}`, () =>
-      api.patch(`/api/admin/users/${u.osuId}`, { userGroup: group }),
-    );
+    run(`group-${u.osuId}`, () => api.patch(`/api/admin/users/${u.osuId}`, { userGroup: group }));
 
   const setStatus = (u: AdminUserStub, status: string) =>
     run(`status-${u.osuId}`, () =>
@@ -160,9 +154,7 @@ export default function UserManagement() {
 
   return (
     <div>
-      <SectionTitle>
-        注册用户
-      </SectionTitle>
+      <SectionTitle>注册用户</SectionTitle>
 
       {/* 搜索与筛选 */}
       <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -243,7 +235,10 @@ export default function UserManagement() {
                         <div className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
                             {(u.avatarUrl || osuAvatarUrl(u.osuId)) && (
-                              <AvatarImage src={u.avatarUrl || osuAvatarUrl(u.osuId)} alt={u.username} />
+                              <AvatarImage
+                                src={u.avatarUrl || osuAvatarUrl(u.osuId)}
+                                alt={u.username}
+                              />
                             )}
                             <AvatarFallback>{u.username?.slice(0, 1) || "?"}</AvatarFallback>
                           </Avatar>

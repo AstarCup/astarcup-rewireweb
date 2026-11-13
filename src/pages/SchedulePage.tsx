@@ -82,7 +82,7 @@ export default function SchedulePage() {
   // null = 还没手动选过，默认跟随「最新赛季」
   const [season, setSeason] = useState<string | null>(null);
 
-  const all = data ?? [];
+  const all = useMemo(() => data ?? [], [data]);
   const seasons = useMemo(() => {
     const set = new Set<string>();
     for (const s of all) {
@@ -92,19 +92,20 @@ export default function SchedulePage() {
     return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }, [all]);
 
-  const activeSeason = season ?? (seasons[seasons.length - 1] ?? "all");
+  const activeSeason = season ?? seasons[seasons.length - 1] ?? "all";
 
   const rows = useMemo(() => {
     const visible = activeSeason === "all" ? all : all.filter((s) => seasonOf(s) === activeSeason);
-    return [...visible]
-      // 时间倒序：晚的在前、早的在后
-      .sort((a, b) => (b.room?.matchTime ?? "").localeCompare(a.room?.matchTime ?? ""))
-      .map(toRow);
+    return (
+      [...visible]
+        // 时间倒序：晚的在前、早的在后
+        .sort((a, b) => (b.room?.matchTime ?? "").localeCompare(a.room?.matchTime ?? ""))
+        .map(toRow)
+    );
   }, [all, activeSeason]);
 
   return (
     <div className="bg-(--pc-paper)">
-
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         {loading && <LoadingBlock label="正在加载赛程…" />}
         {error && <ErrorBlock message={error} onRetry={() => void load()} />}

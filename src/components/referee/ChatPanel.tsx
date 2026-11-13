@@ -14,7 +14,10 @@ import {
   MessageHeader,
 } from "@/components/ui/message";
 
-const matchStatusMeta: Record<RefRoomState["status"], { label: string; variant: "teal" | "yellow" | "primary" }> = {
+const matchStatusMeta: Record<
+  RefRoomState["status"],
+  { label: string; variant: "teal" | "yellow" | "primary" }
+> = {
   Idle: { label: "空闲", variant: "teal" },
   Playing: { label: "比赛中", variant: "yellow" },
   Aborted: { label: "已中止", variant: "primary" },
@@ -135,59 +138,59 @@ export default function ChatPanel({
             onScroll={handleScroll}
             className="h-96 overflow-y-auto rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-3"
           >
-          {lines.length === 0 && (
-            <p className="py-8 text-center text-sm text-(--pc-faint)">暂无消息…</p>
-          )}
-          <MessageGroup className="gap-2">
-            {lines.map((line) => {
-              if (line.kind === "system") {
-                return (
-                  <div
-                    key={line.id}
-                    className="border-b border-dashed border-(--pc-border) px-1 pb-1 font-mono text-xs italic text-(--pc-slate)"
-                  >
-                    {line.content}
-                  </div>
-                );
-              }
-              const isMe = meId != null && String(line.userId) === meId;
-              return (
-                <Message key={line.id} align={isMe ? "end" : "start"}>
-                  <MessageAvatar className="h-8 w-8 border-2 border-(--pc-border) bg-(--pc-white)">
-                    <img
-                      src={line.avatarUrl ?? osuAvatarUrl(line.userId) ?? undefined}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  </MessageAvatar>
-                  <MessageContent>
-                    <MessageHeader>
-                      {line.username}
-                      {isMe && <span className="font-normal text-(--pc-faint)">（你）</span>}
-                    </MessageHeader>
+            {lines.length === 0 && (
+              <p className="py-8 text-center text-sm text-(--pc-faint)">暂无消息…</p>
+            )}
+            <MessageGroup className="gap-2">
+              {lines.map((line) => {
+                if (line.kind === "system") {
+                  return (
                     <div
-                      data-slot="bubble"
-                      className={cn(
-                        "w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-2xl border-2 px-3 py-1.5 text-sm",
-                        isMe
-                          ? "border-pc-primary/30 bg-pc-primary/10 text-(--pc-ink)"
-                          : "border-(--pc-border) bg-(--pc-white) text-(--pc-ink)",
-                        line.isAction && "italic text-(--pc-slate)",
-                      )}
+                      key={line.id}
+                      className="border-b border-dashed border-(--pc-border) px-1 pb-1 font-mono text-xs italic text-(--pc-slate)"
                     >
-                      {line.isAction ? `* ${line.username} ${line.content}` : line.content}
+                      {line.content}
                     </div>
-                  </MessageContent>
-                </Message>
-              );
-            })}
-          </MessageGroup>
-          {agentBusy && (
-            <div className="mt-2 flex items-center gap-2 px-1 font-mono text-xs italic text-(--pc-slate)">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              裁判助手处理中…
-            </div>
-          )}
+                  );
+                }
+                const isMe = meId != null && String(line.userId) === meId;
+                return (
+                  <Message key={line.id} align={isMe ? "end" : "start"}>
+                    <MessageAvatar className="h-8 w-8 border-2 border-(--pc-border) bg-(--pc-white)">
+                      <img
+                        src={line.avatarUrl ?? osuAvatarUrl(line.userId) ?? undefined}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </MessageAvatar>
+                    <MessageContent>
+                      <MessageHeader>
+                        {line.username}
+                        {isMe && <span className="font-normal text-(--pc-faint)">（你）</span>}
+                      </MessageHeader>
+                      <div
+                        data-slot="bubble"
+                        className={cn(
+                          "w-fit max-w-[85%] whitespace-pre-wrap break-words rounded-2xl border-2 px-3 py-1.5 text-sm",
+                          isMe
+                            ? "border-pc-primary/30 bg-pc-primary/10 text-(--pc-ink)"
+                            : "border-(--pc-border) bg-(--pc-white) text-(--pc-ink)",
+                          line.isAction && "italic text-(--pc-slate)",
+                        )}
+                      >
+                        {line.isAction ? `* ${line.username} ${line.content}` : line.content}
+                      </div>
+                    </MessageContent>
+                  </Message>
+                );
+              })}
+            </MessageGroup>
+            {agentBusy && (
+              <div className="mt-2 flex items-center gap-2 px-1 font-mono text-xs italic text-(--pc-slate)">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                裁判助手处理中…
+              </div>
+            )}
           </div>
           {newCount > 0 && (
             <button

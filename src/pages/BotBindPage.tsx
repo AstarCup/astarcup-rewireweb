@@ -122,9 +122,7 @@ export default function BotBindPage() {
               <ShieldAlert className="h-5 w-5 text-pc-primary" />
               绑定链接无效
             </CardTitle>
-            <CardDescription>
-              链接缺少绑定令牌。
-            </CardDescription>
+            <CardDescription>链接缺少绑定令牌。</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-(--pc-slate)">
@@ -264,9 +262,7 @@ export default function BotBindPage() {
               <span className="text-right font-bold text-(--pc-ink)">
                 {info.username}
                 <br />
-                <span className="text-xs font-normal text-(--pc-faint)">
-                  osu! ID {info.osuId}
-                </span>
+                <span className="text-xs font-normal text-(--pc-faint)">osu! ID {info.osuId}</span>
               </span>
             </div>
             <div className="flex items-start justify-between gap-3">
@@ -299,7 +295,11 @@ export default function BotBindPage() {
           )}
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="primary" onClick={() => void handleConfirm()} disabled={confirm.loading}>
+            <Button
+              variant="primary"
+              onClick={() => void handleConfirm()}
+              disabled={confirm.loading}
+            >
               {confirm.loading ? "绑定中…" : "确认这是我的账号并绑定"}
             </Button>
             <Button asChild variant="outline">

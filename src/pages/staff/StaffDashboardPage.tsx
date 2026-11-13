@@ -102,7 +102,8 @@ const SIDEBAR_SECTIONS: { label?: string; items: TabKey[] }[] = [
 
 const TRIGGER_BASE =
   "border-2 shadow-[2px_2px_0px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 active:translate-y-0.5";
-const TRIGGER_ACTIVE = "border-pc-primary bg-pc-primary text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]";
+const TRIGGER_ACTIVE =
+  "border-pc-primary bg-pc-primary text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)]";
 const TRIGGER_IDLE = "border-(--pc-border) bg-(--pc-white) text-(--pc-ink)";
 
 const STORAGE_KEY = "staff-dashboard-active-tab";
@@ -119,11 +120,7 @@ function SidebarCollapseButton() {
       title={open ? "收起侧边栏" : "展开侧边栏"}
       aria-label={open ? "收起侧边栏" : "展开侧边栏"}
     >
-      {open ? (
-        <PanelLeftClose className="h-4 w-4" />
-      ) : (
-        <PanelLeftOpen className="h-4 w-4" />
-      )}
+      {open ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
     </Button>
   );
 }

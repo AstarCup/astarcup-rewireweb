@@ -34,8 +34,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: "Varela Round", ui-rounded, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
-    system-ui, sans-serif;
+  --font-sans:
+    "Varela Round", ui-rounded, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui,
+    sans-serif;
   --font-display: "Varela Round", ui-rounded, "PingFang SC", system-ui, sans-serif;
 
   /* Paper Craft 调色板 → Tailwind 颜色工具类（bg-pc-primary / text-pc-teal / border-pc-blue/40 …） */

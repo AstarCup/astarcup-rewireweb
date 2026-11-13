@@ -127,11 +127,7 @@ export default function MarkdownEditor({
   return (
     <>
       <div ref={hostRef} className={className ?? "h-full w-full"} />
-      <EmojiPicker
-        open={pickerOpen}
-        onOpenChange={setPickerOpen}
-        onPick={insertEmoji}
-      />
+      <EmojiPicker open={pickerOpen} onOpenChange={setPickerOpen} onPick={insertEmoji} />
     </>
   );
 }

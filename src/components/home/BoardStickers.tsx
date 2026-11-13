@@ -34,7 +34,10 @@ interface BoardStickersProps {
   selectedId: number | null;
   editable: (s: CanvasSticker) => boolean;
   onSelect: (id: number | null) => void;
-  onDraft: (id: number, patch: Partial<Pick<CanvasSticker, "x" | "y" | "scale" | "rotation">>) => void;
+  onDraft: (
+    id: number,
+    patch: Partial<Pick<CanvasSticker, "x" | "y" | "scale" | "rotation">>,
+  ) => void;
   onCommit: (id: number) => void;
   onDelete: (s: CanvasSticker) => void;
 }
@@ -124,7 +127,10 @@ function StickerItem({
   return (
     <div
       ref={ref}
-      className={cn("pointer-events-auto absolute touch-none select-none", selected ? "z-20" : "z-10")}
+      className={cn(
+        "pointer-events-auto absolute touch-none select-none",
+        selected ? "z-20" : "z-10",
+      )}
       style={{
         left: s.x,
         top: s.y,
@@ -223,16 +229,16 @@ export default function BoardStickers({
     <div className="pointer-events-none absolute inset-0 z-30">
       {stickers.map((s) => (
         <StickerItem
-        key={s.id}
-        sticker={s}
-        boardScale={boardScale}
-        selected={selectedId === s.id}
-        canEdit={editable(s)}
-        onSelect={() => onSelect(s.id)}
-        onDraft={onDraft}
-        onCommit={onCommit}
-        onDelete={onDelete}
-      />
+          key={s.id}
+          sticker={s}
+          boardScale={boardScale}
+          selected={selectedId === s.id}
+          canEdit={editable(s)}
+          onSelect={() => onSelect(s.id)}
+          onDraft={onDraft}
+          onCommit={onCommit}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   );

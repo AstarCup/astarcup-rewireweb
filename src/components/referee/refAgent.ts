@@ -6,13 +6,9 @@
  */
 import { api } from "@/lib/api";
 import type { HubEvent, RefRoomState } from "@/lib/ref";
-import type {
-  DisplayScore,
-  MatchSchedule,
-  Settings,
-} from "@/lib/types";
-// biome-ignore lint/suspicious/noExplicitAny: roomContext 为自由结构
-type Json = any;
+import type { DisplayScore, MatchSchedule, Settings } from "@/lib/types";
+// 房间上下文是自由结构（喂给模型的 JSON）
+type Json = Record<string, unknown>;
 
 export interface RefAgentDeps {
   getRoom: () => RefRoomState | null;
@@ -34,12 +30,7 @@ interface AgentTurnResponse {
 }
 
 /** 交给 agent 处理的事件（roll 判定、小节结束播报等自动行为） */
-const AGENT_EVENTS = new Set([
-  "RollCompleted",
-  "MatchStarted",
-  "MatchAborted",
-  "MatchCompleted",
-]);
+const AGENT_EVENTS = new Set(["RollCompleted", "MatchStarted", "MatchAborted", "MatchCompleted"]);
 
 export class RefAgent {
   enabled = true;
@@ -63,9 +54,7 @@ export class RefAgent {
         this.enabled = arg === "on";
         this.deps.system(`裁判助手已${this.enabled ? "开启" : "关闭"}`);
       } else {
-        this.deps.system(
-          `裁判助手当前${this.enabled ? "已开启" : "已关闭"}（!mp agent on|off）`,
-        );
+        this.deps.system(`裁判助手当前${this.enabled ? "已开启" : "已关闭"}（!mp agent on|off）`);
       }
       return true;
     }
@@ -119,9 +108,7 @@ export class RefAgent {
       this.deps.system("裁判助手：尚未进入房间。");
       return;
     }
-    const current = Object.values(room.playlistItems).find(
-      (x) => Number(x.order) === 0,
-    );
+    const current = Object.values(room.playlistItems).find((x) => Number(x.order) === 0);
     const res = await api.post<AgentTurnResponse>("/api/ref/agent/message", {
       roomId: room.id,
       chatChannelId: room.chatChannelId,
@@ -146,9 +133,7 @@ export class RefAgent {
   private buildRoomContext(room: RefRoomState): Json {
     const matchup = this.deps.getMatchup();
     const settings = this.deps.getSettings();
-    const current = Object.values(room.playlistItems).find(
-      (x) => Number(x.order) === 0,
-    );
+    const current = Object.values(room.playlistItems).find((x) => Number(x.order) === 0);
     return {
       room: {
         id: room.id,
@@ -159,15 +144,13 @@ export class RefAgent {
         locked: room.locked,
         currentPlaylistItemId: current?.id ?? null,
         currentBeatmapId: current?.beatmap_id ?? null,
-        players: [...Object.values(room.players), ...Object.values(room.refs)].map(
-          (p) => ({
-            id: p.id,
-            name: p.user?.username ?? `#${p.id}`,
-            team: p.team,
-            status: p.status,
-            mods: p.mods.map((m) => m.acronym),
-          }),
-        ),
+        players: [...Object.values(room.players), ...Object.values(room.refs)].map((p) => ({
+          id: p.id,
+          name: p.user?.username ?? `#${p.id}`,
+          team: p.team,
+          status: p.status,
+          mods: p.mods.map((m) => m.acronym),
+        })),
       },
       matchup: matchup
         ? {

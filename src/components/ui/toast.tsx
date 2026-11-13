@@ -1,12 +1,5 @@
 import { Toast as ToastPrimitive } from "@base-ui/react/toast";
-import {
-  CircleCheck,
-  Info,
-  Loader2,
-  OctagonX,
-  TriangleAlert,
-  X,
-} from "lucide-react";
+import { CircleCheck, Info, Loader2, OctagonX, TriangleAlert, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -21,11 +14,7 @@ function ToastPortal(props: ToastPrimitive.Portal.Props) {
 }
 
 /** 视口固定在屏幕水平居中、垂直「中心再往下 1/4 屏」的位置，多条 toast 堆叠 */
-function ToastViewport({
-  className,
-  children,
-  ...props
-}: ToastPrimitive.Viewport.Props) {
+function ToastViewport({ className, children, ...props }: ToastPrimitive.Viewport.Props) {
   return (
     <ToastPrimitive.Viewport
       data-slot="toast-viewport"
@@ -35,9 +24,7 @@ function ToastViewport({
       )}
       {...props}
     >
-      <div className="flex w-full translate-y-[25vh] flex-col items-center gap-3">
-        {children}
-      </div>
+      <div className="flex w-full translate-y-[25vh] flex-col items-center gap-3">{children}</div>
     </ToastPrimitive.Viewport>
   );
 }
@@ -162,11 +149,7 @@ function ToastList() {
   ));
 }
 
-function Toaster({
-  children,
-  toastManager = toast,
-  ...props
-}: ToastPrimitive.Provider.Props) {
+function Toaster({ children, toastManager = toast, ...props }: ToastPrimitive.Provider.Props) {
   return (
     <ToastProvider toastManager={toastManager} {...props}>
       {children}

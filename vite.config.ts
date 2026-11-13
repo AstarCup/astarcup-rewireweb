@@ -92,5 +92,30 @@ export default defineConfig(({ mode }) => {
         "/files": { target: BACKEND, changeOrigin: true },
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // 把体积大的三方依赖拆开：首屏不必为 vditor/jszip 等买单，
+          // 也让页面 chunk 之间可以长期复用同一份 vendor 缓存。
+          manualChunks(id: string) {
+            if (!id.includes("node_modules")) return;
+            if (/[\\/]node_modules[\\/]vditor[\\/]/.test(id)) return "vditor";
+            if (/[\\/]node_modules[\\/]jszip[\\/]/.test(id)) return "jszip";
+            if (/[\\/]node_modules[\\/]date-fns[\\/]/.test(id)) return "date-fns";
+            if (/[\\/]node_modules[\\/]gsap[\\/]/.test(id)) return "gsap";
+            if (/[\\/]node_modules[\\/](@radix-ui|@base-ui)[\\/]/.test(id)) return "ui-vendor";
+            if (/[\\/]node_modules[\\/]lucide-react[\\/]/.test(id)) return "icons";
+            if (
+              /[\\/]node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom)[\\/]/.test(
+                id,
+              )
+            ) {
+              return "react-vendor";
+            }
+            return "vendor";
+          },
+        },
+      },
+    },
   };
 });

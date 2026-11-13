@@ -218,9 +218,7 @@ function PlaylistDialog({ open, onOpenChange, room, editing }: PlaylistDialogPro
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{editing ? "编辑图池项" : "添加图池项"}</DialogTitle>
-          <DialogDescription>
-            点选 mod 并可调整参数；没有选中的 mod 即为不限。
-          </DialogDescription>
+          <DialogDescription>点选 mod 并可调整参数；没有选中的 mod 即为不限。</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
           <div className="grid gap-1.5">

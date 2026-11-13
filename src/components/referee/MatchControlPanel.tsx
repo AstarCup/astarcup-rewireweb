@@ -15,7 +15,10 @@ function mmss(total: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-const statusMeta: Record<RefRoomState["status"], { label: string; variant: "teal" | "yellow" | "primary" }> = {
+const statusMeta: Record<
+  RefRoomState["status"],
+  { label: string; variant: "teal" | "yellow" | "primary" }
+> = {
   Idle: { label: "空闲", variant: "teal" },
   Playing: { label: "比赛中", variant: "yellow" },
   Aborted: { label: "已中止", variant: "primary" },

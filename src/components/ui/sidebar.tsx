@@ -33,11 +33,7 @@ function useIsMobile(breakpoint = 1024) {
   return isMobile;
 }
 
-function SidebarProvider({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
+function SidebarProvider({ children, className, ...props }: React.ComponentProps<"div">) {
   const isMobile = useIsMobile();
   const [open, setOpen] = React.useState(true);
 
@@ -130,11 +126,7 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
 
 function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div
-      data-slot="sidebar-group"
-      className={cn("flex flex-col gap-1", className)}
-      {...props}
-    />
+    <div data-slot="sidebar-group" className={cn("flex flex-col gap-1", className)} {...props} />
   );
 }
 
@@ -152,7 +144,13 @@ function SidebarGroupLabel({ className, ...props }: React.ComponentProps<"div">)
 }
 
 function SidebarGroupContent({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="sidebar-group-content" className={cn("flex flex-col gap-1", className)} {...props} />;
+  return (
+    <div
+      data-slot="sidebar-group-content"
+      className={cn("flex flex-col gap-1", className)}
+      {...props}
+    />
+  );
 }
 
 function SidebarMenu({ className, ...props }: React.ComponentProps<"ul">) {
@@ -191,8 +189,7 @@ function SidebarMenuButton({
   isActive = false,
   size = "default",
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof sidebarMenuButtonVariants>) {
+}: React.ComponentProps<"button"> & VariantProps<typeof sidebarMenuButtonVariants>) {
   return (
     <button
       data-slot="sidebar-menu-button"

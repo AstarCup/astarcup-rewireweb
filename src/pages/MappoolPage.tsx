@@ -8,11 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  HoverCard,
-  HoverCardTrigger,
-  HoverCardContent,
-} from "@/components/ui/hover-card";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { LoadingBlock, ErrorBlock, useAsync } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -193,6 +189,8 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
               <HoverCardTrigger asChild>
                 <a
                   href={`osu://b/${map.beatmapId}`}
+                  aria-label={`在 osu! 客户端打开谱面 ${map.beatmapId}`}
+                  title="在 osu! 客户端打开"
                   className="grid h-7 w-7 place-items-center rounded-full bg-(--pc-paper) text-(--pc-faint) transition hover:text-pc-primary"
                 >
                   <svg
@@ -206,9 +204,7 @@ function MapCard({ map, useUnicode }: { map: MapSelection; useUnicode: boolean }
                 </a>
               </HoverCardTrigger>
               <HoverCardContent side="bottom" className="w-auto px-3 py-1.5">
-                <p className="text-xs font-bold text-(--pc-ink)">
-                  osu! 直接打开
-                </p>
+                <p className="text-xs font-bold text-(--pc-ink)">osu! 直接打开</p>
               </HoverCardContent>
             </HoverCard>
             <HoverCard openDelay={0} closeDelay={0}>
@@ -287,9 +283,7 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
             <th className="px-4 py-3 font-bold text-(--pc-slate)">BPM</th>
             <th className="px-4 py-3 font-bold text-(--pc-slate)">时长</th>
             <th className="px-4 py-3 font-bold text-(--pc-slate)">Max</th>
-            {showObjs && (
-              <th className="px-4 py-3 font-bold text-(--pc-slate)">物件数</th>
-            )}
+            {showObjs && <th className="px-4 py-3 font-bold text-(--pc-slate)">物件数</th>}
             <th className="px-4 py-3 font-bold text-(--pc-slate)">星级</th>
           </tr>
         </thead>
@@ -333,8 +327,16 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  {m.isOrigin && <Badge variant="blue" className="mr-1">原创</Badge>}
-                  {m.isCustome && <Badge variant="yellow" className="mr-1">定制</Badge>}
+                  {m.isOrigin && (
+                    <Badge variant="blue" className="mr-1">
+                      原创
+                    </Badge>
+                  )}
+                  {m.isCustome && (
+                    <Badge variant="yellow" className="mr-1">
+                      定制
+                    </Badge>
+                  )}
                   <a
                     href={osuLink(m)}
                     target="_blank"
@@ -351,7 +353,9 @@ function MapTable({ group, useUnicode }: { group: ModGroup; useUnicode: boolean 
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.ar)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.od)}</td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmt(m.bpm)}</td>
-                <td className="px-4 py-3 font-sans text-(--pc-slate)">{fmtLength(m.totalLength)}</td>
+                <td className="px-4 py-3 font-sans text-(--pc-slate)">
+                  {fmtLength(m.totalLength)}
+                </td>
                 <td className="px-4 py-3 font-sans text-(--pc-slate)">
                   {m.maxCombo != null ? m.maxCombo : "-"}
                 </td>
@@ -456,8 +460,7 @@ export default function MappoolPage() {
   // settings 请求结束后即可按当前赛季/轮次拉取图池：
   // 即使 /api/settings 失败，也用 localStorage/默认赛季继续，避免永久停留在 loading。
   const settingsReady = settingsLoaded;
-  const seasonSettled =
-    init || !settings?.current_season || season === settings?.current_season;
+  const seasonSettled = init || !settings?.current_season || season === settings?.current_season;
   const stageMapped = settings?.current_season_stage
     ? STAGE_TO_CATEGORY[settings.current_season_stage]
     : undefined;
@@ -495,7 +498,6 @@ export default function MappoolPage() {
 
   return (
     <div className="bg-(--pc-paper)">
-
       <div className="mx-auto max-w-6xl px-4 py-10 md:px-8">
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-wrap items-end gap-4">
@@ -612,7 +614,6 @@ export default function MappoolPage() {
             ))}
           </div>
         )}
-
       </div>
     </div>
   );

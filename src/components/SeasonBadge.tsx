@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  HoverCard,
-  HoverCardTrigger,
-  HoverCardContent,
-} from "@/components/ui/hover-card";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 
 /**
  * 赛季徽章：优先显示 /assets/badge/{season}.svg 图片；图片缺失时回退为原来的奖杯 Badge。

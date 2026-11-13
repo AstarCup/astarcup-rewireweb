@@ -51,29 +51,35 @@ export function formatDate(iso?: string | null): string {
   });
 }
 
+const WALL_CLOCK_FORMAT = new Intl.DateTimeFormat("zh-CN", {
+  timeZone: "Asia/Shanghai",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 /** 后端将本地(+8)墙钟时间按 UTC 序列化(+00:00)，此处按 +08:00 墙钟解析，避免偏移 8 小时 */
 export function formatWallClock(iso?: string | null): string {
   if (!iso) return "-";
   const naive = iso.replace(/Z$/, "").replace(/[+-]\d{2}:\d{2}$/, "");
   const d = new Date(`${naive}+08:00`);
   if (Number.isNaN(d.getTime())) return "-";
-  const s = d.toLocaleString("zh-CN", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const [datePart, timePart = ""] = s.split(" ");
-  const [y, m, day] = datePart.split("/");
-  return `${y}年${m}月${day}日 ${timePart}`;
+  // 用 formatToParts 取值，不依赖 toLocaleString 的分隔符 / 空格形式
+  const parts = WALL_CLOCK_FORMAT.formatToParts(d);
+  const get = (type: "year" | "month" | "day" | "hour" | "minute") =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  const year = get("year");
+  const month = get("month");
+  const day = get("day");
+  let hour = get("hour");
+  // 某些引擎午夜会输出 24 时
+  if (hour === "24") hour = "00";
+  const minute = get("minute").padStart(2, "0");
+  return `${year}年${month}月${day}日 ${hour.padStart(2, "0")}:${minute}`;
 }
-
-/** Standard Paper Craft button shadow tokens. */
-export const hoverLift =
-  "transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0.5";
 
 const PLATFORM_LABELS: Record<string, string> = {
   aiocqhttp: "QQ",

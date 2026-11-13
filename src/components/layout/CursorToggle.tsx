@@ -23,7 +23,9 @@ export default function CursorToggle({ enabled, onToggle }: CursorToggleProps) {
           : "border-(--pc-border) bg-(--pc-white)/90 text-(--pc-faint)",
       )}
     >
-      <MousePointer2 className={cn("h-3.5 w-3.5", enabled ? "text-pc-primary" : "text-(--pc-faint)")} />
+      <MousePointer2
+        className={cn("h-3.5 w-3.5", enabled ? "text-pc-primary" : "text-(--pc-faint)")}
+      />
       光标
       <span
         className={cn(

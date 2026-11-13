@@ -118,7 +118,8 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
   const seasons = useMemo(() => seasonOptions(settings), [settings]);
   const defaultSeason = settings?.current_season || seasons[0]?.value || "s1";
   // 默认跟当前轮次；没有轮次时用 QUA，而不是「全部阶段」
-  const defaultCategory = STAGE_TO_CATEGORY[settings?.current_season_stage ?? ""] ?? DEFAULT_CATEGORY;
+  const defaultCategory =
+    STAGE_TO_CATEGORY[settings?.current_season_stage ?? ""] ?? DEFAULT_CATEGORY;
 
   const [season, setSeason] = useState(defaultSeason);
   const [category, setCategory] = useState(defaultCategory);
@@ -197,8 +198,15 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
     const q = query.trim().toLowerCase();
     if (!q) return maps;
     return maps.filter((m) =>
-      [m.title, m.artist, m.version, m.selectedMods, m.modPosition, String(m.beatmapId), m.category]
-        .some((v) => (v ?? "").toLowerCase().includes(q)),
+      [
+        m.title,
+        m.artist,
+        m.version,
+        m.selectedMods,
+        m.modPosition,
+        String(m.beatmapId),
+        m.category,
+      ].some((v) => (v ?? "").toLowerCase().includes(q)),
     );
   }, [maps, query]);
 
@@ -265,13 +273,14 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
               <SelectValue placeholder="赛季" />
             </SelectTrigger>
             <SelectContent>
-              {(seasons.length > 0 ? seasons : [{ value: season || "s1", label: season || "s1" }]).map(
-                (s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ),
-              )}
+              {(seasons.length > 0
+                ? seasons
+                : [{ value: season || "s1", label: season || "s1" }]
+              ).map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -316,9 +325,7 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
             ) : error ? (
               <p className="py-10 text-center text-sm text-destructive">{error}</p>
             ) : groups.length === 0 ? (
-              <p className="py-10 text-center text-sm text-(--pc-faint)">
-                这个阶段还没有公开的图
-              </p>
+              <p className="py-10 text-center text-sm text-(--pc-faint)">这个阶段还没有公开的图</p>
             ) : (
               groups.map((group) => (
                 <div key={group.mod} className="mb-3 last:mb-0">
@@ -399,7 +406,9 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
                       {CATEGORY_LABEL[selected.category] ?? selected.category}
                     </Badge>
                   )}
-                  {selected.customModName && <Badge variant="yellow">{selected.customModName}</Badge>}
+                  {selected.customModName && (
+                    <Badge variant="yellow">{selected.customModName}</Badge>
+                  )}
                   {selected.customDTRate != null && (
                     <Badge variant="yellow">DT×{Number(selected.customDTRate)}</Badge>
                   )}
@@ -414,8 +423,8 @@ export default function MappoolPicker({ open, onOpenChange, room }: MappoolPicke
                   <ModPicker value={allowedMods} onChange={setAllowedMods} />
                 </div>
                 <p className="text-[10px] leading-relaxed text-(--pc-faint)">
-                  点选 mod；带参数的 mod 选中后可在下方调整参数。加入图池时 HD
-                  图会附带 Deflate、其他图附带 Approach Different。
+                  点选 mod；带参数的 mod 选中后可在下方调整参数。加入图池时 HD 图会附带
+                  Deflate、其他图附带 Approach Different。
                 </p>
                 <Button variant="ghost" size="sm" onClick={() => selectMap(selected)}>
                   <RotateCcw className="h-3.5 w-3.5" /> 恢复图池配置

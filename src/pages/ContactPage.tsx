@@ -39,29 +39,29 @@ export default function ContactPage() {
               >
                 <Card className="flex flex-col p-6 cursor-pointer">
                   <div className="flex items-center gap-4">
-                  {avatar ? (
-                    <img
-                      src={avatar}
-                      alt={member.name}
-                      loading="lazy"
-                      className="h-16 w-16 rounded-full border-2 border-(--pc-border) object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-(--pc-border) bg-(--pc-paper) font-bold text-xl text-(--pc-faint)">
-                      {member.name.slice(0, 1).toUpperCase()}
+                    {avatar ? (
+                      <img
+                        src={avatar}
+                        alt={member.name}
+                        loading="lazy"
+                        className="h-16 w-16 rounded-full border-2 border-(--pc-border) object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-(--pc-border) bg-(--pc-paper) font-bold text-xl text-(--pc-faint)">
+                        {member.name.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-bold text-lg text-(--pc-ink)">{member.name}</h3>
+                      <Badge
+                        className={darkText ? "text-(--pc-ink)" : "text-pc-cream"}
+                        style={{ backgroundColor: color, borderColor: color }}
+                      >
+                        {member.role}
+                      </Badge>
                     </div>
-                  )}
-                  <div>
-                    <h3 className="font-bold text-lg text-(--pc-ink)">{member.name}</h3>
-                    <Badge
-                      className={darkText ? "text-(--pc-ink)" : "text-pc-cream"}
-                      style={{ backgroundColor: color, borderColor: color }}
-                    >
-                      {member.role}
-                    </Badge>
                   </div>
-                </div>
-                <p className="mt-4 text-sm text-(--pc-slate)">{member.description}</p>
+                  <p className="mt-4 text-sm text-(--pc-slate)">{member.description}</p>
                 </Card>
               </a>
             );

@@ -39,9 +39,7 @@ const statusMeta: Record<string, { label: string; variant: BadgeProps["variant"]
 
 function statusBadge(status: RefUserStatus) {
   const meta = status ? statusMeta[status] : null;
-  return (
-    <Badge variant={meta?.variant ?? "outline"}>{meta?.label ?? status ?? "—"}</Badge>
-  );
+  return <Badge variant={meta?.variant ?? "outline"}>{meta?.label ?? status ?? "—"}</Badge>;
 }
 
 function teamBarClass(team: RefUser["team"]) {
@@ -84,8 +82,7 @@ export default function PlayersPanel({ room, matchup }: PlayersPanelProps) {
     : [];
   const pendingTargets = matchupTargets.filter((t) => {
     const uid = Number(t.id);
-    const inRoom =
-      Number.isFinite(uid) && (room.players[uid] != null || room.refs[uid] != null);
+    const inRoom = Number.isFinite(uid) && (room.players[uid] != null || room.refs[uid] != null);
     return !inRoom;
   });
 

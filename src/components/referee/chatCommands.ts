@@ -37,10 +37,7 @@ function fail(text: string) {
   toast({ variant: "destructive", title: "命令执行失败", description: text });
 }
 
-export async function runChatInput(
-  raw: string,
-  ctx: ChatCommandContext,
-): Promise<boolean> {
+export async function runChatInput(raw: string, ctx: ChatCommandContext): Promise<boolean> {
   const { room, system: onSystem, closeRoom: onRoomClosed, timer } = ctx;
   const trimmed = raw.trim();
   if (!trimmed) return false;
@@ -199,7 +196,9 @@ export async function runChatInput(
     }
     case "mods": {
       if (args.length === 0) {
-        onSystem("用法：!mp mods <NM|FM|缩写...>，例如 !mp mods HD HR / !mp mods FM / !mp mods HD FM");
+        onSystem(
+          "用法：!mp mods <NM|FM|缩写...>，例如 !mp mods HD HR / !mp mods FM / !mp mods HD FM",
+        );
         return true;
       }
       const rulesetId = currentPlaylistItem(room)?.ruleset_id ?? 0;

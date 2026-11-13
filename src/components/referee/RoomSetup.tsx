@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DoorOpen, Loader2, PlusSquare } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import {
-  hub,
-  invokeHub,
-  slotCountError,
-  type RoomJoinedResponse,
-} from "@/lib/ref";
+import { hub, invokeHub, slotCountError, type RoomJoinedResponse } from "@/lib/ref";
 import { api } from "@/lib/api";
 import { stageLabelOf } from "@/lib/rooms";
 import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
@@ -100,12 +95,9 @@ export default function RoomSetup({ onRoomJoined, onSelectMatchup }: RoomSetupPr
         const list = res.data
           .filter((s) => s.status !== "cancelled")
           .sort((a, b) => {
-            const done =
-              Number(a.status === "completed") - Number(b.status === "completed");
+            const done = Number(a.status === "completed") - Number(b.status === "completed");
             if (done !== 0) return done;
-            return String(a.room?.matchDate ?? "").localeCompare(
-              String(b.room?.matchDate ?? ""),
-            );
+            return String(a.room?.matchDate ?? "").localeCompare(String(b.room?.matchDate ?? ""));
           });
         setSchedules(list);
       }
@@ -121,8 +113,7 @@ export default function RoomSetup({ onRoomJoined, onSelectMatchup }: RoomSetupPr
       seasonFilter === "all"
         ? schedules
         : schedules.filter(
-            (s) =>
-              (s.season ?? s.room?.season ?? "").toLowerCase() === seasonFilter.toLowerCase(),
+            (s) => (s.season ?? s.room?.season ?? "").toLowerCase() === seasonFilter.toLowerCase(),
           ),
     [schedules, seasonFilter],
   );
@@ -145,8 +136,7 @@ export default function RoomSetup({ onRoomJoined, onSelectMatchup }: RoomSetupPr
       map.set(key, g);
     }
     return Array.from(map.values()).sort(
-      (a, b) =>
-        a.season.localeCompare(b.season, undefined, { numeric: true }) || b.rank - a.rank,
+      (a, b) => a.season.localeCompare(b.season, undefined, { numeric: true }) || b.rank - a.rank,
     );
   }, [filteredSchedules, currentSeason, seasonFilter]);
 
@@ -166,7 +156,10 @@ export default function RoomSetup({ onRoomJoined, onSelectMatchup }: RoomSetupPr
     const beatmap = beatmapRaw === "" ? DEFAULT_BEATMAP_ID : Number(beatmapRaw);
     const name = roomName.trim();
     if (!Number.isFinite(ruleset) || ruleset < 0) {
-      toast({ variant: "destructive", title: "请输入有效的规则集 ID（0=osu! 1=taiko 2=catch 3=mania）" });
+      toast({
+        variant: "destructive",
+        title: "请输入有效的规则集 ID（0=osu! 1=taiko 2=catch 3=mania）",
+      });
       return;
     }
     if (!Number.isFinite(beatmap) || beatmap <= 0) {
@@ -199,17 +192,17 @@ export default function RoomSetup({ onRoomJoined, onSelectMatchup }: RoomSetupPr
       toast({ title: "房间已创建", description: res.data.name });
       onRoomJoined(res.data, true);
       // 新建房间默认改为团队赛（Team Versus）
-      void invokeHub(
-        hub.changeRoomSettings(res.data.room_id, { type: "team_versus" }),
-      ).then((r) => {
-        if (!r.ok) {
-          toast({
-            variant: "destructive",
-            title: "切换团队赛失败",
-            description: r.error.message,
-          });
-        }
-      });
+      void invokeHub(hub.changeRoomSettings(res.data.room_id, { type: "team_versus" })).then(
+        (r) => {
+          if (!r.ok) {
+            toast({
+              variant: "destructive",
+              title: "切换团队赛失败",
+              description: r.error.message,
+            });
+          }
+        },
+      );
     } else if (!res.ok) {
       toast({ variant: "destructive", title: "创建房间失败", description: res.error.message });
     }
@@ -379,7 +372,11 @@ export default function RoomSetup({ onRoomJoined, onSelectMatchup }: RoomSetupPr
           </div>
           <div>
             <Button variant="teal" onClick={joinRoom} disabled={joinBusy}>
-              {joinBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <DoorOpen className="h-4 w-4" />}
+              {joinBusy ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <DoorOpen className="h-4 w-4" />
+              )}
               加入房间
             </Button>
           </div>

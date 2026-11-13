@@ -27,18 +27,17 @@ export function parseFrontMatter(raw: string): MarkdownDoc {
     const idx = line.indexOf(":");
     if (idx === -1) continue;
     const key = line.slice(0, idx).trim();
-    const val = line.slice(idx + 1).trim().replace(/^["']|["']$/g, "");
+    const val = line
+      .slice(idx + 1)
+      .trim()
+      .replace(/^["']|["']$/g, "");
     data[key] = val;
   }
   return { data, content: raw.slice(match[0].length) };
 }
 
 const escapeHtml = (s: string): string =>
-  s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** 仅放行安全 scheme，阻断 javascript:/data: 等链接注入。 */
 function safeUrl(url: string): string {
@@ -154,21 +153,13 @@ export function renderMarkdown(src: string): string {
       i--;
       if (rows.length === 0) continue;
       let body = rows.slice(1);
-      const isSep = (r: string[]) =>
-        r.length > 0 && r.every((c) => /^:?-{1,}:?$/.test(c));
+      const isSep = (r: string[]) => r.length > 0 && r.every((c) => /^:?-{1,}:?$/.test(c));
       if (body.length > 0 && isSep(body[0])) body = body.slice(1);
       out.push("<table>");
-      out.push(
-        `<thead><tr>${rows[0]
-          .map((c) => `<th>${inline(c)}</th>`)
-          .join("")}</tr></thead>`,
-      );
+      out.push(`<thead><tr>${rows[0].map((c) => `<th>${inline(c)}</th>`).join("")}</tr></thead>`);
       out.push(
         `<tbody>${body
-          .map(
-            (r) =>
-              `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`,
-          )
+          .map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`)
           .join("")}</tbody>`,
       );
       out.push("</table>");

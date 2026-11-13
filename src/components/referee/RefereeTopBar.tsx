@@ -85,7 +85,11 @@ export default function RefereeTopBar({
       await navigator.clipboard.writeText(roomLink(room.id));
       toast({ title: "房间链接已复制", description: roomLink(room.id) });
     } catch {
-      toast({ variant: "destructive", title: "复制失败", description: "请手动复制：" + roomLink(room.id) });
+      toast({
+        variant: "destructive",
+        title: "复制失败",
+        description: "请手动复制：" + roomLink(room.id),
+      });
     }
   };
 
@@ -173,7 +177,10 @@ export default function RefereeTopBar({
         </Button>
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <Popover open={settingsOpen} onOpenChange={(o) => (o ? openSettings() : setSettingsOpen(false))}>
+          <Popover
+            open={settingsOpen}
+            onOpenChange={(o) => (o ? openSettings() : setSettingsOpen(false))}
+          >
             <PopoverTrigger asChild>
               <Button variant="secondary" size="sm">
                 <Settings className="h-3.5 w-3.5" /> 房间设置

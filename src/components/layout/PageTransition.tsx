@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useOutlet } from "react-router-dom";
 import { gsap } from "gsap";
 import Logo from "@/components/layout/Logo";
@@ -139,7 +139,7 @@ async function loadImageWithProgress(
     }
     // MIME 必须保留：SVG 等类型在 <img> 中渲染要求 blob 带正确类型，缺失会解码失败只剩 alt 文本
     const type = res.headers.get("content-type")?.split(";")[0].trim() || mimeFromUrl(url);
-    const blobUrl = URL.createObjectURL(new Blob([merged], { type: type || undefined }));
+    const blobUrl = URL.createObjectURL(type ? new Blob([merged], { type }) : new Blob([merged]));
     // 进入内存缓存并常驻（SPA 生命周期内复用：切换页面回来免重复下载）
     imageCache.set(url, blobUrl);
     if (img.isConnected) {
@@ -243,6 +243,9 @@ type Displayed = {
 export default function PageTransition() {
   const outlet = useOutlet();
   const { pathname } = useLocation();
+  // 转场时间轴里用 ref 取最新 outlet，避免把 outlet 放进依赖导致每次路由都重放动画
+  const outletRef = useRef(outlet);
+  outletRef.current = outlet;
 
   const [stage, setStage] = useState<Stage>("idle");
   const [displayed, setDisplayed] = useState<Displayed>({
@@ -375,7 +378,7 @@ export default function PageTransition() {
     // 最上层最深遮挡屏幕的瞬间：此刻才切换页面内容（其他层不参与遮挡判断）
     tl.call(
       () => {
-        setDisplayed((d) => ({ ...d, node: outlet }));
+        setDisplayed((d) => ({ ...d, node: outletRef.current }));
         setSwapId((n) => n + 1);
         // 首屏 loading 在幕布完全遮挡时移除，随揭幕一起消失
         setBooting(false);
@@ -408,7 +411,7 @@ export default function PageTransition() {
 
   return (
     <>
-      {displayed.node}
+      <Suspense fallback={null}>{displayed.node}</Suspense>
       {booting && (
         <div className="boot-loading paper-texture">
           <div className="boot-loading__panel">
@@ -421,32 +424,17 @@ export default function PageTransition() {
               aria-valuemax={100}
               aria-valuenow={Math.round(bootProgress)}
             >
-              <div
-                className="boot-loading__bar"
-                style={{ width: `${bootProgress}%` }}
-              />
+              <div className="boot-loading__bar" style={{ width: `${bootProgress}%` }} />
             </div>
           </div>
         </div>
       )}
       {stage !== "idle" && (
         <div className="page-transition" aria-hidden="true">
-          <div
-            ref={shadowRef}
-            className="page-transition-layer page-transition-layer--shadow"
-          />
-          <div
-            ref={tealRef}
-            className="page-transition-layer page-transition-layer--teal"
-          />
-          <div
-            ref={yellowRef}
-            className="page-transition-layer page-transition-layer--yellow"
-          />
-          <div
-            ref={curtainRef}
-            className="page-transition-layer page-transition-layer--primary"
-          />
+          <div ref={shadowRef} className="page-transition-layer page-transition-layer--shadow" />
+          <div ref={tealRef} className="page-transition-layer page-transition-layer--teal" />
+          <div ref={yellowRef} className="page-transition-layer page-transition-layer--yellow" />
+          <div ref={curtainRef} className="page-transition-layer page-transition-layer--primary" />
           <div
             ref={backgroundRef}
             className="page-transition-layer page-transition-layer--background paper-texture"

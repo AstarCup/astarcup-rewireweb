@@ -30,8 +30,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
       classNames={{
         caption_label: "font-bold text-(--pc-ink)",
         weekday: "text-(--pc-faint)",
-        day_button:
-          "rounded-lg text-(--pc-ink) hover:bg-pc-blue/10 hover:text-(--pc-ink) p-3",
+        day_button: "rounded-lg text-(--pc-ink) hover:bg-pc-blue/10 hover:text-(--pc-ink) p-3",
         day_selected: "bg-pc-primary text-pc-cream hover:bg-pc-primary hover:text-pc-cream",
         ...classNames,
       }}

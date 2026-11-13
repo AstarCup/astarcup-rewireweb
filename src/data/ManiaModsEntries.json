@@ -1,667 +1,661 @@
 [
-    {
-        "Acronym": "EZ",
-        "Name": "Easy",
-        "Description": "More forgiving HP drain, less accuracy required, and extra lives!",
-        "Type": "DifficultyReduction",
-        "Settings": [
-            {
-                "Name": "retries",
-                "Type": "number",
-                "Label": "Extra Lives",
-                "Description": "Number of extra lives",
-                "UnderlyingValue": 2,
-                "Default": 2,
-                "IsInteger": true,
-                "DefaultPrecision": 1,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "NF",
-        "Name": "No Fail",
-        "Description": "You can't fail, no matter what.",
-        "Type": "DifficultyReduction",
-        "Settings": []
-    },
-    {
-        "Acronym": "HT",
-        "Name": "Half Time",
-        "Description": "Less zoom...",
-        "Type": "DifficultyReduction",
-        "Settings": [
-            {
-                "Name": "speed_change",
-                "Type": "number",
-                "Label": "Speed decrease",
-                "Description": "The actual decrease to apply",
-                "UnderlyingValue": 0.75,
-                "Default": 0.75,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "adjust_pitch",
-                "Type": "boolean",
-                "Label": "Adjust pitch",
-                "Description": "Should pitch be adjusted with speed",
-                "UnderlyingValue": false,
-                "Default": false,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "DC",
-        "Name": "Daycore",
-        "Description": "Whoaaaaa...",
-        "Type": "DifficultyReduction",
-        "Settings": [
-            {
-                "Name": "speed_change",
-                "Type": "number",
-                "Label": "Speed decrease",
-                "Description": "The actual decrease to apply",
-                "UnderlyingValue": 0.75,
-                "Default": 0.75,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "NR",
-        "Name": "No Release",
-        "Description": "No more timing the end of hold notes.",
-        "Type": "DifficultyReduction",
-        "Settings": []
-    },
-    {
-        "Acronym": "HR",
-        "Name": "Hard Rock",
-        "Description": "Everything just got a bit harder...",
-        "Type": "DifficultyIncrease",
-        "Settings": []
-    },
-    {
-        "Acronym": "SD",
-        "Name": "Sudden Death",
-        "Description": "Miss and fail.",
-        "Type": "DifficultyIncrease",
-        "Settings": [
-            {
-                "Name": "restart",
-                "Type": "boolean",
-                "Label": "Restart on fail",
-                "Description": "Automatically restarts when failed.",
-                "UnderlyingValue": false,
-                "Default": false,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "PF",
-        "Name": "Perfect",
-        "Description": "SS or quit.",
-        "Type": "DifficultyIncrease",
-        "Settings": [
-            {
-                "Name": "require_perfect_hits",
-                "Type": "boolean",
-                "Label": "Require perfect hits",
-                "Description": "",
-                "UnderlyingValue": false,
-                "Default": false,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            },
-            {
-                "Name": "restart",
-                "Type": "boolean",
-                "Label": "Restart on fail",
-                "Description": "Automatically restarts when failed.",
-                "UnderlyingValue": true,
-                "Default": true,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "DT",
-        "Name": "Double Time",
-        "Description": "Zoooooooooom...",
-        "Type": "DifficultyIncrease",
-        "Settings": [
-            {
-                "Name": "speed_change",
-                "Type": "number",
-                "Label": "Speed increase",
-                "Description": "The actual increase to apply",
-                "UnderlyingValue": 1.5,
-                "Default": 1.5,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "adjust_pitch",
-                "Type": "boolean",
-                "Label": "Adjust pitch",
-                "Description": "Should pitch be adjusted with speed",
-                "UnderlyingValue": false,
-                "Default": false,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "NC",
-        "Name": "Nightcore",
-        "Description": "Uguuuuuuuu...",
-        "Type": "DifficultyIncrease",
-        "Settings": [
-            {
-                "Name": "speed_change",
-                "Type": "number",
-                "Label": "Speed increase",
-                "Description": "The actual increase to apply",
-                "UnderlyingValue": 1.5,
-                "Default": 1.5,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "FI",
-        "Name": "Fade In",
-        "Description": "Keys appear out of nowhere!",
-        "Type": "DifficultyIncrease",
-        "Settings": []
-    },
-    {
-        "Acronym": "HD",
-        "Name": "Hidden",
-        "Description": "Keys fade out before you hit them!",
-        "Type": "DifficultyIncrease",
-        "Settings": []
-    },
-    {
-        "Acronym": "CO",
-        "Name": "Cover",
-        "Description": "Decrease the playfield's viewing area.",
-        "Type": "DifficultyIncrease",
-        "Settings": [
-            {
-                "Name": "coverage",
-                "Type": "number",
-                "Label": "Coverage",
-                "Description": "The proportion of playfield height that notes will be hidden for.",
-                "UnderlyingValue": 0.5,
-                "Default": 0.5,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "direction",
-                "Type": "enum",
-                "Label": "Direction",
-                "Description": "The direction on which the cover is applied",
-                "UnderlyingValue": "AlongScroll",
-                "Default": "AlongScroll",
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": [
-                    "AlongScroll",
-                    "AgainstScroll"
-                ]
-            }
-        ]
-    },
-    {
-        "Acronym": "FL",
-        "Name": "Flashlight",
-        "Description": "Restricted view area.",
-        "Type": "DifficultyIncrease",
-        "Settings": [
-            {
-                "Name": "size_multiplier",
-                "Type": "number",
-                "Label": "Flashlight size",
-                "Description": "Multiplier applied to the default flashlight size.",
-                "UnderlyingValue": 1.0,
-                "Default": 1.0,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "combo_based_size",
-                "Type": "boolean",
-                "Label": "Change size based on combo",
-                "Description": "Decrease the flashlight size as combo increases.",
-                "UnderlyingValue": false,
-                "Default": false,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "AC",
-        "Name": "Accuracy Challenge",
-        "Description": "Fail if your accuracy drops too low!",
-        "Type": "DifficultyIncrease",
-        "Settings": [
-            {
-                "Name": "minimum_accuracy",
-                "Type": "number",
-                "Label": "Minimum accuracy",
-                "Description": "Trigger a failure if your accuracy goes below this value.",
-                "UnderlyingValue": 0.9,
-                "Default": 0.9,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "accuracy_judge_mode",
-                "Type": "enum",
-                "Label": "Accuracy mode",
-                "Description": "The mode of accuracy that will trigger failure.",
-                "UnderlyingValue": "MaximumAchievable",
-                "Default": "MaximumAchievable",
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": [
-                    "MaximumAchievable",
-                    "Standard"
-                ]
-            },
-            {
-                "Name": "restart",
-                "Type": "boolean",
-                "Label": "Restart on fail",
-                "Description": "Automatically restarts when failed.",
-                "UnderlyingValue": false,
-                "Default": false,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "RD",
-        "Name": "Random",
-        "Description": "Shuffle around the keys!",
-        "Type": "Conversion",
-        "Settings": [
-            {
-                "Name": "seed",
-                "Type": "number",
-                "Label": "Seed",
-                "Description": "Use a custom seed instead of a random one",
-                "UnderlyingValue": null,
-                "Default": null,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "DS",
-        "Name": "Dual Stages",
-        "Description": "Double the stages, double the fun!",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "MR",
-        "Name": "Mirror",
-        "Description": "Notes are flipped horizontally.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "DA",
-        "Name": "Difficulty Adjust",
-        "Description": "Override a beatmap's difficulty settings.",
-        "Type": "Conversion",
-        "Settings": [
-            {
-                "Name": "overall_difficulty",
-                "Type": "number",
-                "Label": "Accuracy",
-                "Description": "Override a beatmap's set OD.",
-                "UnderlyingValue": null,
-                "Default": null,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            },
-            {
-                "Name": "drain_rate",
-                "Type": "number",
-                "Label": "HP Drain",
-                "Description": "Override a beatmap's set HP.",
-                "UnderlyingValue": null,
-                "Default": null,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            },
-            {
-                "Name": "extended_limits",
-                "Type": "boolean",
-                "Label": "Extended Limits",
-                "Description": "Adjust difficulty beyond sane limits.",
-                "UnderlyingValue": false,
-                "Default": false,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "CL",
-        "Name": "Classic",
-        "Description": "Feeling nostalgic?",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "IN",
-        "Name": "Invert",
-        "Description": "Hold the keys. To the beat.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "CS",
-        "Name": "Constant Speed",
-        "Description": "No more tricky speed changes!",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "HO",
-        "Name": "Hold Off",
-        "Description": "Replaces all hold notes with normal notes.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "1K",
-        "Name": "One Key",
-        "Description": "Play with one key.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "2K",
-        "Name": "Two Keys",
-        "Description": "Play with two keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "3K",
-        "Name": "Three Keys",
-        "Description": "Play with three keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "4K",
-        "Name": "Four Keys",
-        "Description": "Play with four keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "5K",
-        "Name": "Five Keys",
-        "Description": "Play with five keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "6K",
-        "Name": "Six Keys",
-        "Description": "Play with six keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "7K",
-        "Name": "Seven Keys",
-        "Description": "Play with seven keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "8K",
-        "Name": "Eight Keys",
-        "Description": "Play with eight keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "9K",
-        "Name": "Nine Keys",
-        "Description": "Play with nine keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "10K",
-        "Name": "Ten Keys",
-        "Description": "Play with ten keys.",
-        "Type": "Conversion",
-        "Settings": []
-    },
-    {
-        "Acronym": "AT",
-        "Name": "Autoplay",
-        "Description": "Watch a perfect automated play through the song.",
-        "Type": "Automation",
-        "Settings": []
-    },
-    {
-        "Acronym": "CN",
-        "Name": "Cinema",
-        "Description": "Watch the video without visual distractions.",
-        "Type": "Automation",
-        "Settings": []
-    },
-    {
-        "Acronym": "WU",
-        "Name": "Wind Up",
-        "Description": "Can you keep up?",
-        "Type": "Fun",
-        "Settings": [
-            {
-                "Name": "initial_rate",
-                "Type": "number",
-                "Label": "Initial rate",
-                "Description": "The starting speed of the track",
-                "UnderlyingValue": 1.0,
-                "Default": 1.0,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "final_rate",
-                "Type": "number",
-                "Label": "Final rate",
-                "Description": "The final speed to ramp to",
-                "UnderlyingValue": 1.5,
-                "Default": 1.5,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "adjust_pitch",
-                "Type": "boolean",
-                "Label": "Adjust pitch",
-                "Description": "Should pitch be adjusted with speed",
-                "UnderlyingValue": true,
-                "Default": true,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "WD",
-        "Name": "Wind Down",
-        "Description": "Sloooow doooown...",
-        "Type": "Fun",
-        "Settings": [
-            {
-                "Name": "initial_rate",
-                "Type": "number",
-                "Label": "Initial rate",
-                "Description": "The starting speed of the track",
-                "UnderlyingValue": 1.0,
-                "Default": 1.0,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "final_rate",
-                "Type": "number",
-                "Label": "Final rate",
-                "Description": "The final speed to ramp to",
-                "UnderlyingValue": 0.75,
-                "Default": 0.75,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "adjust_pitch",
-                "Type": "boolean",
-                "Label": "Adjust pitch",
-                "Description": "Should pitch be adjusted with speed",
-                "UnderlyingValue": true,
-                "Default": true,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "MU",
-        "Name": "Muted",
-        "Description": "Can you still feel the rhythm without music?",
-        "Type": "Fun",
-        "Settings": [
-            {
-                "Name": "inverse_muting",
-                "Type": "boolean",
-                "Label": "Start muted",
-                "Description": "Increase volume as combo builds.",
-                "UnderlyingValue": false,
-                "Default": false,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            },
-            {
-                "Name": "enable_metronome",
-                "Type": "boolean",
-                "Label": "Enable metronome",
-                "Description": "Add a metronome beat to help you keep track of the rhythm.",
-                "UnderlyingValue": true,
-                "Default": true,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            },
-            {
-                "Name": "mute_combo_count",
-                "Type": "number",
-                "Label": "Final volume at combo",
-                "Description": "The combo count at which point the track reaches its final volume.",
-                "UnderlyingValue": 100,
-                "Default": 100,
-                "IsInteger": true,
-                "DefaultPrecision": 1,
-                "EnumValues": null
-            },
-            {
-                "Name": "affects_hit_sounds",
-                "Type": "boolean",
-                "Label": "Mute hit sounds",
-                "Description": "Hit sounds are also muted alongside the track.",
-                "UnderlyingValue": true,
-                "Default": true,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "AS",
-        "Name": "Adaptive Speed",
-        "Description": "Let track speed adapt to you.",
-        "Type": "Fun",
-        "Settings": [
-            {
-                "Name": "initial_rate",
-                "Type": "number",
-                "Label": "Initial rate",
-                "Description": "The starting speed of the track",
-                "UnderlyingValue": 1.0,
-                "Default": 1.0,
-                "IsInteger": false,
-                "DefaultPrecision": 0.0,
-                "EnumValues": null
-            },
-            {
-                "Name": "adjust_pitch",
-                "Type": "boolean",
-                "Label": "Adjust pitch",
-                "Description": "Should pitch be adjusted with speed",
-                "UnderlyingValue": true,
-                "Default": true,
-                "IsInteger": null,
-                "DefaultPrecision": null,
-                "EnumValues": null
-            }
-        ]
-    },
-    {
-        "Acronym": "SV2",
-        "Name": "Score V2",
-        "Description": "Score set on earlier osu! versions with the V2 scoring algorithm active.",
-        "Type": "System",
-        "Settings": []
-    }
+  {
+    "Acronym": "EZ",
+    "Name": "Easy",
+    "Description": "More forgiving HP drain, less accuracy required, and extra lives!",
+    "Type": "DifficultyReduction",
+    "Settings": [
+      {
+        "Name": "retries",
+        "Type": "number",
+        "Label": "Extra Lives",
+        "Description": "Number of extra lives",
+        "UnderlyingValue": 2,
+        "Default": 2,
+        "IsInteger": true,
+        "DefaultPrecision": 1,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "NF",
+    "Name": "No Fail",
+    "Description": "You can't fail, no matter what.",
+    "Type": "DifficultyReduction",
+    "Settings": []
+  },
+  {
+    "Acronym": "HT",
+    "Name": "Half Time",
+    "Description": "Less zoom...",
+    "Type": "DifficultyReduction",
+    "Settings": [
+      {
+        "Name": "speed_change",
+        "Type": "number",
+        "Label": "Speed decrease",
+        "Description": "The actual decrease to apply",
+        "UnderlyingValue": 0.75,
+        "Default": 0.75,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "adjust_pitch",
+        "Type": "boolean",
+        "Label": "Adjust pitch",
+        "Description": "Should pitch be adjusted with speed",
+        "UnderlyingValue": false,
+        "Default": false,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "DC",
+    "Name": "Daycore",
+    "Description": "Whoaaaaa...",
+    "Type": "DifficultyReduction",
+    "Settings": [
+      {
+        "Name": "speed_change",
+        "Type": "number",
+        "Label": "Speed decrease",
+        "Description": "The actual decrease to apply",
+        "UnderlyingValue": 0.75,
+        "Default": 0.75,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "NR",
+    "Name": "No Release",
+    "Description": "No more timing the end of hold notes.",
+    "Type": "DifficultyReduction",
+    "Settings": []
+  },
+  {
+    "Acronym": "HR",
+    "Name": "Hard Rock",
+    "Description": "Everything just got a bit harder...",
+    "Type": "DifficultyIncrease",
+    "Settings": []
+  },
+  {
+    "Acronym": "SD",
+    "Name": "Sudden Death",
+    "Description": "Miss and fail.",
+    "Type": "DifficultyIncrease",
+    "Settings": [
+      {
+        "Name": "restart",
+        "Type": "boolean",
+        "Label": "Restart on fail",
+        "Description": "Automatically restarts when failed.",
+        "UnderlyingValue": false,
+        "Default": false,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "PF",
+    "Name": "Perfect",
+    "Description": "SS or quit.",
+    "Type": "DifficultyIncrease",
+    "Settings": [
+      {
+        "Name": "require_perfect_hits",
+        "Type": "boolean",
+        "Label": "Require perfect hits",
+        "Description": "",
+        "UnderlyingValue": false,
+        "Default": false,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      },
+      {
+        "Name": "restart",
+        "Type": "boolean",
+        "Label": "Restart on fail",
+        "Description": "Automatically restarts when failed.",
+        "UnderlyingValue": true,
+        "Default": true,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "DT",
+    "Name": "Double Time",
+    "Description": "Zoooooooooom...",
+    "Type": "DifficultyIncrease",
+    "Settings": [
+      {
+        "Name": "speed_change",
+        "Type": "number",
+        "Label": "Speed increase",
+        "Description": "The actual increase to apply",
+        "UnderlyingValue": 1.5,
+        "Default": 1.5,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "adjust_pitch",
+        "Type": "boolean",
+        "Label": "Adjust pitch",
+        "Description": "Should pitch be adjusted with speed",
+        "UnderlyingValue": false,
+        "Default": false,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "NC",
+    "Name": "Nightcore",
+    "Description": "Uguuuuuuuu...",
+    "Type": "DifficultyIncrease",
+    "Settings": [
+      {
+        "Name": "speed_change",
+        "Type": "number",
+        "Label": "Speed increase",
+        "Description": "The actual increase to apply",
+        "UnderlyingValue": 1.5,
+        "Default": 1.5,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "FI",
+    "Name": "Fade In",
+    "Description": "Keys appear out of nowhere!",
+    "Type": "DifficultyIncrease",
+    "Settings": []
+  },
+  {
+    "Acronym": "HD",
+    "Name": "Hidden",
+    "Description": "Keys fade out before you hit them!",
+    "Type": "DifficultyIncrease",
+    "Settings": []
+  },
+  {
+    "Acronym": "CO",
+    "Name": "Cover",
+    "Description": "Decrease the playfield's viewing area.",
+    "Type": "DifficultyIncrease",
+    "Settings": [
+      {
+        "Name": "coverage",
+        "Type": "number",
+        "Label": "Coverage",
+        "Description": "The proportion of playfield height that notes will be hidden for.",
+        "UnderlyingValue": 0.5,
+        "Default": 0.5,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "direction",
+        "Type": "enum",
+        "Label": "Direction",
+        "Description": "The direction on which the cover is applied",
+        "UnderlyingValue": "AlongScroll",
+        "Default": "AlongScroll",
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": ["AlongScroll", "AgainstScroll"]
+      }
+    ]
+  },
+  {
+    "Acronym": "FL",
+    "Name": "Flashlight",
+    "Description": "Restricted view area.",
+    "Type": "DifficultyIncrease",
+    "Settings": [
+      {
+        "Name": "size_multiplier",
+        "Type": "number",
+        "Label": "Flashlight size",
+        "Description": "Multiplier applied to the default flashlight size.",
+        "UnderlyingValue": 1.0,
+        "Default": 1.0,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "combo_based_size",
+        "Type": "boolean",
+        "Label": "Change size based on combo",
+        "Description": "Decrease the flashlight size as combo increases.",
+        "UnderlyingValue": false,
+        "Default": false,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "AC",
+    "Name": "Accuracy Challenge",
+    "Description": "Fail if your accuracy drops too low!",
+    "Type": "DifficultyIncrease",
+    "Settings": [
+      {
+        "Name": "minimum_accuracy",
+        "Type": "number",
+        "Label": "Minimum accuracy",
+        "Description": "Trigger a failure if your accuracy goes below this value.",
+        "UnderlyingValue": 0.9,
+        "Default": 0.9,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "accuracy_judge_mode",
+        "Type": "enum",
+        "Label": "Accuracy mode",
+        "Description": "The mode of accuracy that will trigger failure.",
+        "UnderlyingValue": "MaximumAchievable",
+        "Default": "MaximumAchievable",
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": ["MaximumAchievable", "Standard"]
+      },
+      {
+        "Name": "restart",
+        "Type": "boolean",
+        "Label": "Restart on fail",
+        "Description": "Automatically restarts when failed.",
+        "UnderlyingValue": false,
+        "Default": false,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "RD",
+    "Name": "Random",
+    "Description": "Shuffle around the keys!",
+    "Type": "Conversion",
+    "Settings": [
+      {
+        "Name": "seed",
+        "Type": "number",
+        "Label": "Seed",
+        "Description": "Use a custom seed instead of a random one",
+        "UnderlyingValue": null,
+        "Default": null,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "DS",
+    "Name": "Dual Stages",
+    "Description": "Double the stages, double the fun!",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "MR",
+    "Name": "Mirror",
+    "Description": "Notes are flipped horizontally.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "DA",
+    "Name": "Difficulty Adjust",
+    "Description": "Override a beatmap's difficulty settings.",
+    "Type": "Conversion",
+    "Settings": [
+      {
+        "Name": "overall_difficulty",
+        "Type": "number",
+        "Label": "Accuracy",
+        "Description": "Override a beatmap's set OD.",
+        "UnderlyingValue": null,
+        "Default": null,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      },
+      {
+        "Name": "drain_rate",
+        "Type": "number",
+        "Label": "HP Drain",
+        "Description": "Override a beatmap's set HP.",
+        "UnderlyingValue": null,
+        "Default": null,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      },
+      {
+        "Name": "extended_limits",
+        "Type": "boolean",
+        "Label": "Extended Limits",
+        "Description": "Adjust difficulty beyond sane limits.",
+        "UnderlyingValue": false,
+        "Default": false,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "CL",
+    "Name": "Classic",
+    "Description": "Feeling nostalgic?",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "IN",
+    "Name": "Invert",
+    "Description": "Hold the keys. To the beat.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "CS",
+    "Name": "Constant Speed",
+    "Description": "No more tricky speed changes!",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "HO",
+    "Name": "Hold Off",
+    "Description": "Replaces all hold notes with normal notes.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "1K",
+    "Name": "One Key",
+    "Description": "Play with one key.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "2K",
+    "Name": "Two Keys",
+    "Description": "Play with two keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "3K",
+    "Name": "Three Keys",
+    "Description": "Play with three keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "4K",
+    "Name": "Four Keys",
+    "Description": "Play with four keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "5K",
+    "Name": "Five Keys",
+    "Description": "Play with five keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "6K",
+    "Name": "Six Keys",
+    "Description": "Play with six keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "7K",
+    "Name": "Seven Keys",
+    "Description": "Play with seven keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "8K",
+    "Name": "Eight Keys",
+    "Description": "Play with eight keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "9K",
+    "Name": "Nine Keys",
+    "Description": "Play with nine keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "10K",
+    "Name": "Ten Keys",
+    "Description": "Play with ten keys.",
+    "Type": "Conversion",
+    "Settings": []
+  },
+  {
+    "Acronym": "AT",
+    "Name": "Autoplay",
+    "Description": "Watch a perfect automated play through the song.",
+    "Type": "Automation",
+    "Settings": []
+  },
+  {
+    "Acronym": "CN",
+    "Name": "Cinema",
+    "Description": "Watch the video without visual distractions.",
+    "Type": "Automation",
+    "Settings": []
+  },
+  {
+    "Acronym": "WU",
+    "Name": "Wind Up",
+    "Description": "Can you keep up?",
+    "Type": "Fun",
+    "Settings": [
+      {
+        "Name": "initial_rate",
+        "Type": "number",
+        "Label": "Initial rate",
+        "Description": "The starting speed of the track",
+        "UnderlyingValue": 1.0,
+        "Default": 1.0,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "final_rate",
+        "Type": "number",
+        "Label": "Final rate",
+        "Description": "The final speed to ramp to",
+        "UnderlyingValue": 1.5,
+        "Default": 1.5,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "adjust_pitch",
+        "Type": "boolean",
+        "Label": "Adjust pitch",
+        "Description": "Should pitch be adjusted with speed",
+        "UnderlyingValue": true,
+        "Default": true,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "WD",
+    "Name": "Wind Down",
+    "Description": "Sloooow doooown...",
+    "Type": "Fun",
+    "Settings": [
+      {
+        "Name": "initial_rate",
+        "Type": "number",
+        "Label": "Initial rate",
+        "Description": "The starting speed of the track",
+        "UnderlyingValue": 1.0,
+        "Default": 1.0,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "final_rate",
+        "Type": "number",
+        "Label": "Final rate",
+        "Description": "The final speed to ramp to",
+        "UnderlyingValue": 0.75,
+        "Default": 0.75,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "adjust_pitch",
+        "Type": "boolean",
+        "Label": "Adjust pitch",
+        "Description": "Should pitch be adjusted with speed",
+        "UnderlyingValue": true,
+        "Default": true,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "MU",
+    "Name": "Muted",
+    "Description": "Can you still feel the rhythm without music?",
+    "Type": "Fun",
+    "Settings": [
+      {
+        "Name": "inverse_muting",
+        "Type": "boolean",
+        "Label": "Start muted",
+        "Description": "Increase volume as combo builds.",
+        "UnderlyingValue": false,
+        "Default": false,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      },
+      {
+        "Name": "enable_metronome",
+        "Type": "boolean",
+        "Label": "Enable metronome",
+        "Description": "Add a metronome beat to help you keep track of the rhythm.",
+        "UnderlyingValue": true,
+        "Default": true,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      },
+      {
+        "Name": "mute_combo_count",
+        "Type": "number",
+        "Label": "Final volume at combo",
+        "Description": "The combo count at which point the track reaches its final volume.",
+        "UnderlyingValue": 100,
+        "Default": 100,
+        "IsInteger": true,
+        "DefaultPrecision": 1,
+        "EnumValues": null
+      },
+      {
+        "Name": "affects_hit_sounds",
+        "Type": "boolean",
+        "Label": "Mute hit sounds",
+        "Description": "Hit sounds are also muted alongside the track.",
+        "UnderlyingValue": true,
+        "Default": true,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "AS",
+    "Name": "Adaptive Speed",
+    "Description": "Let track speed adapt to you.",
+    "Type": "Fun",
+    "Settings": [
+      {
+        "Name": "initial_rate",
+        "Type": "number",
+        "Label": "Initial rate",
+        "Description": "The starting speed of the track",
+        "UnderlyingValue": 1.0,
+        "Default": 1.0,
+        "IsInteger": false,
+        "DefaultPrecision": 0.0,
+        "EnumValues": null
+      },
+      {
+        "Name": "adjust_pitch",
+        "Type": "boolean",
+        "Label": "Adjust pitch",
+        "Description": "Should pitch be adjusted with speed",
+        "UnderlyingValue": true,
+        "Default": true,
+        "IsInteger": null,
+        "DefaultPrecision": null,
+        "EnumValues": null
+      }
+    ]
+  },
+  {
+    "Acronym": "SV2",
+    "Name": "Score V2",
+    "Description": "Score set on earlier osu! versions with the V2 scoring algorithm active.",
+    "Type": "System",
+    "Settings": []
+  }
 ]

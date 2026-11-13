@@ -29,6 +29,7 @@ TYPE: Handmade paper art interface
 - 禁止层叠纸片在 hover 时完全同向运动（会丢失手工剥离感）
 
 COLOR RULES:
+
 - Craft Red: #e85d75 (primary)
 - Paper White: #fdf6ee (background)
 - Paper Teal: #5cb8a5
@@ -37,6 +38,7 @@ COLOR RULES:
 - Text: #2d2d2d
 
 SPECIAL EFFECTS:
+
 - Multi-layer paper stacking with rotation offsets
 - Inset shadows for cut-out/embossed feel
 - Active press-down: active:translate-y-0.5
@@ -60,6 +62,7 @@ SPECIAL EFFECTS:
 Paper Craft（纸艺手作）的设计灵感来自剪纸艺术、折纸和手工拼贴。通过层叠的纸张效果、柔和的投影和不规则的手作边缘，创造出温暖、有触感的视觉体验。
 
 核心理念：
+
 - 纸张层叠：通过多层阴影和微妙的偏移创造出真实的纸张堆叠感
 - 手作质感：边缘略带不规则感，避免过于数字化的精确
 - 柔和色彩：使用纸张般温暖的底色搭配明快但不刺眼的彩色纸片
@@ -74,6 +77,7 @@ Paper Craft（纸艺手作）的设计灵感来自剪纸艺术、折纸和手工
 ## Token 字典（精确 Class 映射）
 
 ### 边框
+
 ```
 宽度: border-2
 颜色: border-[#e0d8cc]
@@ -81,6 +85,7 @@ Paper Craft（纸艺手作）的设计灵感来自剪纸艺术、折纸和手工
 ```
 
 ### 阴影
+
 ```
 小: shadow-[2px_2px_0px_rgba(0,0,0,0.06)]
 中: shadow-[4px_4px_0px_rgba(0,0,0,0.08)]
@@ -90,6 +95,7 @@ Paper Craft（纸艺手作）的设计灵感来自剪纸艺术、折纸和手工
 ```
 
 ### 交互效果
+
 ```
 悬停位移: （无）
 悬停缩放: hover:-translate-y-0.5
@@ -99,6 +105,7 @@ Paper Craft（纸艺手作）的设计灵感来自剪纸艺术、折纸和手工
 ```
 
 ### 字体
+
 ```
 标题: font-bold
 正文: font-sans
@@ -106,6 +113,7 @@ Paper Craft（纸艺手作）的设计灵感来自剪纸艺术、折纸和手工
 ```
 
 ### 字号
+
 ```
 Hero: text-4xl md:text-6xl lg:text-7xl
 H1: text-3xl md:text-5xl
@@ -116,6 +124,7 @@ H3: text-xl md:text-2xl
 ```
 
 ### 间距
+
 ```
 Section: py-12 md:py-20
 容器: px-4 md:px-8
@@ -126,6 +135,7 @@ Section: py-12 md:py-20
 ```
 
 ### 颜色角色
+
 ```
 背景主色: bg-[#fdf6ee]
 背景辅色: bg-white
@@ -144,6 +154,7 @@ Section: py-12 md:py-20
 以下 class 在本风格中**绝对禁止使用**，生成时必须检查并避免：
 
 ### 禁止的 Class
+
 - `bg-black`
 - `bg-gray-900`
 - `bg-gray-950`
@@ -154,12 +165,14 @@ Section: py-12 md:py-20
 - `bg-fuchsia-`
 
 ### 禁止的模式
+
 - 匹配 `^bg-(?:black|gray-[89])`
 - 匹配 `^shadow-\[0_0_.*rgba`
 - 匹配 `^text-(?:cyan|fuchsia)-`
 - 匹配 `^bg-(?:cyan|fuchsia)-`
 
 ### 禁止原因
+
 - `bg-black`: Paper Craft uses warm light backgrounds, never dark
 - `shadow-[0_0_`: Use offset paper shadows (shadow-[4px_4px_...]), not glows
 - `text-cyan-`: Use craft colors (#e85d75, #5cb8a5, #f5c040) not neon
@@ -171,6 +184,7 @@ Section: py-12 md:py-20
 ## [REQUIRED] 必须包含
 
 ### 按钮必须包含
+
 ```
 px-6 py-3
 font-bold
@@ -180,6 +194,7 @@ transition-all duration-200
 ```
 
 ### 卡片必须包含
+
 ```
 bg-white
 rounded-2xl
@@ -187,6 +202,7 @@ shadow-[4px_4px_0px_rgba(0,0,0,0.08)]
 ```
 
 ### 输入框必须包含
+
 ```
 bg-white
 border-2 border-[#e0d8cc]
@@ -205,15 +221,17 @@ focus:outline-none
 ### 按钮
 
 [WRONG] **错误示例**（通用组件库默认样式，不要直接复制）：
+
 ```html
-<button class="{GENERIC_LIBRARY_BUTTON_DEFAULT}">
-  点击我
-</button>
+<button class="{GENERIC_LIBRARY_BUTTON_DEFAULT}">点击我</button>
 ```
 
 [CORRECT] **正确示例**（使用当前风格的 token）：
+
 ```html
-<button class="px-6 py-3 font-bold rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 bg-[#e85d75] text-white">
+<button
+  class="px-6 py-3 font-bold rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 bg-[#e85d75] text-white"
+>
   点击我
 </button>
 ```
@@ -221,6 +239,7 @@ focus:outline-none
 ### 卡片
 
 [WRONG] **错误示例**（未经当前风格适配的通用卡片）：
+
 ```html
 <div class="{GENERIC_LIBRARY_CARD_DEFAULT}">
   <h3>{TITLE}</h3>
@@ -228,6 +247,7 @@ focus:outline-none
 ```
 
 [CORRECT] **正确示例**（使用当前风格的 card token）：
+
 ```html
 <div class="bg-white rounded-2xl shadow-[4px_4px_0px_rgba(0,0,0,0.08)] p-6">
   <h3 class="font-bold text-xl md:text-2xl">{TITLE}</h3>
@@ -237,13 +257,18 @@ focus:outline-none
 ### 输入框
 
 [WRONG] **错误示例**（未经当前风格适配的通用输入框）：
+
 ```html
 <input class="{GENERIC_LIBRARY_INPUT_DEFAULT}" />
 ```
 
 [CORRECT] **正确示例**（使用当前风格的 input token）：
+
 ```html
-<input class="bg-white border-2 border-[#e0d8cc] rounded-xl text-[#2d2d2d] focus:border-[#e85d75] focus:outline-none" placeholder="{PLACEHOLDER}" />
+<input
+  class="bg-white border-2 border-[#e0d8cc] rounded-xl text-[#2d2d2d] focus:border-[#e85d75] focus:outline-none"
+  placeholder="{PLACEHOLDER}"
+/>
 ```
 
 ---
@@ -253,30 +278,26 @@ focus:outline-none
 以下骨架只使用当前风格的 token。替换 `{PLACEHOLDER}` 时，不要移除或替换这些 token：
 
 ### 导航栏骨架
+
 ```html
 <nav class="bg-[#fdf6ee] text-[#2d2d2d] border-2 border-[#e0d8cc] px-4 md:px-8">
   <div class="flex items-center justify-between max-w-6xl mx-auto gap-6">
-    <a href="/" class="font-bold text-xl md:text-2xl">
-      {LOGO_TEXT}
-    </a>
-    <div class="flex gap-6 font-sans text-xs">
-      {NAV_LINKS}
-    </div>
+    <a href="/" class="font-bold text-xl md:text-2xl"> {LOGO_TEXT} </a>
+    <div class="flex gap-6 font-sans text-xs">{NAV_LINKS}</div>
   </div>
 </nav>
 ```
 
 ### Hero 区块骨架
+
 ```html
 <section class="bg-[#e85d75] text-[#2d2d2d] py-12 md:py-20 px-4 md:px-8">
   <div class="max-w-4xl mx-auto">
-    <h1 class="font-bold text-4xl md:text-6xl lg:text-7xl">
-      {HEADLINE}
-    </h1>
-    <p class="font-sans text-sm md:text-base max-w-xl">
-      {SUBHEADLINE}
-    </p>
-    <button class="px-6 py-3 font-bold rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 bg-[#e85d75] text-white">
+    <h1 class="font-bold text-4xl md:text-6xl lg:text-7xl">{HEADLINE}</h1>
+    <p class="font-sans text-sm md:text-base max-w-xl">{SUBHEADLINE}</p>
+    <button
+      class="px-6 py-3 font-bold rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200 bg-[#e85d75] text-white"
+    >
       {CTA_TEXT}
     </button>
   </div>
@@ -284,6 +305,7 @@ focus:outline-none
 ```
 
 ### 卡片网格骨架
+
 ```html
 <section class="bg-[#fdf6ee] text-[#2d2d2d] py-12 md:py-20 px-4 md:px-8">
   <div class="max-w-6xl mx-auto">
@@ -300,11 +322,16 @@ focus:outline-none
 ```
 
 ### 表单输入骨架
+
 ```html
-<input class="bg-white border-2 border-[#e0d8cc] rounded-xl text-[#2d2d2d] focus:border-[#e85d75] focus:outline-none" placeholder="{PLACEHOLDER}" />
+<input
+  class="bg-white border-2 border-[#e0d8cc] rounded-xl text-[#2d2d2d] focus:border-[#e85d75] focus:outline-none"
+  placeholder="{PLACEHOLDER}"
+/>
 ```
 
 ### 页脚骨架
+
 ```html
 <footer class="bg-white text-[#666666] py-12 md:py-20 px-4 md:px-8">
   <div class="max-w-6xl mx-auto">
@@ -331,11 +358,13 @@ focus:outline-none
 **输出代码前，逐项验证当前风格的 token 和规则。如有违反，先修正再交付：**
 
 ### Token 检查
+
 - [ ] 按钮包含： `px-6 py-3 font-bold rounded-xl shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-all duration-200`
 - [ ] 卡片包含： `bg-white rounded-2xl shadow-[4px_4px_0px_rgba(0,0,0,0.08)]`
 - [ ] 输入框包含： `bg-white border-2 border-[#e0d8cc] rounded-xl text-[#2d2d2d] focus:border-[#e85d75] focus:outline-none`
 
 ### 禁止项检查
+
 - [ ] 没有使用 `bg-black`
 - [ ] 没有使用 `bg-gray-900`
 - [ ] 没有使用 `bg-gray-950`
@@ -346,6 +375,7 @@ focus:outline-none
 - [ ] 没有使用 `bg-fuchsia-`
 
 ### 风格规则检查
+
 - [ ] 背景使用纸白色 bg-[#fdf6ee] 或柔和暖白
 - [ ] 卡片使用纸张阴影 shadow-[4px_4px_0px_rgba(0,0,0,0.08)] 模拟凸起效果
 - [ ] 按钮使用偏移阴影 shadow-[3px_3px_0px_rgba(0,0,0,0.1)] 模拟纸片凸起
@@ -353,6 +383,7 @@ focus:outline-none
 - [ ] 色块使用明快的纸艺色 bg-[#e85d75]、bg-[#5cb8a5]、bg-[#f5c040]
 
 ### 风格漂移检查
+
 - [ ] 没有违反：禁止使用深色/黑色背景
 - [ ] 没有违反：禁止使用发光效果或霓虹阴影
 - [ ] 没有违反：禁止使用金属质感或玻璃拟态
@@ -360,6 +391,7 @@ focus:outline-none
 - [ ] 没有违反：禁止使用高饱和度的荧光色
 
 ### 通用交付检查
+
 - [ ] 响应式布局在手机、平板和桌面下稳定，没有横向溢出
 - [ ] 所有交互元素有清晰焦点、可访问名称和 reduced-motion 方案
 - [ ] 文本对比度达到 WCAG AA，且没有用颜色单独传递状态

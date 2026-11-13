@@ -28,7 +28,10 @@ import type { MatchRoom, MatchSchedule, PlayerStub } from "@/lib/types";
 import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
 import SeasonSelect from "@/components/staff/SeasonSelect";
 
-const STATUS_META: Record<string, { label: string; variant: "primary" | "teal" | "yellow" | "blue" | "outline" }> = {
+const STATUS_META: Record<
+  string,
+  { label: string; variant: "primary" | "teal" | "yellow" | "blue" | "outline" }
+> = {
   pending: { label: "待确认", variant: "yellow" },
   confirmed: { label: "已确认", variant: "teal" },
   completed: { label: "已完成", variant: "blue" },
@@ -195,9 +198,7 @@ export default function MatchScheduleManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle className="mb-0">
-          赛程安排
-        </SectionTitle>
+        <SectionTitle className="mb-0">赛程安排</SectionTitle>
         <div className="flex items-center gap-2">
           <SeasonSelect
             value={activeSeason}

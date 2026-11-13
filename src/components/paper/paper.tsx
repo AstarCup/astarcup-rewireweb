@@ -14,10 +14,16 @@ export function PaperStack({
   return (
     <div className={cn("paper-stack", className)}>
       {layers >= 2 && (
-        <span aria-hidden className="paper-stack__under paper-stack__under--1 rounded-2xl bg-pc-yellow/70" />
+        <span
+          aria-hidden
+          className="paper-stack__under paper-stack__under--1 rounded-2xl bg-pc-yellow/70"
+        />
       )}
       {layers >= 3 && (
-        <span aria-hidden className="paper-stack__under paper-stack__under--2 rounded-2xl bg-pc-teal/70" />
+        <span
+          aria-hidden
+          className="paper-stack__under paper-stack__under--2 rounded-2xl bg-pc-teal/70"
+        />
       )}
       <div className="relative rounded-2xl bg-(--pc-white) shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
         {children}

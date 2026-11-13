@@ -15,11 +15,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  seasonOptions as buildSeasonOptions,
-  CATEGORY_OPTIONS,
-  MODS_ORDER,
-} from "@/lib/types";
+import { seasonOptions as buildSeasonOptions, CATEGORY_OPTIONS, MODS_ORDER } from "@/lib/types";
 import type { MapSelection } from "@/lib/types";
 import { MOD_COLORS, MOD_DISPLAY, modBase } from "@/lib/mods";
 import { cn, fmt } from "@/lib/utils";
@@ -243,9 +239,7 @@ export default function ReplayCollectionManagement() {
 
   return (
     <div>
-      <SectionTitle>
-        已上传回放
-      </SectionTitle>
+      <SectionTitle>已上传回放</SectionTitle>
 
       {/* Filters + actions */}
       <div className="flex flex-wrap items-center gap-3">
@@ -302,18 +296,14 @@ export default function ReplayCollectionManagement() {
         </div>
       </div>
 
-      <p className="mt-3 text-xs text-(--pc-faint)">
-        共 {maps.length} 张测图中选图
-      </p>
+      <p className="mt-3 text-xs text-(--pc-faint)">共 {maps.length} 张测图中选图</p>
 
       {loading ? (
         <LoadingBlock label="加载图池…" />
       ) : error ? (
         <ErrorBlock message={error} onRetry={() => void loadPool()} />
       ) : filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-(--pc-faint)">
-          当前条件下没有测图中的选图。
-        </p>
+        <p className="py-10 text-center text-sm text-(--pc-faint)">当前条件下没有测图中的选图。</p>
       ) : (
         <div className="mt-4 flex flex-col gap-8">
           {groups.map((g) => (
@@ -335,7 +325,9 @@ export default function ReplayCollectionManagement() {
                     <Card
                       key={m.id}
                       className={cn("overflow-hidden p-0", usernames.length > 0 && "border-l-8")}
-                      style={usernames.length > 0 ? { borderLeftColor: "var(--pc-teal)" } : undefined}
+                      style={
+                        usernames.length > 0 ? { borderLeftColor: "var(--pc-teal)" } : undefined
+                      }
                     >
                       <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-pc-teal/40 to-pc-blue/40">
                         {m.coverUrl && (
@@ -356,7 +348,10 @@ export default function ReplayCollectionManagement() {
                         <p className="text-xs text-(--pc-faint)">
                           [{m.version}] by {m.creator ?? "-"}
                         </p>
-                        <p className="mt-1 text-xs font-bold" style={{ color: starColor(m.starRating) }}>
+                        <p
+                          className="mt-1 text-xs font-bold"
+                          style={{ color: starColor(m.starRating) }}
+                        >
                           ★ {fmt(m.starRating)}
                         </p>
 

@@ -61,16 +61,43 @@ function rubberBand(v: number, limit: number) {
 
 const eventCards = [
   { to: "/guide", label: "比赛手册", Icon: BookOpen, color: "var(--pc-primary)", x: 696, y: 153 },
-  { to: "/schedule", label: "赛程安排", Icon: CalendarDays, color: "var(--pc-teal)", x: 861, y: 125 },
+  {
+    to: "/schedule",
+    label: "赛程安排",
+    Icon: CalendarDays,
+    color: "var(--pc-teal)",
+    x: 861,
+    y: 125,
+  },
   { to: "/mappool", label: "图池", Icon: MapIcon, color: "var(--pc-blue)", x: 1013, y: 146 },
-  { to: "/registrations", label: "参赛选手", Icon: Users, color: "var(--pc-yellow)", x: 522, y: 178 },
-  { to: "/contact", label: "联系我们", Icon: MessageCircle, color: "var(--pc-primary)", x: 1110, y: 186 },
+  {
+    to: "/registrations",
+    label: "参赛选手",
+    Icon: Users,
+    color: "var(--pc-yellow)",
+    x: 522,
+    y: 178,
+  },
+  {
+    to: "/contact",
+    label: "联系我们",
+    Icon: MessageCircle,
+    color: "var(--pc-primary)",
+    x: 1110,
+    y: 186,
+  },
 ];
 
 const community = [
   { label: "QQ群", href: site.contact.qqGroup, color: "var(--pc-teal)", x: 498, y: 300 },
   { label: "bilibili", href: site.contact.bilibili, color: "var(--pc-blue)", x: 419, y: 383 },
-  { label: "bilibili live", href: site.contact.bilibiliLive, color: "var(--pc-primary)", x: 440, y: 464 },
+  {
+    label: "bilibili live",
+    href: site.contact.bilibiliLive,
+    color: "var(--pc-primary)",
+    x: 440,
+    y: 464,
+  },
 ];
 
 const projectLinks = [
@@ -83,12 +110,7 @@ const cardBase =
   "flex items-center gap-2.5 rounded-[22px] border-2 border-(--pc-border) bg-(--pc-white)/95 px-4 py-2.5 " +
   "shadow-[3px_3px_0px_rgba(0,0,0,0.1)] backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5";
 
-const DECOR_COLORS = [
-  "var(--pc-primary)",
-  "var(--pc-teal)",
-  "var(--pc-blue)",
-  "var(--pc-yellow)",
-];
+const DECOR_COLORS = ["var(--pc-primary)", "var(--pc-teal)", "var(--pc-blue)", "var(--pc-yellow)"];
 
 const panelBase =
   "rounded-2xl border-2 border-(--pc-border) bg-(--pc-white) p-4 shadow-[4px_4px_0px_rgba(0,0,0,0.1)]";
@@ -153,8 +175,7 @@ export default function HomePage() {
     };
   }, []);
 
-  const canEditSticker = (s: CanvasSticker) =>
-    !!user && (s.createdBy === user.osuId || isAdmin);
+  const canEditSticker = (s: CanvasSticker) => !!user && (s.createdBy === user.osuId || isAdmin);
 
   const draftSticker = (
     id: number,
@@ -233,10 +254,6 @@ export default function HomePage() {
     return () => ro.disconnect();
   }, []);
 
-
-
-
-
   // 整块场地一起拖动
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -259,14 +276,18 @@ export default function HomePage() {
   // 滚轮先带动画布；画布到边界后，才把滚动交还给页面
   const [wheeling, setWheeling] = useState(false);
   const wheelTimer = useRef<number | null>(null);
+  // 监听只注册一次，滚动时读 ref，避免每次 offset 变化都重建监听
+  const offsetRef = useRef(offset);
+  offsetRef.current = offset;
 
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      const nextX = clampX(offset.x - e.deltaX);
-      const nextY = clampY(offset.y - e.deltaY);
-      if (nextX === offset.x && nextY === offset.y) return; // 到边界了，交给页面滚动
+      const cur = offsetRef.current;
+      const nextX = clampX(cur.x - e.deltaX);
+      const nextY = clampY(cur.y - e.deltaY);
+      if (nextX === cur.x && nextY === cur.y) return; // 到边界了，交给页面滚动
       e.preventDefault();
       setOffset({ x: nextX, y: nextY });
       setWheeling(true);
@@ -278,7 +299,7 @@ export default function HomePage() {
       el.removeEventListener("wheel", onWheel);
       if (wheelTimer.current) window.clearTimeout(wheelTimer.current);
     };
-  }, [offset.x, offset.y]);
+  }, []);
 
   return (
     <div className="relative bg-(--pc-paper)">
@@ -288,7 +309,13 @@ export default function HomePage() {
         className="relative -mt-[4.125rem] hidden h-[100svh] touch-none overflow-hidden select-none xl:block"
         onPointerDown={(e) => {
           setSelectedSticker(null);
-          drag.current = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: offset.x, oy: offset.y };
+          drag.current = {
+            id: e.pointerId,
+            sx: e.clientX,
+            sy: e.clientY,
+            ox: offset.x,
+            oy: offset.y,
+          };
           moved.current = false;
           setDragging(true);
           // 先不 capture，否则 click 会落在 section 上，按钮/链接点了没反应
@@ -400,11 +427,56 @@ export default function HomePage() {
 
             {/* 赛事板块 */}
             {[
-              { key: "guide", x: 696, y: 93, rotate: -3, color: eventCards[0].color, label: "比赛手册", to: "/guide", Icon: BookOpen },
-              { key: "schedule", x: 861, y: 125, rotate: 2, color: eventCards[1].color, label: "赛程安排", to: "/schedule", Icon: CalendarDays },
-              { key: "mappool", x: 1013, y: 146, rotate: -2, color: eventCards[2].color, label: "图池", to: "/mappool", Icon: MapIcon },
-              { key: "contact", x: 1310, y: 126, rotate: 3, color: eventCards[4].color, label: "联系我们", to: "/contact", Icon: MessageCircle },
-              { key: "players", x: 522, y: 178, rotate: -4, color: eventCards[3].color, label: "参赛选手", to: "/registrations", Icon: Users },
+              {
+                key: "guide",
+                x: 696,
+                y: 93,
+                rotate: -3,
+                color: eventCards[0].color,
+                label: "比赛手册",
+                to: "/guide",
+                Icon: BookOpen,
+              },
+              {
+                key: "schedule",
+                x: 861,
+                y: 125,
+                rotate: 2,
+                color: eventCards[1].color,
+                label: "赛程安排",
+                to: "/schedule",
+                Icon: CalendarDays,
+              },
+              {
+                key: "mappool",
+                x: 1013,
+                y: 146,
+                rotate: -2,
+                color: eventCards[2].color,
+                label: "图池",
+                to: "/mappool",
+                Icon: MapIcon,
+              },
+              {
+                key: "contact",
+                x: 1310,
+                y: 126,
+                rotate: 3,
+                color: eventCards[4].color,
+                label: "联系我们",
+                to: "/contact",
+                Icon: MessageCircle,
+              },
+              {
+                key: "players",
+                x: 522,
+                y: 178,
+                rotate: -4,
+                color: eventCards[3].color,
+                label: "参赛选手",
+                to: "/registrations",
+                Icon: Users,
+              },
             ].map((c) => (
               <Piece key={c.key} x={c.x} y={c.y} rotate={c.rotate}>
                 <div className="relative">
@@ -416,7 +488,9 @@ export default function HomePage() {
                   />
                   <Link to={c.to} className={cn(cardBase, "relative")}>
                     <c.Icon className="h-6 w-6 shrink-0" style={{ color: c.color }} />
-                    <span className="text-base font-bold whitespace-nowrap text-(--pc-ink)">{c.label}</span>
+                    <span className="text-base font-bold whitespace-nowrap text-(--pc-ink)">
+                      {c.label}
+                    </span>
                   </Link>
                 </div>
               </Piece>
@@ -425,8 +499,15 @@ export default function HomePage() {
             {/* 左侧社群 */}
             {community.map((c, i) => (
               <Piece key={c.label} x={c.x} y={c.y} rotate={i % 2 ? 2 : -2}>
-                <a href={c.href} target="_blank" rel="noreferrer" className="flex items-center gap-3">
-                  <span className="text-xs font-bold whitespace-nowrap text-(--pc-slate)">{c.label}</span>
+                <a
+                  href={c.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-3"
+                >
+                  <span className="text-xs font-bold whitespace-nowrap text-(--pc-slate)">
+                    {c.label}
+                  </span>
                   <span
                     className="grid h-12 w-12 place-items-center rounded-full border-2 border-(--pc-border) text-pc-cream shadow-[3px_3px_0px_rgba(0,0,0,0.1)] transition-transform hover:scale-110"
                     style={{ backgroundColor: c.color }}
@@ -451,17 +532,19 @@ export default function HomePage() {
                     className="absolute -top-[1000px] right-[24px] h-[1000px] w-[4px] rounded-full bg-(--pc-ink) opacity-25"
                   />
                   <div className="relative flex items-center gap-2 rounded-2xl border-2 border-(--pc-border) bg-(--pc-white)/95 px-3 py-2 shadow-[3px_3px_0px_rgba(0,0,0,0.1)] backdrop-blur-sm">
-                  <img
-                    src={champion.avatarUrl || osuAvatarUrl(champion.osuId)}
-                    alt={champion.playerName}
-                    className="h-8 w-8 rounded-lg border-2 border-(--pc-border) object-cover"
-                  />
-                  <span>
-                    <span className="block text-xs font-bold text-(--pc-ink)">{champion.playerName}</span>
-                    <span className="flex items-center gap-1 text-[10px] text-(--pc-faint)">
-                      <History className="h-3 w-3" /> 卫冕冠军
+                    <img
+                      src={champion.avatarUrl || osuAvatarUrl(champion.osuId)}
+                      alt={champion.playerName}
+                      className="h-8 w-8 rounded-lg border-2 border-(--pc-border) object-cover"
+                    />
+                    <span>
+                      <span className="block text-xs font-bold text-(--pc-ink)">
+                        {champion.playerName}
+                      </span>
+                      <span className="flex items-center gap-1 text-[10px] text-(--pc-faint)">
+                        <History className="h-3 w-3" /> 卫冕冠军
+                      </span>
                     </span>
-                  </span>
                     <Badge variant="yellow" className="text-[10px]">
                       S1
                     </Badge>
@@ -473,7 +556,9 @@ export default function HomePage() {
             {/* 项目与工具 */}
             <Piece x={350} y={744} width={250} rotate={-1.5}>
               <div className={panelBase}>
-                <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">Tools</p>
+                <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">
+                  Tools
+                </p>
                 <p className="mt-0.5 text-base font-black text-(--pc-ink)">项目与工具</p>
                 <div className="mt-2 grid gap-1">
                   {projectLinks.map((l) => (
@@ -496,7 +581,9 @@ export default function HomePage() {
             {/* 最新资讯 */}
             <Piece x={634} y={730} width={740} rotate={1.5}>
               <div className={panelBase}>
-                <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">News</p>
+                <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">
+                  News
+                </p>
                 <p className="mt-0.5 text-base font-black text-(--pc-ink)">最新资讯</p>
                 <div className="mt-2 grid gap-1">
                   {news.length > 0 ? (
@@ -553,7 +640,12 @@ export default function HomePage() {
 
             {user && (
               <Piece x={1000} y={686} rotate={2}>
-                <Button asChild variant="primary" size="lg" className="shadow-[4px_4px_0px_rgba(0,0,0,0.14)]">
+                <Button
+                  asChild
+                  variant="primary"
+                  size="lg"
+                  className="shadow-[4px_4px_0px_rgba(0,0,0,0.14)]"
+                >
                   <Link to="/player-info">个人中心</Link>
                 </Button>
               </Piece>
@@ -561,7 +653,12 @@ export default function HomePage() {
 
             {user && isAdmin && (
               <Piece x={1184} y={712} rotate={-3}>
-                <Button asChild variant="teal" size="lg" className="shadow-[4px_4px_0px_rgba(0,0,0,0.14)]">
+                <Button
+                  asChild
+                  variant="teal"
+                  size="lg"
+                  className="shadow-[4px_4px_0px_rgba(0,0,0,0.14)]"
+                >
                   <Link to="/staff-dashboard">管理后台</Link>
                 </Button>
               </Piece>
@@ -660,7 +757,9 @@ export default function HomePage() {
           </div>
 
           <div className={cn(panelBase, "w-full")}>
-            <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">Tools</p>
+            <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">
+              Tools
+            </p>
             <p className="mt-0.5 text-base font-black text-(--pc-ink)">项目与工具</p>
             <div className="mt-2 grid gap-1">
               {projectLinks.map((l) => (
@@ -680,7 +779,9 @@ export default function HomePage() {
           </div>
 
           <div className={cn(panelBase, "w-full")}>
-            <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">News</p>
+            <p className="text-[10px] font-bold tracking-[0.18em] text-(--pc-faint) uppercase">
+              News
+            </p>
             <p className="mt-0.5 text-base font-black text-(--pc-ink)">最新资讯</p>
             <div className="mt-2 grid gap-2">
               {news.length > 0 ? (
@@ -690,7 +791,9 @@ export default function HomePage() {
                     to={`/news/${n.slug}`}
                     className="block rounded-lg px-2 py-2 hover:bg-pc-yellow/15"
                   >
-                    <span className="block text-sm font-bold text-(--pc-ink)">{n.title || "未命名资讯"}</span>
+                    <span className="block text-sm font-bold text-(--pc-ink)">
+                      {n.title || "未命名资讯"}
+                    </span>
                     {n.date && <span className="text-[10px] text-(--pc-faint)">{n.date}</span>}
                   </Link>
                 ))

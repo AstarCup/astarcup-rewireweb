@@ -82,7 +82,8 @@ export default function Navbar() {
                     className={({ isActive }) =>
                       cn(
                         "rounded-xl px-3 py-2.5 text-sm font-bold text-(--pc-slate) transition-all duration-200 hover:bg-(--pc-white) hover:text-(--pc-ink)",
-                        isActive && "bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
+                        isActive &&
+                          "bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
                       )
                     }
                   >
@@ -111,7 +112,8 @@ export default function Navbar() {
               className={({ isActive }) =>
                 cn(
                   "rounded-xl px-2 py-2 text-sm font-bold text-(--pc-slate) transition-all duration-200 hover:-translate-y-0.5 hover:text-(--pc-ink) lg:px-3",
-                  isActive && "bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
+                  isActive &&
+                    "bg-(--pc-white) text-(--pc-ink) shadow-[2px_2px_0px_rgba(0,0,0,0.08)]",
                 )
               }
             >

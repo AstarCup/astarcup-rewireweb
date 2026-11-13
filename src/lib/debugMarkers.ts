@@ -62,16 +62,7 @@ const SKIP = new Set([
   "ForwardRef",
 ]);
 
-const TAG_SKIP = new Set([
-  "SCRIPT",
-  "STYLE",
-  "META",
-  "LINK",
-  "TITLE",
-  "NOSCRIPT",
-  "HEAD",
-  "HTML",
-]);
+const TAG_SKIP = new Set(["SCRIPT", "STYLE", "META", "LINK", "TITLE", "NOSCRIPT", "HEAD", "HTML"]);
 
 let installed = false;
 let active = false;
@@ -100,12 +91,7 @@ function fiberOf(el: Element): any | null {
 function typeName(t: any): string | null {
   if (typeof t === "function") return t.displayName || t.name || null;
   if (t && typeof t === "object") {
-    return (
-      t.displayName ||
-      t.name ||
-      (t.render && (t.render.displayName || t.render.name)) ||
-      null
-    );
+    return t.displayName || t.name || (t.render && (t.render.displayName || t.render.name)) || null;
   }
   return null;
 }

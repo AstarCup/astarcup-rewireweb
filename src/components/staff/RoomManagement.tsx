@@ -4,6 +4,7 @@ import { ChevronsUpDown } from "lucide-react";
 import { useFetch, LoadingBlock, ErrorBlock } from "@/hooks/useFetch";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { formatWallClock } from "@/lib/utils";
 import { SectionTitle } from "@/components/paper/paper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,26 +100,6 @@ async function mapLimit<T>(
     }
   });
   await Promise.all(workers);
-}
-
-function formatMatchTime(iso?: string | null): string {
-  if (!iso) return "-";
-  // 后端将本地(+8)墙钟时间按 UTC 序列化(后缀 +00:00)，此处按 +08:00 墙钟解析，避免偏移 8 小时
-  const naive = iso.replace(/Z$/, "").replace(/[+-]\d{2}:\d{2}$/, "");
-  const d = new Date(`${naive}+08:00`);
-  if (Number.isNaN(d.getTime())) return "-";
-  const s = d.toLocaleString("zh-CN", {
-    timeZone: "Asia/Shanghai",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const [datePart, timePart = ""] = s.split(" ");
-  const [y, m, day] = datePart.split("/");
-  return `${y}年${m}月${day}日 ${timePart}`;
 }
 
 export default function RoomManagement() {
@@ -269,10 +250,7 @@ export default function RoomManagement() {
     const target = (batchSeason || currentSeason).toLowerCase();
     const max = (data ?? [])
       .filter((r) => (r.season ?? "").toLowerCase() === target)
-      .reduce(
-        (m, r) => (r.roundNumber === Number(batchStage) ? Math.max(m, r.matchNumber) : m),
-        0,
-      );
+      .reduce((m, r) => (r.roundNumber === Number(batchStage) ? Math.max(m, r.matchNumber) : m), 0);
     return max + 1;
   }, [batchStage, batchSeason, currentSeason, data]);
 
@@ -351,337 +329,356 @@ export default function RoomManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle className="mb-0">
-          比赛房间
-        </SectionTitle>
+        <SectionTitle className="mb-0">比赛房间</SectionTitle>
         <div className="flex items-center gap-2">
-        <SeasonSelect
-          value={activeSeason}
-          onChange={(v) => setSeasonFilter(v)}
-          options={seasonOptions}
-          includeAll
-          className="w-36"
-        />
-        <Dialog
-          open={open}
-          onOpenChange={(o) => {
-            setOpen(o);
-            if (!o) {
-              setDateObj(undefined);
-              setDateOpen(false);
-            }
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button variant="primary">新建房间</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>新建房间</DialogTitle>
-              <DialogDescription>填写房间信息后点击创建。</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3">
-              <div className="grid gap-1.5">
-                <Label>房间名称</Label>
-                <Input
-                  value={form.room_name}
-                  onChange={setField("room_name")}
-                  placeholder="e.g. RO16 · Room 1"
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>赛季</Label>
-                <SeasonSelect
-                  value={newRoomSeason || currentSeason}
-                  onChange={setNewRoomSeason}
-                  options={seasonOptions}
-                  className="w-full"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+          <SeasonSelect
+            value={activeSeason}
+            onChange={(v) => setSeasonFilter(v)}
+            options={seasonOptions}
+            includeAll
+            className="w-36"
+          />
+          <Dialog
+            open={open}
+            onOpenChange={(o) => {
+              setOpen(o);
+              if (!o) {
+                setDateObj(undefined);
+                setDateOpen(false);
+              }
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="primary">新建房间</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>新建房间</DialogTitle>
+                <DialogDescription>填写房间信息后点击创建。</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-3">
                 <div className="grid gap-1.5">
-                  <Label>阶段</Label>
-                  <Select
-                    value={form.round_number}
-                    onValueChange={(v) => setForm((f) => ({ ...f, round_number: v }))}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="选择阶段" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROUND_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>房间名称</Label>
+                  <Input
+                    value={form.room_name}
+                    onChange={setField("room_name")}
+                    placeholder="e.g. RO16 · Room 1"
+                  />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>场次</Label>
-                  <Input value={form.match_number} onChange={setField("match_number")} />
+                  <Label>赛季</Label>
+                  <SeasonSelect
+                    value={newRoomSeason || currentSeason}
+                    onChange={setNewRoomSeason}
+                    options={seasonOptions}
+                    className="w-full"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-1.5">
+                    <Label>阶段</Label>
+                    <Select
+                      value={form.round_number}
+                      onValueChange={(v) => setForm((f) => ({ ...f, round_number: v }))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="选择阶段" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ROUND_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>场次</Label>
+                    <Input value={form.match_number} onChange={setField("match_number")} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-1.5">
+                    <Label>日期</Label>
+                    <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          aria-haspopup="dialog"
+                          aria-expanded={dateOpen}
+                          className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
+                          onClick={() => {
+                            if (!dateObj && form.match_date) setDateObj(new Date(form.match_date));
+                          }}
+                        >
+                          {dateObj
+                            ? format(dateObj, "yyyy年M月d日")
+                            : form.match_date || "选择日期"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateObj}
+                          captionLayout="dropdown"
+                          fromYear={2020}
+                          toYear={2030}
+                          defaultMonth={dateObj}
+                          onSelect={(d) => {
+                            setDateObj(d);
+                            setForm((f) => ({
+                              ...f,
+                              match_date: d ? format(d, "yyyy-MM-dd") : "",
+                            }));
+                            setDateOpen(false);
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>时间</Label>
+                    <Select
+                      value={form.match_time}
+                      onValueChange={(v) => setForm((f) => ({ ...f, match_time: v }))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="选择时间" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>早上</SelectLabel>
+                          {MORNING_TIMES.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                        <SelectSeparator />
+                        <SelectGroup>
+                          <SelectLabel>下午</SelectLabel>
+                          {AFTERNOON_TIMES.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {t}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>最大人数</Label>
+                  <Input
+                    type="number"
+                    value={form.max_participants}
+                    onChange={setField("max_participants")}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>描述</Label>
+                  <Input
+                    value={form.description}
+                    onChange={setField("description")}
+                    placeholder="可选"
+                  />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">取消</Button>
+                </DialogClose>
+                <Button variant="primary" onClick={createRoom} disabled={busy}>
+                  {busy ? "创建中…" : "创建"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={batchOpen}
+            onOpenChange={(o) => {
+              setBatchOpen(o);
+              if (!o) resetBatch();
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="teal">批量新建房间</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>批量新建房间</DialogTitle>
+                <DialogDescription>
+                  按预设时间段为所选日期、阶段批量创建房间，场次自动递增。
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-3">
                 <div className="grid gap-1.5">
                   <Label>日期</Label>
-                  <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                  <Popover open={batchDateOpen} onOpenChange={setBatchDateOpen}>
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        role="combobox"
-                        aria-expanded={dateOpen}
+                        aria-haspopup="dialog"
+                        aria-expanded={batchDateOpen}
                         className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
-                        onClick={() => {
-                          if (!dateObj && form.match_date) setDateObj(new Date(form.match_date));
-                        }}
                       >
-                        {dateObj ? format(dateObj, "yyyy年M月d日") : form.match_date || "选择日期"}
+                        {batchDateObj ? format(batchDateObj, "yyyy年M月d日") : "选择日期"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
                       </button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto overflow-hidden p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={dateObj}
+                        selected={batchDateObj}
                         captionLayout="dropdown"
                         fromYear={2020}
                         toYear={2030}
-                        defaultMonth={dateObj}
+                        defaultMonth={batchDateObj}
                         onSelect={(d) => {
-                          setDateObj(d);
-                          setForm((f) => ({ ...f, match_date: d ? format(d, "yyyy-MM-dd") : "" }));
-                          setDateOpen(false);
+                          setBatchDateObj(d);
+                          setBatchDateOpen(false);
                         }}
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
-                <div className="grid gap-1.5">
-                  <Label>时间</Label>
-                  <Select
-                    value={form.match_time}
-                    onValueChange={(v) => setForm((f) => ({ ...f, match_time: v }))}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="选择时间" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>早上</SelectLabel>
-                        {MORNING_TIMES.map((t) => (
-                          <SelectItem key={t} value={t}>
-                            {t}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="grid gap-1.5">
+                    <Label>赛季</Label>
+                    <SeasonSelect
+                      value={batchSeason || currentSeason}
+                      onChange={setBatchSeason}
+                      options={seasonOptions}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label>阶段</Label>
+                    <Select value={batchStage} onValueChange={setBatchStage}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="选择阶段" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ROUND_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>
+                            {o.label}
                           </SelectItem>
                         ))}
-                      </SelectGroup>
-                      <SelectSeparator />
-                      <SelectGroup>
-                        <SelectLabel>下午</SelectLabel>
-                        {AFTERNOON_TIMES.map((t) => (
-                          <SelectItem key={t} value={t}>
-                            {t}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid gap-1.5">
-                <Label>最大人数</Label>
-                <Input
-                  type="number"
-                  value={form.max_participants}
-                  onChange={setField("max_participants")}
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label>描述</Label>
-                <Input value={form.description} onChange={setField("description")} placeholder="可选" />
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">取消</Button>
-              </DialogClose>
-              <Button variant="primary" onClick={createRoom} disabled={busy}>
-                {busy ? "创建中…" : "创建"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog
-          open={batchOpen}
-          onOpenChange={(o) => {
-            setBatchOpen(o);
-            if (!o) resetBatch();
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button variant="teal">批量新建房间</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>批量新建房间</DialogTitle>
-              <DialogDescription>按预设时间段为所选日期、阶段批量创建房间，场次自动递增。</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3">
-              <div className="grid gap-1.5">
-                <Label>日期</Label>
-                <Popover open={batchDateOpen} onOpenChange={setBatchDateOpen}>
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      role="combobox"
-                      aria-expanded={batchDateOpen}
-                      className="flex h-10 w-full items-center justify-between rounded-xl border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none transition focus:border-pc-primary focus:shadow-[0_0_0_3px_rgba(232,93,117,0.15)]"
-                    >
-                      {batchDateObj ? format(batchDateObj, "yyyy年M月d日") : "选择日期"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 text-(--pc-faint)" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={batchDateObj}
-                      captionLayout="dropdown"
-                      fromYear={2020}
-                      toYear={2030}
-                      defaultMonth={batchDateObj}
-                      onSelect={(d) => {
-                        setBatchDateObj(d);
-                        setBatchDateOpen(false);
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5">
-                  <Label>赛季</Label>
-                  <SeasonSelect
-                    value={batchSeason || currentSeason}
-                    onChange={setBatchSeason}
-                    options={seasonOptions}
-                    className="w-full"
-                  />
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="grid gap-1.5">
-                  <Label>阶段</Label>
-                  <Select value={batchStage} onValueChange={setBatchStage}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="选择阶段" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROUND_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>
-                          {o.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid gap-1.5">
-                <Label>最大人数</Label>
-                <Input
-                  type="number"
-                  value={batchMax}
-                  onChange={(e) => setBatchMax(e.target.value)}
-                />
-              </div>
-              <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-3 text-xs text-(--pc-slate)">
-                将创建 {ALL_TIMES.length} 个房间（{ALL_TIMES[0]} ~ {ALL_TIMES[ALL_TIMES.length - 1]}），房间名「
-                {STAGE_LABEL[batchStage] ?? "Stage"} 1」至「{STAGE_LABEL[batchStage] ?? "Stage"} {ALL_TIMES.length}」。
-                同一天已有房间的时段会自动跳过。
-              </div>
-              {batchBusy && (
-                <div className="h-2 overflow-hidden rounded-full bg-(--pc-paper)">
-                  <div
-                    className="h-full rounded-full bg-pc-teal transition-all duration-200"
-                    style={{ width: `${batchTotal ? (batchProgress / batchTotal) * 100 : 0}%` }}
+                  <Label>最大人数</Label>
+                  <Input
+                    type="number"
+                    value={batchMax}
+                    onChange={(e) => setBatchMax(e.target.value)}
                   />
                 </div>
-              )}
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline" disabled={batchBusy}>取消</Button>
-              </DialogClose>
-              <Button variant="primary" onClick={() => void batchCreate()} disabled={batchBusy}>
-                {batchBusy
-                  ? `创建中 ${batchProgress}/${batchTotal || ALL_TIMES.length}`
-                  : `一键新建 ${ALL_TIMES.length} 个房间`}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog
-          open={batchDeleteOpen}
-          onOpenChange={(o) => {
-            setBatchDeleteOpen(o);
-            if (!o) setDeleteIds(new Set());
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button variant="outline" className="border-pc-primary/60 text-pc-primary hover:bg-pc-primary/5">
-              批量删除
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-xl">
-            <DialogHeader>
-              <DialogTitle>批量删除房间</DialogTitle>
-              <DialogDescription>
-                勾选要删除的房间，确认后逐个删除（不可撤销）。房间下的赛程、比分、对战与人员安排会一并删除。
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-(--pc-faint)">已选 {deleteIds.size} / {rooms.length} 个房间</span>
-              <Button variant="outline" size="sm" onClick={toggleDeleteAll}>
-                {deleteIds.size === rooms.length ? "取消全选" : "全选"}
-              </Button>
-            </div>
-            <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-(--pc-border)">
-              {rooms.map((room) => {
-                const stageLabel = stageLabelOf(room);
-                return (
-                  <label
-                    key={room.id}
-                    className="flex cursor-pointer items-center gap-3 border-b border-(--pc-border)/60 px-3 py-2.5 last:border-0 hover:bg-(--pc-paper)"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={deleteIds.has(room.id)}
-                      onChange={() => toggleDeleteId(room.id)}
-                      className="h-4 w-4 accent-pc-primary"
+                <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-paper) p-3 text-xs text-(--pc-slate)">
+                  将创建 {ALL_TIMES.length} 个房间（{ALL_TIMES[0]} ~{" "}
+                  {ALL_TIMES[ALL_TIMES.length - 1]}），房间名「
+                  {STAGE_LABEL[batchStage] ?? "Stage"} 1」至「{STAGE_LABEL[batchStage] ?? "Stage"}{" "}
+                  {ALL_TIMES.length}」。 同一天已有房间的时段会自动跳过。
+                </div>
+                {batchBusy && (
+                  <div className="h-2 overflow-hidden rounded-full bg-(--pc-paper)">
+                    <div
+                      className="h-full rounded-full bg-pc-teal transition-all duration-200"
+                      style={{ width: `${batchTotal ? (batchProgress / batchTotal) * 100 : 0}%` }}
                     />
-                    <span className="font-bold text-(--pc-ink)">{room.roomName}</span>
-                    <span className="text-xs text-(--pc-faint)">
-                      {stageLabel} · {formatMatchTime(room.matchTime)}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline" disabled={batchDelBusy}>取消</Button>
-              </DialogClose>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" disabled={batchBusy}>
+                    取消
+                  </Button>
+                </DialogClose>
+                <Button variant="primary" onClick={() => void batchCreate()} disabled={batchBusy}>
+                  {batchBusy
+                    ? `创建中 ${batchProgress}/${batchTotal || ALL_TIMES.length}`
+                    : `一键新建 ${ALL_TIMES.length} 个房间`}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={batchDeleteOpen}
+            onOpenChange={(o) => {
+              setBatchDeleteOpen(o);
+              if (!o) setDeleteIds(new Set());
+            }}
+          >
+            <DialogTrigger asChild>
               <Button
-                variant="destructive"
-                onClick={() => void confirmBatchDelete()}
-                disabled={batchDelBusy || deleteIds.size === 0}
+                variant="outline"
+                className="border-pc-primary/60 text-pc-primary hover:bg-pc-primary/5"
               >
-                {batchDelBusy
-                  ? `删除中 ${batchDelProgress}/${deleteIds.size}`
-                  : `删除 ${deleteIds.size} 个房间`}
+                批量删除
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="max-w-xl">
+              <DialogHeader>
+                <DialogTitle>批量删除房间</DialogTitle>
+                <DialogDescription>
+                  勾选要删除的房间，确认后逐个删除（不可撤销）。房间下的赛程、比分、对战与人员安排会一并删除。
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-(--pc-faint)">
+                  已选 {deleteIds.size} / {rooms.length} 个房间
+                </span>
+                <Button variant="outline" size="sm" onClick={toggleDeleteAll}>
+                  {deleteIds.size === rooms.length ? "取消全选" : "全选"}
+                </Button>
+              </div>
+              <div className="max-h-72 overflow-y-auto rounded-xl border-2 border-(--pc-border)">
+                {rooms.map((room) => {
+                  const stageLabel = stageLabelOf(room);
+                  return (
+                    <label
+                      key={room.id}
+                      className="flex cursor-pointer items-center gap-3 border-b border-(--pc-border)/60 px-3 py-2.5 last:border-0 hover:bg-(--pc-paper)"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={deleteIds.has(room.id)}
+                        onChange={() => toggleDeleteId(room.id)}
+                        className="h-4 w-4 accent-pc-primary"
+                      />
+                      <span className="font-bold text-(--pc-ink)">{room.roomName}</span>
+                      <span className="text-xs text-(--pc-faint)">
+                        {stageLabel} · {formatWallClock(room.matchTime)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" disabled={batchDelBusy}>
+                    取消
+                  </Button>
+                </DialogClose>
+                <Button
+                  variant="destructive"
+                  onClick={() => void confirmBatchDelete()}
+                  disabled={batchDelBusy || deleteIds.size === 0}
+                >
+                  {batchDelBusy
+                    ? `删除中 ${batchDelProgress}/${deleteIds.size}`
+                    : `删除 ${deleteIds.size} 个房间`}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -710,7 +707,10 @@ export default function RoomManagement() {
                 const scheduleCount = room.schedules?.length ?? room.scheduleIds?.length ?? 0;
                 const stageLabel = stageLabelOf(room);
                 return (
-                  <tr key={room.id} className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)">
+                  <tr
+                    key={room.id}
+                    className="border-b border-(--pc-border)/60 hover:bg-(--pc-paper)"
+                  >
                     <td className="px-4 py-3">
                       <p className="font-bold text-(--pc-ink)">{room.roomName}</p>
                       {room.description && (
@@ -729,9 +729,11 @@ export default function RoomManagement() {
                     <td className="px-4 py-3 font-sans text-(--pc-slate)">{stageLabel}</td>
                     <td className="px-4 py-3 font-sans text-(--pc-slate)">{room.matchNumber}</td>
                     <td className="px-4 py-3 font-sans text-(--pc-slate)">
-                      {formatMatchTime(room.matchTime)}
+                      {formatWallClock(room.matchTime)}
                     </td>
-                    <td className="px-4 py-3 font-sans text-(--pc-slate)">{room.maxParticipants}</td>
+                    <td className="px-4 py-3 font-sans text-(--pc-slate)">
+                      {room.maxParticipants}
+                    </td>
                     <td className="px-4 py-3">
                       <Badge variant={statusVariant(room.status)}>{room.status}</Badge>
                     </td>
@@ -739,11 +741,7 @@ export default function RoomManagement() {
                       {scheduleCount > 0 ? scheduleCount : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setDeleteTarget(room)}
-                      >
+                      <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(room)}>
                         删除
                       </Button>
                       <AlertDialog
@@ -754,7 +752,8 @@ export default function RoomManagement() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>删除房间</AlertDialogTitle>
                             <AlertDialogDescription>
-                              确定要删除「{room.roomName}」吗？此操作不可撤销，房间下的赛程、比分、对战与人员安排会一并删除。
+                              确定要删除「{room.roomName}
+                              」吗？此操作不可撤销，房间下的赛程、比分、对战与人员安排会一并删除。
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

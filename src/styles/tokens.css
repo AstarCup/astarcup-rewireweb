@@ -4,29 +4,29 @@
 
 :root {
   /* ---- Paper Craft shadcn theme tokens ---- */
-  --background: 32 79% 96%;            /* #fdf6ee */
-  --foreground: 0 0% 18%;              /* #2d2d2d */
+  --background: 32 79% 96%; /* #fdf6ee */
+  --foreground: 0 0% 18%; /* #2d2d2d */
   --card: 32 79% 96%;
   --card-foreground: 0 0% 18%;
   --popover: 32 79% 96%;
   --popover-foreground: 0 0% 18%;
-  --primary: 350 75% 64%;              /* #e85d75 */
+  --primary: 350 75% 64%; /* #e85d75 */
   --primary-foreground: 0 0% 9%;
   --secondary: 32 79% 96%;
   --secondary-foreground: 0 0% 9%;
   --muted: 0 0% 100%;
   --muted-foreground: 40 13% 64%;
-  --accent: 168 39% 54%;               /* #5cb8a5 */
+  --accent: 168 39% 54%; /* #5cb8a5 */
   --accent-foreground: 0 0% 98%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 98%;
-  --border: 36 24% 84%;                /* #e0d8cc */
+  --border: 36 24% 84%; /* #e0d8cc */
   --input: 36 24% 84%;
   --ring: 350 75% 64%;
   --chart-1: 350 75% 64%;
   --chart-2: 168 39% 54%;
-  --chart-3: 42 90% 61%;               /* #f5c040 */
-  --chart-4: 224 33% 56%;              /* #6b7fb5 */
+  --chart-3: 42 90% 61%; /* #f5c040 */
+  --chart-4: 224 33% 56%; /* #6b7fb5 */
   --chart-5: 216 63% 70%;
   --sidebar: 32 79% 96%;
   --sidebar-foreground: 0 0% 18%;

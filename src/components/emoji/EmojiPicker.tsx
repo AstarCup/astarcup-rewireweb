@@ -3,12 +3,7 @@ import { ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { EMOJI_PACKS } from "@/lib/emoji-data";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 const ALL = "__all__";
@@ -33,7 +28,11 @@ export default function EmojiPicker({ open, onOpenChange, onPick }: EmojiPickerP
 
   // 切换表情包后把选中的包滚到中间
   useEffect(() => {
-    activeTileRef.current?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    activeTileRef.current?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
   }, [packId]);
 
   const list = useMemo(() => {

@@ -39,7 +39,10 @@ import type { PlayerMatchup, PlayerStub } from "@/lib/types";
 import { useCurrentSeason, useSeasonOptions } from "@/lib/seasons";
 import SeasonSelect from "@/components/staff/SeasonSelect";
 
-const STATUS_META: Record<string, { label: string; variant: "primary" | "teal" | "yellow" | "blue" | "outline" }> = {
+const STATUS_META: Record<
+  string,
+  { label: string; variant: "primary" | "teal" | "yellow" | "blue" | "outline" }
+> = {
   available: { label: "可预约", variant: "teal" },
   pending: { label: "待确认", variant: "yellow" },
   scheduled: { label: "已排期", variant: "blue" },
@@ -124,9 +127,7 @@ export default function MatchupManagement() {
   };
 
   const updateStatus = async (m: PlayerMatchup, status: string) => {
-    const res = await patch.run(() =>
-      api.patch(`/api/matchups/${m.id}`, { status }),
-    );
+    const res = await patch.run(() => api.patch(`/api/matchups/${m.id}`, { status }));
     if (res?.ok) {
       toast({ title: "状态已更新" });
       void load();
@@ -155,9 +156,7 @@ export default function MatchupManagement() {
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <SectionTitle className="mb-0">
-          比赛对战
-        </SectionTitle>
+        <SectionTitle className="mb-0">比赛对战</SectionTitle>
         <div className="flex items-center gap-2">
           <SeasonSelect
             value={activeSeason}
@@ -167,65 +166,65 @@ export default function MatchupManagement() {
             className="w-36"
           />
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button variant="primary">新建对战</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>新建对战</DialogTitle>
-              <DialogDescription>从已过审选手中选择两名选手。</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-3">
-              <div className="grid gap-1.5">
-                <Label>选手一</Label>
-                <Select value={p1} onValueChange={setP1}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择选手一" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {playerList.map((p) => (
-                      <SelectItem key={p.osuId} value={p.osuId}>
-                        {p.username}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <DialogTrigger asChild>
+              <Button variant="primary">新建对战</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>新建对战</DialogTitle>
+                <DialogDescription>从已过审选手中选择两名选手。</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-3">
+                <div className="grid gap-1.5">
+                  <Label>选手一</Label>
+                  <Select value={p1} onValueChange={setP1}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择选手一" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {playerList.map((p) => (
+                        <SelectItem key={p.osuId} value={p.osuId}>
+                          {p.username}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>选手二</Label>
+                  <Select value={p2} onValueChange={setP2}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择选手二" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {playerList.map((p) => (
+                        <SelectItem key={p.osuId} value={p.osuId}>
+                          {p.username}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label>赛季</Label>
+                  <SeasonSelect
+                    value={newSeason || currentSeason}
+                    onChange={setNewSeason}
+                    options={seasonOptions}
+                    className="w-full"
+                  />
+                </div>
               </div>
-              <div className="grid gap-1.5">
-                <Label>选手二</Label>
-                <Select value={p2} onValueChange={setP2}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="选择选手二" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {playerList.map((p) => (
-                      <SelectItem key={p.osuId} value={p.osuId}>
-                        {p.username}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-1.5">
-                <Label>赛季</Label>
-                <SeasonSelect
-                  value={newSeason || currentSeason}
-                  onChange={setNewSeason}
-                  options={seasonOptions}
-                  className="w-full"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">取消</Button>
-              </DialogClose>
-              <Button variant="primary" onClick={createMatchup} disabled={busy}>
-                {busy ? "创建中…" : "创建"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">取消</Button>
+                </DialogClose>
+                <Button variant="primary" onClick={createMatchup} disabled={busy}>
+                  {busy ? "创建中…" : "创建"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

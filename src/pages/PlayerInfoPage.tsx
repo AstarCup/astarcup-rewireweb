@@ -8,13 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { fmtInt, formatDateTime, osuAvatarUrl, platformLabel } from "@/lib/utils";
 import type { BotBindCode, BotBinding, MatchRoom, NextMatch, Settings } from "@/lib/types";
 import { seasonLabel } from "@/lib/types";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -242,8 +236,7 @@ export default function PlayerInfoPage() {
     const season = (settings?.current_season ?? "").trim().toLowerCase();
     rooms.run(() =>
       api.get<MatchRoom[]>(
-        "/api/rooms" +
-          qs({ status: "open", withSchedules: true, season: season || undefined }),
+        "/api/rooms" + qs({ status: "open", withSchedules: true, season: season || undefined }),
       ),
     );
     setDialogOpen(true);
@@ -276,9 +269,7 @@ export default function PlayerInfoPage() {
                 <Trophy className="h-5 w-5 text-pc-primary" />
                 报名参赛
               </CardTitle>
-              <CardDescription className="mt-1">
-                你尚未报名本赛季。
-              </CardDescription>
+              <CardDescription className="mt-1">你尚未报名本赛季。</CardDescription>
             </div>
             <Button variant="primary" size="lg" onClick={() => setRegisterOpen(true)}>
               立即报名
@@ -306,231 +297,224 @@ export default function PlayerInfoPage() {
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* 左列：基本信息 + g0v0 绑定纵向堆叠 */}
         <div className="flex flex-col gap-6 lg:col-span-1">
-        {/* Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-pc-blue" />
-              基本信息
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={user.avatarUrl || osuAvatarUrl(user.osuId)} alt={user.username} />
-                <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="truncate font-bold text-xl text-(--pc-ink)">{user.username}</p>
-                </div>
-                <p className="mt-1 text-xs text-(--pc-faint)">osuId: {user.osuId}</p>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-xl bg-(--pc-paper) p-3">
-                <p className="text-lg font-bold text-(--pc-ink)">{fmtInt(user.pp)}</p>
-                <p className="text-xs text-(--pc-faint)">PP</p>
-              </div>
-              <div className="rounded-xl bg-(--pc-paper) p-3">
-                <p className="text-lg font-bold text-(--pc-ink)">#{fmtInt(user.globalRank)}</p>
-                <p className="text-xs text-(--pc-faint)">全球排名</p>
-              </div>
-              <div className="rounded-xl bg-(--pc-paper) p-3">
-                <p className="text-lg font-bold text-(--pc-ink)">#{fmtInt(user.countryRank)}</p>
-                <p className="text-xs text-(--pc-faint)">地区排名</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {user.country && <Badge variant="outline">{user.country}</Badge>}
-              {user.registrationStatus && user.registrationStatus !== "not_registered" && (
-                <Badge
-                  variant={
-                    user.registrationStatus === "approved" ? "teal" : "yellow"
-                  }
-                >
-                  {registrationLabels[user.registrationStatus] ?? user.registrationStatus}
-                </Badge>
-              )}
-              {isAdmin && (
-                <Badge variant="blue">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  管理员
-                </Badge>
-              )}
-            </div>
-
-            {user.season && user.season.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-xs font-bold text-(--pc-faint)">已报名参赛过的赛季</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  {user.season.map((s) => (
-                    <SeasonBadge key={s} season={s} label={seasonLabel(settings as Settings | null, s) || s} />
-                  ))}
+          {/* Profile */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5 text-pc-blue" />
+                基本信息
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage
+                    src={user.avatarUrl || osuAvatarUrl(user.osuId)}
+                    alt={user.username}
+                  />
+                  <AvatarFallback>{user.username.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-bold text-xl text-(--pc-ink)">{user.username}</p>
+                  </div>
+                  <p className="mt-1 text-xs text-(--pc-faint)">osuId: {user.osuId}</p>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* g0v0 服务器绑定 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gamepad2 className="h-5 w-5 text-pc-teal" />
-              g0v0 服务器绑定
-            </CardTitle>
-            <CardDescription>
-              {requireGv0
-                ? "报名比赛前需先绑定 g0v0 私服账号"
-                : "当前比赛不使用 g0v0 服务器，绑定为可选项"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {user.g0v0Bound ? (
-              <>
-                <div className="rounded-xl bg-(--pc-paper) px-4 py-3">
-                  <p className="text-xs text-(--pc-faint)">已绑定</p>
-                  <p className="mt-0.5 font-bold text-(--pc-ink)">
-                    {user.guServerUsername}
+              <Separator />
+
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-xl bg-(--pc-paper) p-3">
+                  <p className="text-lg font-bold text-(--pc-ink)">{fmtInt(user.pp)}</p>
+                  <p className="text-xs text-(--pc-faint)">PP</p>
+                </div>
+                <div className="rounded-xl bg-(--pc-paper) p-3">
+                  <p className="text-lg font-bold text-(--pc-ink)">#{fmtInt(user.globalRank)}</p>
+                  <p className="text-xs text-(--pc-faint)">全球排名</p>
+                </div>
+                <div className="rounded-xl bg-(--pc-paper) p-3">
+                  <p className="text-lg font-bold text-(--pc-ink)">#{fmtInt(user.countryRank)}</p>
+                  <p className="text-xs text-(--pc-faint)">地区排名</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {user.country && <Badge variant="outline">{user.country}</Badge>}
+                {user.registrationStatus && user.registrationStatus !== "not_registered" && (
+                  <Badge variant={user.registrationStatus === "approved" ? "teal" : "yellow"}>
+                    {registrationLabels[user.registrationStatus] ?? user.registrationStatus}
+                  </Badge>
+                )}
+                {isAdmin && (
+                  <Badge variant="blue">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    管理员
+                  </Badge>
+                )}
+              </div>
+
+              {user.season && user.season.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-bold text-(--pc-faint)">已报名参赛过的赛季</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {user.season.map((s) => (
+                      <SeasonBadge
+                        key={s}
+                        season={s}
+                        label={seasonLabel(settings as Settings | null, s) || s}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* g0v0 服务器绑定 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gamepad2 className="h-5 w-5 text-pc-teal" />
+                g0v0 服务器绑定
+              </CardTitle>
+              <CardDescription>
+                {requireGv0
+                  ? "报名比赛前需先绑定 g0v0 私服账号"
+                  : "当前比赛不使用 g0v0 服务器，绑定为可选项"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {user.g0v0Bound ? (
+                <>
+                  <div className="rounded-xl bg-(--pc-paper) px-4 py-3">
+                    <p className="text-xs text-(--pc-faint)">已绑定</p>
+                    <p className="mt-0.5 font-bold text-(--pc-ink)">{user.guServerUsername}</p>
+                    <p className="text-xs text-(--pc-faint)">g0v0 ID：{user.guServerUserId}</p>
+                    {user.guServerBindAt && (
+                      <p className="text-xs text-(--pc-faint)">
+                        绑定于 {formatDateTime(user.guServerBindAt)}
+                      </p>
+                    )}
+                  </div>
+                  <Button variant="outline" onClick={() => void handleUnbind()} disabled={bindBusy}>
+                    解绑
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-(--pc-faint)">
+                    {requireGv0
+                      ? "尚未绑定 g0v0 服务器账号，绑定后才能报名比赛。"
+                      : "尚未绑定 g0v0 账号；当前比赛不使用 g0v0，可不绑定。"}
+                  </p>
+                  <Button variant="teal" onClick={() => void handleBind()} disabled={bindBusy}>
+                    {bindBusy ? "跳转中…" : "绑定 g0v0 账号"}
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 机器人身份绑定 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-pc-blue" />
+                机器人绑定
+              </CardTitle>
+              <CardDescription>
+                绑定后可在 QQ 群或私聊中使用 /rules、/book 等指令查询和预约比赛
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-(--pc-faint)">
+                绑定码等同于登录凭证，请勿发给他人；绑定请私聊机器人，不要发到群里。
+                也可以私聊机器人发送 <span className="font-mono">/bind</span> 获取一键绑定链接。
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => void handleGenerateBotBindCode()}
+                disabled={botBindBusy}
+              >
+                {botBindBusy ? "生成中…" : "生成绑定码"}
+              </Button>
+
+              {botBindCode && (
+                <div className="space-y-2 rounded-xl bg-(--pc-paper) px-4 py-3">
+                  <p className="text-xs text-(--pc-faint)">
+                    绑定码（{botBindCode.ttlMinutes} 分钟内有效，仅可使用一次）
+                  </p>
+                  <p className="break-all font-mono text-lg font-bold tracking-wider text-(--pc-ink)">
+                    {botBindCode.code}
                   </p>
                   <p className="text-xs text-(--pc-faint)">
-                    g0v0 ID：{user.guServerUserId}
+                    私聊机器人发送：
+                    <span className="font-mono text-(--pc-ink)">{botBindCode.command}</span>
                   </p>
-                  {user.guServerBindAt && (
-                    <p className="text-xs text-(--pc-faint)">
-                      绑定于 {formatDateTime(user.guServerBindAt)}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => void handleUnbind()}
-                  disabled={bindBusy}
-                >
-                  解绑
-                </Button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-(--pc-faint)">
-                  {requireGv0
-                    ? "尚未绑定 g0v0 服务器账号，绑定后才能报名比赛。"
-                    : "尚未绑定 g0v0 账号；当前比赛不使用 g0v0，可不绑定。"}
-                </p>
-                <Button
-                  variant="teal"
-                  onClick={() => void handleBind()}
-                  disabled={bindBusy}
-                >
-                  {bindBusy ? "跳转中…" : "绑定 g0v0 账号"}
-                </Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 机器人身份绑定 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bot className="h-5 w-5 text-pc-blue" />
-              机器人绑定
-            </CardTitle>
-            <CardDescription>
-              绑定后可在 QQ 群或私聊中使用 /rules、/book 等指令查询和预约比赛
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-(--pc-faint)">
-              绑定码等同于登录凭证，请勿发给他人；绑定请私聊机器人，不要发到群里。
-              也可以私聊机器人发送 <span className="font-mono">/bind</span> 获取一键绑定链接。
-            </p>
-            <Button
-              variant="primary"
-              onClick={() => void handleGenerateBotBindCode()}
-              disabled={botBindBusy}
-            >
-              {botBindBusy ? "生成中…" : "生成绑定码"}
-            </Button>
-
-            {botBindCode && (
-              <div className="space-y-2 rounded-xl bg-(--pc-paper) px-4 py-3">
-                <p className="text-xs text-(--pc-faint)">
-                  绑定码（{botBindCode.ttlMinutes} 分钟内有效，仅可使用一次）
-                </p>
-                <p className="break-all font-mono text-lg font-bold tracking-wider text-(--pc-ink)">
-                  {botBindCode.code}
-                </p>
-                <p className="text-xs text-(--pc-faint)">
-                  私聊机器人发送：
-                  <span className="font-mono text-(--pc-ink)">{botBindCode.command}</span>
-                </p>
-                <p className="text-xs text-(--pc-faint)">
-                  过期时间：{formatDateTime(botBindCode.expiresAt)}
-                </p>
-                <Button variant="outline" size="sm" onClick={() => void copyBotBindCode()}>
-                  复制绑定码
-                </Button>
-              </div>
-            )}
-
-            <Separator />
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-bold text-(--pc-faint)">已绑定账号</p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => void botBindings.refetch()}
-                  disabled={botBindings.loading}
-                >
-                  <RefreshCw className={botBindings.loading ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"} />
-                  刷新
-                </Button>
-              </div>
-              {botBindings.loading ? (
-                <p className="text-sm text-(--pc-faint)">加载中…</p>
-              ) : botBindings.error ? (
-                <p className="text-sm text-pc-primary">{botBindings.error}</p>
-              ) : (botBindings.data ?? []).length === 0 ? (
-                <p className="text-sm text-(--pc-faint)">尚未绑定任何机器人账号。</p>
-              ) : (
-                <div className="space-y-2">
-                  {(botBindings.data ?? []).map((binding) => (
-                    <div
-                      key={binding.id}
-                      className="flex items-center justify-between gap-2 rounded-xl bg-(--pc-paper) px-3 py-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-(--pc-ink)">
-                          {platformLabel(binding.platform)}
-                          {binding.displayName ? ` · ${binding.displayName}` : ""}
-                        </p>
-                        <p className="truncate text-xs text-(--pc-faint)">
-                          {binding.platformUserId} · 绑定于 {formatDateTime(binding.createdAt)}
-                        </p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => void handleUnbindBot(binding.id)}
-                        disabled={unbindingBotId === binding.id}
-                      >
-                        {unbindingBotId === binding.id ? "解绑中…" : "解绑"}
-                      </Button>
-                    </div>
-                  ))}
+                  <p className="text-xs text-(--pc-faint)">
+                    过期时间：{formatDateTime(botBindCode.expiresAt)}
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => void copyBotBindCode()}>
+                    复制绑定码
+                  </Button>
                 </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-bold text-(--pc-faint)">已绑定账号</p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => void botBindings.refetch()}
+                    disabled={botBindings.loading}
+                  >
+                    <RefreshCw
+                      className={botBindings.loading ? "h-3.5 w-3.5 animate-spin" : "h-3.5 w-3.5"}
+                    />
+                    刷新
+                  </Button>
+                </div>
+                {botBindings.loading ? (
+                  <p className="text-sm text-(--pc-faint)">加载中…</p>
+                ) : botBindings.error ? (
+                  <p className="text-sm text-pc-primary">{botBindings.error}</p>
+                ) : (botBindings.data ?? []).length === 0 ? (
+                  <p className="text-sm text-(--pc-faint)">尚未绑定任何机器人账号。</p>
+                ) : (
+                  <div className="space-y-2">
+                    {(botBindings.data ?? []).map((binding) => (
+                      <div
+                        key={binding.id}
+                        className="flex items-center justify-between gap-2 rounded-xl bg-(--pc-paper) px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-(--pc-ink)">
+                            {platformLabel(binding.platform)}
+                            {binding.displayName ? ` · ${binding.displayName}` : ""}
+                          </p>
+                          <p className="truncate text-xs text-(--pc-faint)">
+                            {binding.platformUserId} · 绑定于 {formatDateTime(binding.createdAt)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void handleUnbindBot(binding.id)}
+                          disabled={unbindingBotId === binding.id}
+                        >
+                          {unbindingBotId === binding.id ? "解绑中…" : "解绑"}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Next match */}
@@ -581,16 +565,12 @@ export default function PlayerInfoPage() {
                   <div className="space-y-1 rounded-xl bg-(--pc-paper) px-4 py-3 text-sm text-(--pc-slate)">
                     <div>
                       房间：
-                      <span className="font-bold text-(--pc-ink)">
-                        {nextMatch.room.roomName}
-                      </span>
+                      <span className="font-bold text-(--pc-ink)">{nextMatch.room.roomName}</span>
                     </div>
                     <div>
                       时间：
                       <span className="font-bold text-(--pc-ink)">
-                        {formatDateTime(
-                          nextMatch.room.matchDate || nextMatch.room.matchTime,
-                        )}
+                        {formatDateTime(nextMatch.room.matchDate || nextMatch.room.matchTime)}
                       </span>
                     </div>
                   </div>
@@ -613,9 +593,7 @@ export default function PlayerInfoPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>预约对战</DialogTitle>
-            <DialogDescription>
-              选择一场空闲的比赛房间，系统将通知你的对手。
-            </DialogDescription>
+            <DialogDescription>选择一场空闲的比赛房间，系统将通知你的对手。</DialogDescription>
           </DialogHeader>
 
           {rooms.error && (

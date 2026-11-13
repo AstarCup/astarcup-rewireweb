@@ -21,9 +21,7 @@ export default function Footer() {
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2">
         <div>
           <Logo full />
-          <p className="mt-2 max-w-xs text-xs text-(--pc-slate)">
-            {site.tagline}
-          </p>
+          <p className="mt-2 max-w-xs text-xs text-(--pc-slate)">{site.tagline}</p>
         </div>
         <div>
           <h4 className="text-xl font-bold text-(--pc-ink)">相关链接</h4>
@@ -51,7 +49,8 @@ export default function Footer() {
         </div>
       </div>
       <div className="mx-auto mt-8 max-w-6xl border-t-2 border-(--pc-border) pt-4 text-xs text-(--pc-faint)">
-        © {site.footer.sinceYear} - {new Date().getFullYear()} {name} · {site.footer.icp} · {site.footer.police}
+        © {site.footer.sinceYear} - {new Date().getFullYear()} {name} · {site.footer.icp} ·{" "}
+        {site.footer.police}
       </div>
     </footer>
   );

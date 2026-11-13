@@ -46,9 +46,9 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
   const [skills, setSkills] = useState<Record<string, string>>(EMPTY_SKILLS);
   const [customKey, setCustomKey] = useState("");
   const [customValue, setCustomValue] = useState("");
-  const [customKeyState, setCustomKeyState] = useState<
-    "checking" | "valid" | "invalid" | null
-  >(null);
+  const [customKeyState, setCustomKeyState] = useState<"checking" | "valid" | "invalid" | null>(
+    null,
+  );
   const [customKeyError, setCustomKeyError] = useState("");
   const [bindBusy, setBindBusy] = useState(false);
   const [qq, setQq] = useState("");
@@ -108,6 +108,10 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
   };
 
   const submitRegistration = async () => {
+    if (!user) {
+      setRegMsg("登录状态已失效，请刷新页面后重试");
+      return;
+    }
     if (requireGv0 && !g0v0Bound) {
       setRegMsg("请先绑定 g0v0 服务器账号后再报名");
       return;
@@ -131,7 +135,10 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
     }
     setRegBusy(true);
     setRegMsg(null);
-    const toNum = (s: string) => (s.trim() === "" ? null : Number(s));
+    const toNum = (s?: string) => {
+      const v = s?.trim() ?? "";
+      return v === "" ? null : Number(v);
+    };
     const res = await api.post("/api/users", {
       osuId: user?.osuId,
       username: user?.username,
@@ -201,14 +208,13 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           )}
           {maxPp > 0 && !ppOk && (
             <p className="rounded-xl bg-pc-primary/10 p-3 text-sm font-bold text-pc-primary">
-              你的 PP（{fmtInt(userPp)}）不在报名区间 {fmtInt(minPp)} ~ {fmtInt(maxPp)} 内，无法报名。
+              你的 PP（{fmtInt(userPp)}）不在报名区间 {fmtInt(minPp)} ~ {fmtInt(maxPp)}{" "}
+              内，无法报名。
             </p>
           )}
           {requireGv0 && !g0v0Bound && (
             <div className="rounded-xl border-2 border-pc-yellow bg-pc-yellow/10 p-4">
-              <p className="text-sm font-bold text-(--pc-ink)">
-                尚未绑定 g0v0 服务器账号
-              </p>
+              <p className="text-sm font-bold text-(--pc-ink)">尚未绑定 g0v0 服务器账号</p>
               <p className="mt-1 text-xs text-(--pc-slate)">
                 报名比赛前需先绑定 g0v0 私服账号，绑定后才能提交报名。
               </p>
@@ -225,18 +231,25 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           )}
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4 text-sm">
             <div className="grid grid-cols-2 gap-2">
-              <p className="text-(--pc-slate)">用户名：<span className="font-bold text-(--pc-ink)">{user?.username}</span></p>
-              <p className="text-(--pc-slate)">PP：<span className="font-bold text-(--pc-ink)">{fmtInt(userPp)}</span></p>
-              <p className="text-(--pc-slate)">全球排名：<span className="font-bold text-(--pc-ink)">#{fmtInt(user?.globalRank)}</span></p>
-              <p className="text-(--pc-slate)">地区：<span className="font-bold text-(--pc-ink)">{user?.country ?? "-"}</span></p>
+              <p className="text-(--pc-slate)">
+                用户名：<span className="font-bold text-(--pc-ink)">{user?.username}</span>
+              </p>
+              <p className="text-(--pc-slate)">
+                PP：<span className="font-bold text-(--pc-ink)">{fmtInt(userPp)}</span>
+              </p>
+              <p className="text-(--pc-slate)">
+                全球排名：
+                <span className="font-bold text-(--pc-ink)">#{fmtInt(user?.globalRank)}</span>
+              </p>
+              <p className="text-(--pc-slate)">
+                地区：<span className="font-bold text-(--pc-ink)">{user?.country ?? "-"}</span>
+              </p>
             </div>
           </div>
 
           {/* 技能自评：左边输入，右边雷达图 */}
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
-            <p className="text-sm font-bold text-(--pc-ink)">
-              技能自评（选填）
-            </p>
+            <p className="text-sm font-bold text-(--pc-ink)">技能自评（选填）</p>
             <div className="mt-3 grid gap-4 md:grid-cols-[minmax(0,1fr)_250px] md:items-center">
               <div className="grid grid-cols-2 gap-3">
                 {SKILL_FIELDS.map((f) => (
@@ -248,9 +261,7 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                       max="10"
                       step="0.1"
                       value={skills[f.key]}
-                      onChange={(e) =>
-                        setSkills((prev) => ({ ...prev, [f.key]: e.target.value }))
-                      }
+                      onChange={(e) => setSkills((prev) => ({ ...prev, [f.key]: e.target.value }))}
                       placeholder="0-10"
                       className="h-9 rounded-lg border-2 border-(--pc-border) bg-(--pc-white) px-3 text-sm text-(--pc-ink) outline-none focus:border-pc-primary"
                     />
@@ -274,12 +285,13 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
                     type="text"
                     value={customKey}
                     onChange={(e) => handleCustomKey(e.target.value)}
-                    className={`h-9 w-full rounded-lg border-2 bg-(--pc-white) px-3 pr-8 text-sm text-(--pc-ink) outline-none ${customKeyState === "invalid"
+                    className={`h-9 w-full rounded-lg border-2 bg-(--pc-white) px-3 pr-8 text-sm text-(--pc-ink) outline-none ${
+                      customKeyState === "invalid"
                         ? "border-pc-primary"
                         : customKeyState === "valid"
                           ? "border-pc-teal"
                           : "border-(--pc-border)"
-                      }`}
+                    }`}
                   />
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs">
                     {customKeyState === "checking" && (
@@ -315,7 +327,10 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
           <div className="rounded-xl border-2 border-(--pc-border) bg-(--pc-white) p-4">
             <p className="text-sm font-bold text-(--pc-ink)">QQ 号（必填）</p>
             <p className="mt-0.5 text-xs text-(--pc-faint)">
-              方便 staff 与你联系 · QQ 群：<a href={site.contact.qqGroup} target="_blank" rel="noopener noreferrer">{site.contact.qqGroupNumber}</a>
+              方便 staff 与你联系 · QQ 群：
+              <a href={site.contact.qqGroup} target="_blank" rel="noopener noreferrer">
+                {site.contact.qqGroupNumber}
+              </a>
             </p>
             <input
               type="text"
@@ -342,15 +357,13 @@ export default function RegisterDialog({ open, onOpenChange }: RegisterDialogPro
             </span>
           </label>
           {regMsg && (
-            <p className="rounded-xl bg-pc-primary/10 p-3 text-sm font-bold text-pc-primary">{regMsg}</p>
+            <p className="rounded-xl bg-pc-primary/10 p-3 text-sm font-bold text-pc-primary">
+              {regMsg}
+            </p>
           )}
         </div>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={regBusy}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={regBusy}>
             取消
           </Button>
           <Button

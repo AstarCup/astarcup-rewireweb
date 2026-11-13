@@ -44,28 +44,42 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<A
     return { ok: false, error: { status: 0, message: "网络错误，无法连接后端服务" } };
   }
 
-  let payload: any = null;
+  let payload: unknown = null;
   try {
     payload = await res.json();
   } catch {
     payload = null;
   }
 
+  const envelope =
+    payload && typeof payload === "object" ? (payload as Record<string, unknown>) : null;
+
   if (!res.ok) {
+    const serverMessage = envelope?.error ?? envelope?.message;
     return {
       ok: false,
       error: {
         status: res.status,
-        message: payload?.error || payload?.message || `请求失败 (${res.status})`,
+        message:
+          typeof serverMessage === "string" && serverMessage
+            ? serverMessage
+            : `请求失败 (${res.status})`,
       },
     };
   }
 
-  if (payload && typeof payload === "object" && "success" in payload) {
-    if (payload.success) {
-      return { ok: true, data: payload.data as T, message: payload.message };
+  if (envelope && "success" in envelope) {
+    const message = typeof envelope.message === "string" ? envelope.message : undefined;
+    if (envelope.success) {
+      return { ok: true, data: envelope.data as T, message };
     }
-    return { ok: false, error: { status: res.status, message: payload.error || "请求失败" } };
+    return {
+      ok: false,
+      error: {
+        status: res.status,
+        message: typeof envelope.error === "string" ? envelope.error : "请求失败",
+      },
+    };
   }
 
   return { ok: true, data: payload as T };

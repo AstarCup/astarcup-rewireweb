@@ -67,8 +67,7 @@ const FULLSCREEN =
   "translate-y-0 rotate-0 rounded-none border-0 p-0 gap-0 shadow-none";
 
 /** 弹窗头/尾的通用样式（避开右上角关闭按钮） */
-const DIALOG_HEAD =
-  "shrink-0 border-b-2 border-(--pc-border) px-6 py-4 pr-14";
+const DIALOG_HEAD = "shrink-0 border-b-2 border-(--pc-border) px-6 py-4 pr-14";
 /** 资讯弹窗头：标题在左，保存按钮在右，右上角留给关闭按钮 */
 const DIALOG_HEAD_BAR =
   "shrink-0 flex items-start justify-between gap-4 border-b-2 border-(--pc-border) px-6 py-4 pr-16";
@@ -95,9 +94,12 @@ const RULE_DIALOG_CLOSED: RuleDialogState = {
  * 赛季规则由 AstrBot 的 /api/bot/rules 读取。
  */
 export default function ContentManagement() {
-  const { data: newsList, loading, error, refetch } = useFetch<NewsItem[]>(() =>
-    api.get("/api/admin/news"),
-  );
+  const {
+    data: newsList,
+    loading,
+    error,
+    refetch,
+  } = useFetch<NewsItem[]>(() => api.get("/api/admin/news"));
   const {
     data: rules,
     loading: rulesLoading,
@@ -259,9 +261,7 @@ export default function ContentManagement() {
     <div className="p-6">
       {/* ============ 资讯 ============ */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <SectionTitle className="mb-0">
-          资讯管理
-        </SectionTitle>
+        <SectionTitle className="mb-0">资讯管理</SectionTitle>
         <Button size="sm" onClick={openCreate}>
           <Plus className="mr-1.5 h-4 w-4" /> 新建资讯
         </Button>
@@ -289,9 +289,7 @@ export default function ContentManagement() {
                   key={n.id}
                   className="border-b border-(--pc-border) last:border-0 hover:bg-(--pc-paper)"
                 >
-                  <td className="whitespace-nowrap px-4 py-3 text-(--pc-slate)">
-                    {n.date || "-"}
-                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-(--pc-slate)">{n.date || "-"}</td>
                   <td className="px-4 py-3">
                     <div className="font-bold text-(--pc-ink)">{n.title}</div>
                     {n.description && (
@@ -386,10 +384,7 @@ export default function ContentManagement() {
       </Dialog>
 
       {/* 删除资讯确认 */}
-      <AlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-      >
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>删除资讯</AlertDialogTitle>
@@ -413,9 +408,7 @@ export default function ContentManagement() {
       {/* ============ 赛季规则 ============ */}
       <div className="mt-10 border-t-2 border-(--pc-border) pt-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <SectionTitle className="mb-0">
-            赛季规则
-          </SectionTitle>
+          <SectionTitle className="mb-0">赛季规则</SectionTitle>
           <div className="flex items-center gap-2">
             <Input
               value={newSeason}
@@ -462,15 +455,13 @@ export default function ContentManagement() {
                         {r.updatedAt ? formatDateTime(r.updatedAt) : "-"}
                       </td>
                       <td className="px-4 py-3">
+                        {/* 操作区只需阻止行点击冒泡，本身没有交互语义 */}
+                        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
                         <div
                           className="flex justify-end gap-2"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openRuleEdit(r)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => openRuleEdit(r)}>
                             <Pencil className="mr-1 h-3.5 w-3.5" /> 编辑
                           </Button>
                           <Button
@@ -508,9 +499,7 @@ export default function ContentManagement() {
             <DialogTitle>
               {ruleDialog.isNew ? "新建赛季规则" : `编辑赛季规则 · ${ruleDialog.season}`}
             </DialogTitle>
-            <DialogDescription>
-              支持 Markdown 正文，保存后 Bot 立即生效。
-            </DialogDescription>
+            <DialogDescription>支持 Markdown 正文，保存后 Bot 立即生效。</DialogDescription>
           </DialogHeader>
           <div className={DIALOG_BODY}>
             <div className="grid gap-4">

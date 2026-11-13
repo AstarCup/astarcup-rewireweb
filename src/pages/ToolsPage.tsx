@@ -43,9 +43,7 @@ const TOOLS: ToolEntry[] = [
     tag: "咕服客户端",
     role: "比赛客户端",
     desc: "咕服（g0v0）专用客户端",
-    intro: [
-      "g0v0 lazer 是面向 g0v0（咕服）私服的专用客户端，支持 ASIO 低延迟音频输出。",
-    ],
+    intro: ["g0v0 lazer 是面向 g0v0（咕服）私服的专用客户端，支持 ASIO 低延迟音频输出。"],
     usage: "原生g0v0体验。",
     features: ["咕服专用客户端", "支持 ASIO 低延迟音频"],
     href: site.urls.g0v0Repo,

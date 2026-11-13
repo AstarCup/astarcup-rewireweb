@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toast";
 import ScrollToTop from "@/components/layout/ScrollToTop";
@@ -8,21 +8,31 @@ import CursorToggle from "@/components/layout/CursorToggle";
 import OsuCursor from "@/components/effects/OsuCursor";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import HomePage from "@/pages/HomePage";
-import RegisterPage from "@/pages/RegisterPage";
-import PlayerInfoPage from "@/pages/PlayerInfoPage";
-import StaffDashboardPage from "@/pages/staff/StaffDashboardPage";
-import NewsPage from "@/pages/NewsPage";
-import NewsDetailPage from "@/pages/NewsDetailPage";
-import GuidePage from "@/pages/GuidePage";
-import SchedulePage from "@/pages/SchedulePage";
-import MappoolPage from "@/pages/MappoolPage";
-import RegistrationsPage from "@/pages/RegistrationsPage";
-import ToolsPage from "@/pages/ToolsPage";
-import ContactPage from "@/pages/ContactPage";
-import PhotosPage from "@/pages/PhotosPage";
-import BotBindPage from "@/pages/BotBindPage";
-import NotFoundPage from "@/pages/NotFoundPage";
+
+// 路由级代码分割：页面按需加载，首屏只保留布局与当前页面
+const HomePage = lazy(() => import("@/pages/HomePage"));
+const RegisterPage = lazy(() => import("@/pages/RegisterPage"));
+const PlayerInfoPage = lazy(() => import("@/pages/PlayerInfoPage"));
+const StaffDashboardPage = lazy(() => import("@/pages/staff/StaffDashboardPage"));
+const NewsPage = lazy(() => import("@/pages/NewsPage"));
+const NewsDetailPage = lazy(() => import("@/pages/NewsDetailPage"));
+const GuidePage = lazy(() => import("@/pages/GuidePage"));
+const SchedulePage = lazy(() => import("@/pages/SchedulePage"));
+const MappoolPage = lazy(() => import("@/pages/MappoolPage"));
+const RegistrationsPage = lazy(() => import("@/pages/RegistrationsPage"));
+const ToolsPage = lazy(() => import("@/pages/ToolsPage"));
+const ContactPage = lazy(() => import("@/pages/ContactPage"));
+const PhotosPage = lazy(() => import("@/pages/PhotosPage"));
+const BotBindPage = lazy(() => import("@/pages/BotBindPage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
+
+function PageFallback() {
+  return (
+    <div className="grid min-h-[60vh] place-items-center">
+      <p className="text-sm text-(--pc-faint)">加载中…</p>
+    </div>
+  );
+}
 
 function PublicLayout() {
   return (
@@ -66,30 +76,37 @@ export default function App() {
   return (
     <Toaster>
       <Routes>
-      {/* 管理后台：不显示站点导航栏与页脚 */}
-      <Route path="/staff-dashboard" element={<StaffDashboardPage />} />
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/bind" element={<BotBindPage />} />
-        <Route path="/player-info" element={<PlayerInfoPage />} />
-        <Route path="/news" element={<NewsPage />} />
-        <Route path="/news/:slug" element={<NewsDetailPage />} />
-        <Route path="/guide" element={<GuidePage />} />
-        <Route path="/schedule" element={<SchedulePage />} />
-        <Route path="/mappool" element={<MappoolPage />} />
-        <Route path="/tools" element={<ToolsPage />} />
-        <Route path="/registrations" element={<RegistrationsPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/photos" element={<PhotosPage />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
-    <BackToTop />
-    {/* 左下角开关：关掉后自定义光标和可点击元素指示框一起关闭 */}
-    <CursorToggle enabled={cursorEnabled} onToggle={toggleCursor} />
-    {/* osu!lazer 风格自定义光标：全站生效（含 staff 后台），触屏自动禁用 */}
-    <OsuCursor enabled={cursorEnabled} />
+        {/* 管理后台：不显示站点导航栏与页脚 */}
+        <Route
+          path="/staff-dashboard"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              <StaffDashboardPage />
+            </Suspense>
+          }
+        />
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/bind" element={<BotBindPage />} />
+          <Route path="/player-info" element={<PlayerInfoPage />} />
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/news/:slug" element={<NewsDetailPage />} />
+          <Route path="/guide" element={<GuidePage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/mappool" element={<MappoolPage />} />
+          <Route path="/tools" element={<ToolsPage />} />
+          <Route path="/registrations" element={<RegistrationsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/photos" element={<PhotosPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+      <BackToTop />
+      {/* 左下角开关：关掉后自定义光标和可点击元素指示框一起关闭 */}
+      <CursorToggle enabled={cursorEnabled} onToggle={toggleCursor} />
+      {/* osu!lazer 风格自定义光标：全站生效（含 staff 后台），触屏自动禁用 */}
+      <OsuCursor enabled={cursorEnabled} />
     </Toaster>
   );
 }

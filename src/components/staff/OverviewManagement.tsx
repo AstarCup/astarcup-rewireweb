@@ -38,7 +38,10 @@ export default function OverviewManagement() {
       {/* Welcome banner */}
       <div className="mb-6 flex items-center gap-4 rounded-2xl bg-(--pc-white) p-5 shadow-[4px_4px_0px_rgba(0,0,0,0.08)]">
         <Avatar className="h-16 w-16 rounded-2xl border-2 border-pc-primary">
-          <AvatarImage src={user?.avatarUrl || osuAvatarUrl(user?.osuId)} alt={user?.username ?? ""} />
+          <AvatarImage
+            src={user?.avatarUrl || osuAvatarUrl(user?.osuId)}
+            alt={user?.username ?? ""}
+          />
           <AvatarFallback className="bg-pc-yellow/30 text-xl font-bold text-(--pc-ink)">
             {user?.username?.slice(0, 1).toUpperCase() ?? "?"}
           </AvatarFallback>
@@ -52,9 +55,7 @@ export default function OverviewManagement() {
         </div>
       </div>
 
-      <SectionTitle>
-        运营数据一览
-      </SectionTitle>
+      <SectionTitle>运营数据一览</SectionTitle>
 
       {/* 赛事设置（顶部卡片） */}
       <Card className="mt-6">
@@ -81,9 +82,7 @@ export default function OverviewManagement() {
             </div>
             <div>
               <CardDescription>管理员数量</CardDescription>
-              <p className="mt-1 text-lg font-bold text-(--pc-ink)">
-                {fmtInt(ts.adminCount)}
-              </p>
+              <p className="mt-1 text-lg font-bold text-(--pc-ink)">{fmtInt(ts.adminCount)}</p>
             </div>
             <div>
               <CardDescription>报名开放</CardDescription>
@@ -106,9 +105,7 @@ export default function OverviewManagement() {
       </Card>
 
       {/* 分赛季数据板块 */}
-      <SectionTitle className="mt-10">
-        按赛季查看报名 / 图池 / 回放统计
-      </SectionTitle>
+      <SectionTitle className="mt-10">按赛季查看报名 / 图池 / 回放统计</SectionTitle>
 
       {seasonKeys.length === 0 ? (
         <Card className="mt-6">

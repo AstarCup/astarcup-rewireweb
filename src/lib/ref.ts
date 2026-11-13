@@ -14,13 +14,7 @@ export type MatchType = "head_to_head" | "team_versus";
 export type Team = "red" | "blue" | "none";
 export type RefConnectionState = "connected" | "connecting" | "disconnected";
 export type RefUserStatus =
-  | "referee"
-  | "idle"
-  | "ready"
-  | "playing"
-  | "finished_play"
-  | "spectating"
-  | null;
+  "referee" | "idle" | "ready" | "playing" | "finished_play" | "spectating" | null;
 
 export interface RefMod {
   acronym: string;
@@ -95,8 +89,8 @@ export interface RoomJoinedResponse {
 }
 
 export interface HubEvent {
-  // biome-ignore lint/suspicious/noExplicitAny: hub 事件载荷结构随事件变化
-  data: any;
+  /** hub 事件载荷结构随事件变化，读取时按需收窄 */
+  data: unknown;
   event: string;
 }
 
@@ -153,10 +147,9 @@ export interface ChangeRoomSettingsParams {
 export interface OsuBeatmap {
   id: number;
   version: string;
-  // biome-ignore lint/suspicious/noExplicitAny: osu 原始响应
-  beatmapset: { id: number; artist: string; title: string; [key: string]: any };
-  // biome-ignore lint/suspicious/noExplicitAny: osu 原始响应
-  [key: string]: any;
+  /** osu! 原始响应：常用字段显式声明，其余按需收窄 */
+  beatmapset: { id: number; artist: string; title: string; [key: string]: unknown };
+  [key: string]: unknown;
 }
 
 /**
@@ -174,8 +167,7 @@ export interface OsuChatMessage {
   is_action?: boolean;
   /** 个别接口会直接带发送者资料 */
   sender?: OsuUserLite;
-  // biome-ignore lint/suspicious/noExplicitAny: osu 原始响应
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /** 取聊天消息 id（osu 官方是 message_id） */
@@ -185,12 +177,7 @@ export function chatMessageId(msg: OsuChatMessage | null | undefined): number | 
 
 /** 取发送者 id（osu 官方是 sender_id） */
 export function chatMessageUserId(msg: OsuChatMessage | null | undefined): number {
-  return (
-    asNum(msg?.sender_id) ??
-    asNum(msg?.user_id) ??
-    asNum(msg?.sender?.id) ??
-    0
-  );
+  return asNum(msg?.sender_id) ?? asNum(msg?.user_id) ?? asNum(msg?.sender?.id) ?? 0;
 }
 
 // ============ hub 命令构造 + 执行 ============
@@ -346,9 +333,7 @@ function unwrapMessages(
   return res.ok ? { ok: true, data: res.data.messages ?? [], message: res.message } : res;
 }
 
-function unwrapMessage(
-  res: ApiResult<{ message: OsuChatMessage }>,
-): ApiResult<OsuChatMessage> {
+function unwrapMessage(res: ApiResult<{ message: OsuChatMessage }>): ApiResult<OsuChatMessage> {
   return res.ok ? { ok: true, data: res.data.message, message: res.message } : res;
 }
 
@@ -446,11 +431,28 @@ export function mergeUser(room: RefRoomState, user: OsuUserLite): RefRoomState {
   const patch = (u: RefUser): RefUser => (u.id === user.id ? { ...u, user } : u);
   return {
     ...room,
-    players: Object.fromEntries(
-      Object.entries(room.players).map(([k, u]) => [k, patch(u)]),
-    ),
+    players: Object.fromEntries(Object.entries(room.players).map(([k, u]) => [k, patch(u)])),
     refs: Object.fromEntries(Object.entries(room.refs).map(([k, u]) => [k, patch(u)])),
   };
+}
+
+/** hub 事件负载：字段随事件类型变化，这里按用到的情况声明 */
+interface HubEventPayload {
+  user_id?: number | string;
+  kicked_user_id?: number | string;
+  banned_user_id?: number | string;
+  name?: string;
+  password?: string | null;
+  type?: MatchType;
+  max_participants?: number | string;
+  state?: { locked?: boolean; type?: MatchType; slots?: number[] };
+  playlist_item?: RefPlaylistItem;
+  playlist_item_id?: number | string;
+  status?: RefUserStatus;
+  team?: Team;
+  mods?: RefMod[];
+  result?: number | string;
+  max?: number | string;
 }
 
 /**
@@ -469,7 +471,7 @@ export function applyHubEvent(
   const wantUser = (u: RefUser | undefined | null) => {
     if (u && !u.user && !needUserIds.includes(u.id)) needUserIds.push(u.id);
   };
-  const data = ev.data ?? {};
+  const data = (ev.data ?? {}) as HubEventPayload;
   const next: RefRoomState = {
     ...room,
     players: { ...room.players },
@@ -556,14 +558,14 @@ export function applyHubEvent(
       break;
     }
     case "PlaylistItemAdded": {
-      const item: RefPlaylistItem = data.playlist_item;
+      const item = data.playlist_item;
       if (!item) break;
       if (item.was_played) delete next.playlistItems[item.id];
       else next.playlistItems[item.id] = item;
       break;
     }
     case "PlaylistItemChanged": {
-      const item: RefPlaylistItem = data.playlist_item;
+      const item = data.playlist_item;
       if (!item) break;
       if (item.was_played) {
         delete next.playlistItems[item.id];
@@ -655,15 +657,6 @@ export function displayName(user: OsuUserLite | null | undefined, id: number): s
 
 export function modsText(mods: RefMod[] | undefined | null): string {
   return (mods ?? []).map((m) => m.acronym).join(" ");
-}
-
-/** "HD HR" / "HD,HR" → [{acronym:"HD"},{acronym:"HR"}] */
-export function parseModText(text: string): RefMod[] {
-  return text
-    .split(/[\s+,]+/)
-    .map((s) => s.trim().toUpperCase())
-    .filter((s) => s.length >= 2)
-    .map((acronym) => ({ acronym }));
 }
 
 export function hasModSettings(m: RefMod): boolean {
